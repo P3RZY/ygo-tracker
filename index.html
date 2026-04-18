@@ -264,7 +264,7 @@ async function readBin() {
 }
 
 async function writeBin() {
-  await apiFetch('PUT', `/b/${cfg.binId}`, state);
+  await apiFetch('PUT', `/b/${cfg.binId}`, { record: state });
 }
 
 // ── CONNECT / DISCONNECT ──────────────────────────────────
@@ -328,12 +328,25 @@ async function syncUp() {
 
 async function syncDown() {
   if (!cfg.apiKey || !cfg.binId) return;
+
   setSync('loading', 'aggiornamento...');
   try {
     const remote = await readBin();
-    if (remote && remote.players) { state = remote; saveLocal(); renderPlayers(); updateSelects(); renderTab(); }
+
+    const data = remote?.record || remote;
+
+    if (data?.players) {
+      state = data;
+      saveLocal();
+      renderPlayers();
+      updateSelects();
+      renderTab();
+    }
+
     setSync('ok', 'sincronizzato');
-  } catch(e) { setSync('err', 'errore'); }
+  } catch (e) {
+    setSync('err', 'errore');
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────────
