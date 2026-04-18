@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yu-Gi-Oh! Score Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --bg2: #111118; --bg3: #1a1a24; --card: #16161f;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --gold: #c9a84c; --gold2: #e8c97a;
+    --green: #3a9e6e; --red: #c14a4a;
+    --text: #e8e4d8; --text2: #9b9587; --text3: #5a5650;
+    --p0: #7b5ea7; --p0l: #c4a8e8;
+    --p1: #2e7d6b; --p1l: #7ecfc0;
+    --p2: #c17a2e; --p2l: #f0c06a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+  header { background: var(--bg2); border-bottom: 1px solid var(--border2); padding: 1.2rem 2rem; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+  .logo-eye { width: 36px; height: 36px; background: radial-gradient(circle at 40% 40%, var(--gold2), var(--gold)); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; position: relative; flex-shrink: 0; box-shadow: 0 0 18px rgba(201,168,76,0.4); }
+  .logo-eye::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 14px; height: 14px; background: var(--bg); border-radius: 50%; }
+  header h1 { font-family: 'Cinzel', serif; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.08em; color: var(--gold2); }
+  header .subtitle { font-size: 0.75rem; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; margin-top: -2px; }
+  .sync-status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+  .sync-dot.ok { background: var(--green); }
+  .sync-dot.err { background: var(--red); }
+  .sync-dot.loading { background: var(--gold); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .btn-refresh { background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); font-size: 16px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; line-height: 1; }
+  .btn-refresh:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-refresh.spinning { animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .config-banner { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .config-banner h3 { font-family: 'Cinzel', serif; font-size: 0.85rem; color: var(--gold2); margin-bottom: 10px; letter-spacing: 0.1em; }
+  .config-banner p { font-size: 13px; color: var(--text2); margin-bottom: 8px; line-height: 1.6; }
+  .config-banner a { color: var(--gold); }
+  .config-banner code { background: var(--bg3); color: var(--gold); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .config-steps { font-size: 13px; color: var(--text2); margin: 10px 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .config-steps li::before { content: attr(data-n) ". "; color: var(--gold); font-weight: 600; }
+  .config-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .config-row input { flex: 1; min-width: 200px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; padding: 8px 12px; outline: none; }
+  .config-row input:focus { border-color: var(--gold); }
+  .config-row input::placeholder { color: var(--text3); }
+  .btn-cfg { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
+  .btn-cfg:hover { background: var(--gold2); }
+  .btn-cfg-sec { background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 13px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+  .btn-cfg-sec:hover { border-color: var(--gold); color: var(--gold); }
+  .cfg-error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .panel-title { font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+  .panel-title::before { content: ''; display: inline-block; width: 14px; height: 1px; background: var(--gold); opacity: 0.5; }
+
+  .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .player-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .player-card.p0 { border-top: 2px solid var(--p0); }
+  .player-card.p1 { border-top: 2px solid var(--p1); }
+  .player-card.p2 { border-top: 2px solid var(--p2); }
+  .player-name-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border2); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600; padding: 4px 0 6px; margin-bottom: 10px; outline: none; }
+  .player-name-input.p0 { color: var(--p0l); } .player-name-input.p1 { color: var(--p1l); } .player-name-input.p2 { color: var(--p2l); }
+  .deck-add-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .deck-add-row input { flex: 1; background: var(--bg2); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 12px; padding: 5px 10px; outline: none; }
+  .deck-add-row input:focus { border-color: var(--gold); }
+  .deck-add-row input::placeholder { color: var(--text3); }
+  .btn-icon { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s; }
+  .btn-icon:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .decks-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .deck-tag { font-size: 11px; padding: 3px 8px 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
+  .deck-tag.p0 { background: rgba(123,94,167,0.15); color: var(--p0l); border: 1px solid rgba(123,94,167,0.3); }
+  .deck-tag.p1 { background: rgba(46,125,107,0.15); color: var(--p1l); border: 1px solid rgba(46,125,107,0.3); }
+  .deck-tag.p2 { background: rgba(193,122,46,0.15); color: var(--p2l); border: 1px solid rgba(193,122,46,0.3); }
+  .deck-rm { cursor: pointer; opacity: 0.5; font-size: 13px; } .deck-rm:hover { opacity: 1; color: var(--red); }
+
+  .match-form { display: grid; grid-template-columns: 1fr 1fr auto 1fr 1fr auto; gap: 8px; align-items: end; }
+  @media (max-width: 640px) { .match-form { grid-template-columns: 1fr 1fr; } .vs-col { display: none; } .add-btn { grid-column: 1/-1; } }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+  select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; padding: 7px 10px; outline: none; cursor: pointer; width: 100%; }
+  select:focus { border-color: var(--gold); }
+  .vs-col { text-align: center; font-family: 'Cinzel', serif; font-size: 11px; color: var(--text3); letter-spacing: 0.1em; padding-bottom: 8px; }
+  .btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 18px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn-add:hover { background: var(--gold2); }
+  .winner-select { width: 80px; }
+  .form-error { font-size: 12px; color: var(--red); margin-top: 6px; }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .tab { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; } tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge { font-size: 11px; padding: 2px 9px; border-radius: 20px; display: inline-block; font-weight: 500; }
+  .badge.p0 { background: rgba(123,94,167,0.15); color: var(--p0l); }
+  .badge.p1 { background: rgba(46,125,107,0.15); color: var(--p1l); }
+  .badge.p2 { background: rgba(193,122,46,0.15); color: var(--p2l); }
+  .win { color: var(--green); font-weight: 600; } .loss { color: var(--red); }
+  .btn-rm { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+  .btn-rm:hover { color: var(--red); background: rgba(193,74,74,0.1); }
+
+  .matchup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .matchup-row:last-child { border-bottom: none; }
+  .matchup-deck { font-size: 14px; font-weight: 500; }
+  .matchup-score { text-align: center; font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold2); white-space: nowrap; }
+  .matchup-games { font-size: 10px; color: var(--text3); text-align: center; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .stat-player { margin-bottom: 1.5rem; }
+  .stat-player-name { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .stat-player-name.p0 { color: var(--p0l); } .stat-player-name.p1 { color: var(--p1l); } .stat-player-name.p2 { color: var(--p2l); }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+  .stat-card { background: var(--bg3); border-radius: 8px; padding: 10px 14px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .stat-val.win { color: var(--green); } .stat-val.loss { color: var(--red); } .stat-val.wr { color: var(--gold2); } .stat-val.sm { font-size: 14px; margin-top: 4px; }
+  .empty { text-align: center; color: var(--text3); padding: 2rem 0; font-size: 14px; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-eye"></div>
+  <div>
+    <h1>Yu-Gi-Oh! Tracker</h1>
+    <div class="subtitle">Score &amp; Matchup Manager</div>
+  </div>
+  <div class="sync-status">
+    <button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()" title="Aggiorna dati">↻</button>
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">non configurato</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="config-banner" id="config-banner">
+    <h3>Configurazione JSONBin.io</h3>
+    <p>Segui questi 3 passi rapidi per sincronizzare i dati tra tutti i dispositivi:</p>
+    <ol class="config-steps">
+      <li data-n="1">Vai su <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> e crea un account gratuito</li>
+      <li data-n="2">Vai su <strong>API Keys</strong> nel menu in alto e copia la tua <code>X-Master-Key</code></li>
+      <li data-n="3">Incolla la chiave qui sotto e clicca "Connetti"</li>
+    </ol>
+    <div class="config-row">
+      <input type="password" id="apikey-input" placeholder="$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" />
+      <button class="btn-cfg" onclick="connect()">Connetti</button>
+    </div>
+    <p class="cfg-error" id="cfg-error"></p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" style="justify-content:space-between">
+      <span>Giocatori &amp; Mazzi</span>
+      <button class="btn-cfg-sec" id="btn-disconnect" style="display:none;font-size:11px;padding:4px 10px" onclick="disconnect()">Scollega account</button>
+    </div>
+    <div class="players-grid" id="players-ui"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Registra Partita</div>
+    <div class="match-form">
+      <div class="form-group">
+        <span class="form-label">Giocatore 1</span>
+        <select id="p1sel" onchange="updateDeckSelects()"></select>
+      </div>
+      <div class="form-group">
+        <span class="form-label">Mazzo 1</span>
+        <select id="d1sel"></select>
+      </div>
+      <div class="vs-col">VS</div>
+      <div class="form-group">
+        <span class="form-label">Giocatore 2</span>
+        <select id="p2sel" onchange="updateDeckSelects()"></select>
+      </div>
+      <div class="form-group">
+        <span class="form-label">Mazzo 2</span>
+        <select id="d2sel"></select>
+      </div>
+      <div class="form-group add-btn">
+        <span class="form-label">Vince il</span>
+        <div style="display:flex;gap:6px">
+          <select id="winner" class="winner-select">
+            <option value="1">G1</option>
+            <option value="2">G2</option>
+          </select>
+          <button class="btn-add" onclick="addMatch()">+ Aggiungi</button>
+        </div>
+      </div>
+    </div>
+    <div id="match-error" class="form-error"></div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('matches')">Storico</div>
+      <div class="tab" onclick="switchTab('matchups')">Scontri</div>
+      <div class="tab" onclick="switchTab('stats')">Statistiche</div>
+    </div>
+    <div id="tab-matches"></div>
+    <div id="tab-matchups" style="display:none"></div>
+    <div id="tab-stats" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+const LOCAL_KEY = 'ygo_jsonbin_v1';
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+
+let cfg = { apiKey: '', binId: '' };
+let state = {
+  players: [
+    { name: 'Giocatore 1', decks: ['Dark Magician', 'Blue-Eyes'] },
+    { name: 'Giocatore 2', decks: ['Exodia', 'Blackwing'] },
+    { name: 'Giocatore 3', decks: ['Cyber Dragon'] }
+  ],
+  matches: []
+};
+
+// ── PERSISTENCE ───────────────────────────────────────────
+function saveLocal() {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ cfg, state })); } catch(e) {}
+}
+function loadLocal() {
+  try {
+    const d = localStorage.getItem(LOCAL_KEY);
+    if (d) { const p = JSON.parse(d); if (p.cfg) cfg = p.cfg; if (p.state) state = p.state; }
+  } catch(e) {}
+}
+
+// ── SYNC STATUS ───────────────────────────────────────────
+function setSync(status, label) {
+  document.getElementById('sync-dot').className = 'sync-dot' + (status ? ' '+status : '');
+  document.getElementById('sync-label').textContent = label;
+}
+
+// ── JSONBIN API ───────────────────────────────────────────
+async function apiFetch(method, path, body) {
+  const headers = { 'X-Master-Key': cfg.apiKey, 'Content-Type': 'application/json', 'X-Bin-Versioning': 'false' };
+  const res = await fetch(JSONBIN_BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function createBin() {
+  const data = await apiFetch('POST', '/b', { record: state, name: 'YGO Tracker' });
+  return data.metadata.id;
+}
+
+async function readBin() {
+  const data = await apiFetch('GET', `/b/${cfg.binId}/latest`);
+  return data.record;
+}
+
+async function writeBin() {
+  await apiFetch('PUT', `/b/${cfg.binId}`, state);
+}
+
+// ── CONNECT / DISCONNECT ──────────────────────────────────
+async function connect() {
+  const key = document.getElementById('apikey-input').value.trim();
+  const errEl = document.getElementById('cfg-error');
+  if (!key) { showCfgError('Inserisci la API key.'); return; }
+  errEl.style.display = 'none';
+  cfg.apiKey = key;
+  setSync('loading', 'connessione...');
+  try {
+    if (!cfg.binId) {
+      cfg.binId = await createBin();
+    }
+    const remote = await readBin();
+    if (remote && remote.players) state = remote;
+    saveLocal();
+    onConnected();
+    setSync('ok', 'sincronizzato');
+  } catch(e) {
+    cfg.apiKey = '';
+    setSync('err', 'errore');
+    showCfgError('API key non valida o errore di rete. Riprova.');
+  }
+}
+
+function disconnect() {
+  if (!confirm('Scollegare l\'account? I dati locali restano, ma non si sincronizzeranno più.')) return;
+  cfg = { apiKey: '', binId: '' };
+  saveLocal();
+  document.getElementById('config-banner').style.display = '';
+  document.getElementById('btn-disconnect').style.display = 'none';
+  document.getElementById('apikey-input').value = '';
+  setSync('', 'non configurato');
+}
+
+function showCfgError(msg) {
+  const el = document.getElementById('cfg-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function onConnected() {
+  document.getElementById('config-banner').style.display = 'none';
+  document.getElementById('btn-disconnect').style.display = '';
+  renderPlayers(); updateSelects(); renderTab();
+}
+
+async function manualRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  await syncDown();
+  btn.classList.remove('spinning');
+}
+
+async function syncUp() {
+  if (!cfg.apiKey || !cfg.binId) return;
+  setSync('loading', 'salvataggio...');
+  try { await writeBin(); setSync('ok', 'salvato'); }
+  catch(e) { setSync('err', 'errore salvataggio'); }
+}
+
+async function syncDown() {
+  if (!cfg.apiKey || !cfg.binId) return;
+  setSync('loading', 'aggiornamento...');
+  try {
+    const remote = await readBin();
+    if (remote && remote.players) { state = remote; saveLocal(); renderPlayers(); updateSelects(); renderTab(); }
+    setSync('ok', 'sincronizzato');
+  } catch(e) { setSync('err', 'errore'); }
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+const pClass = ['p0','p1','p2'];
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderPlayers() {
+  const c = document.getElementById('players-ui');
+  c.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = `player-card ${pClass[i]}`;
+    div.innerHTML = `
+      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore"
+        oninput="state.players[${i}].name=this.value;saveLocal();updateSelects();renderTab();"
+        onblur="syncUp()"/>
+      <div class="deck-add-row">
+        <input type="text" placeholder="Aggiungi mazzo..." id="ni${i}" onkeydown="if(event.key==='Enter')addDeck(${i})"/>
+        <button class="btn-icon" onclick="addDeck(${i})">+</button>
+      </div>
+      <div class="decks-tags" id="dt${i}"></div>`;
+    c.appendChild(div);
+    const dt = document.getElementById(`dt${i}`);
+    p.decks.forEach((dk, j) => {
+      const t = document.createElement('div');
+      t.className = `deck-tag ${pClass[i]}`;
+      t.innerHTML = `${escH(dk)}<span class="deck-rm" onclick="removeDeck(${i},${j})">×</span>`;
+      dt.appendChild(t);
+    });
+  });
+}
+
+function addDeck(pi) {
+  const inp = document.getElementById(`ni${pi}`);
+  const v = inp.value.trim(); if (!v) return;
+  state.players[pi].decks.push(v); inp.value = '';
+  saveLocal(); renderPlayers(); updateSelects(); syncUp();
+}
+function removeDeck(pi, di) {
+  state.players[pi].decks.splice(di, 1);
+  saveLocal(); renderPlayers(); updateSelects(); syncUp();
+}
+
+function updateSelects() {
+  ['p1sel','p2sel'].forEach((id, idx) => {
+    const sel = document.getElementById(id); const prev = sel.value;
+    sel.innerHTML = state.players.map((p,i) => `<option value="${i}">${escH(p.name)}</option>`).join('');
+    sel.value = prev || String(idx===0?0:1);
+  });
+  updateDeckSelects();
+}
+function updateDeckSelects() {
+  const p1i = parseInt(document.getElementById('p1sel').value)||0;
+  const p2i = parseInt(document.getElementById('p2sel').value)||0;
+  ['d1sel','d2sel'].forEach((id, idx) => {
+    const sel = document.getElementById(id); const pi = idx===0?p1i:p2i;
+    sel.innerHTML = (state.players[pi]?.decks||[]).map((d,i) => `<option value="${i}">${escH(d)}</option>`).join('');
+  });
+}
+
+function matchKey(p1,d1n,p2,d2n) { const a=`${p1}::${d1n}`,b=`${p2}::${d2n}`; return a<b?`${a}|||${b}`:`${b}|||${a}`; }
+
+async function addMatch() {
+  const p1i=parseInt(document.getElementById('p1sel').value);
+  const p2i=parseInt(document.getElementById('p2sel').value);
+  const d1i=parseInt(document.getElementById('d1sel').value);
+  const d2i=parseInt(document.getElementById('d2sel').value);
+  const ws=parseInt(document.getElementById('winner').value);
+  const err=document.getElementById('match-error');
+  if (p1i===p2i){err.textContent='Seleziona due giocatori diversi.';return;}
+  const d1=state.players[p1i]?.decks[d1i], d2=state.players[p2i]?.decks[d2i];
+  if (!d1||!d2){err.textContent='Entrambi i giocatori devono avere almeno un mazzo.';return;}
+  err.textContent='';
+  state.matches.push({p1i,p2i,d1i,d2i,winner:ws===1?p1i:p2i,ts:Date.now()});
+  saveLocal(); renderTab(); await syncUp();
+}
+
+function removeMatch(i) {
+  if (confirm('Eliminare questa partita?')) {
+    state.matches.splice(i,1); saveLocal(); renderTab(); syncUp();
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────
+let currentTab='matches';
+function switchTab(t) {
+  currentTab=t;
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['matches','matchups','stats'][i]===t));
+  ['matches','matchups','stats'].forEach(id=>document.getElementById(`tab-${id}`).style.display=id===t?'':'none');
+  renderTab();
+}
+function renderTab() {
+  if (currentTab==='matches') renderMatches();
+  else if (currentTab==='matchups') renderMatchups();
+  else renderStats();
+}
+
+function renderMatches() {
+  const c=document.getElementById('tab-matches');
+  if (!state.matches.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
+  const rows=[...state.matches].reverse().map((m,ri)=>{
+    const realIdx=state.matches.length-1-ri;
+    const p1=state.players[m.p1i],p2=state.players[m.p2i];
+    const d1=p1?.decks[m.d1i]||'?',d2=p2?.decks[m.d2i]||'?';
+    const p1w=m.winner===m.p1i;
+    const dt=new Date(m.ts).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<tr>
+      <td><span class="badge ${pClass[m.p1i]}">${escH(p1?.name||'?')}</span></td>
+      <td>${escH(d1)}</td>
+      <td style="text-align:center"><span class="${p1w?'win':'loss'}">${p1w?'V':'S'}</span> · <span class="${p1w?'loss':'win'}">${p1w?'S':'V'}</span></td>
+      <td>${escH(d2)}</td>
+      <td><span class="badge ${pClass[m.p2i]}">${escH(p2?.name||'?')}</span></td>
+      <td style="color:var(--text3);font-size:11px">${dt}</td>
+      <td><button class="btn-rm" onclick="removeMatch(${realIdx})">×</button></td>
+    </tr>`;
+  }).join('');
+  c.innerHTML=`<div class="table-wrap"><table><thead><tr><th>G1</th><th>Mazzo</th><th style="text-align:center">Ris.</th><th>Mazzo</th><th>G2</th><th>Data</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderMatchups() {
+  const c=document.getElementById('tab-matchups');
+  const map={};
+  state.matches.forEach(m=>{
+    const p1=state.players[m.p1i],p2=state.players[m.p2i];
+    if (!p1||!p2) return;
+    const d1n=p1.decks[m.d1i]||'?',d2n=p2.decks[m.d2i]||'?';
+    const key=matchKey(m.p1i,d1n,m.p2i,d2n);
+    if (!map[key]){const aF=`${m.p1i}::${d1n}`<`${m.p2i}::${d2n}`;map[key]={p1i:aF?m.p1i:m.p2i,d1:aF?d1n:d2n,p2i:aF?m.p2i:m.p1i,d2:aF?d2n:d1n,w1:0,w2:0,total:0};}
+    const mu=map[key]; mu.total++;
+    if (m.winner===mu.p1i) mu.w1++; else mu.w2++;
+  });
+  const keys=Object.keys(map);
+  if (!keys.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
+  c.innerHTML='<div>'+keys.map(k=>{
+    const mu=map[k];const p1=state.players[mu.p1i],p2=state.players[mu.p2i];
+    return `<div class="matchup-row">
+      <div><div class="matchup-deck">${escH(mu.d1)}</div><div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}">${escH(p1?.name||'?')}</span></div></div>
+      <div><div class="matchup-score">${mu.w1} – ${mu.w2}</div><div class="matchup-games">${mu.total} ${mu.total===1?'partita':'partite'}</div></div>
+      <div style="text-align:right"><div class="matchup-deck">${escH(mu.d2)}</div><div style="margin-top:4px;display:flex;justify-content:flex-end"><span class="badge ${pClass[mu.p2i]}">${escH(p2?.name||'?')}</span></div></div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function renderStats() {
+  const c=document.getElementById('tab-stats');
+  if (!state.matches.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
+  let html='';
+  state.players.forEach((p,i)=>{
+    let wins=0,losses=0,deckW={},deckL={};
+    state.matches.forEach(m=>{
+      const isP1=m.p1i===i,isP2=m.p2i===i; if (!isP1&&!isP2) return;
+      const myDeck=isP1?(state.players[i]?.decks[m.d1i]||'?'):(state.players[i]?.decks[m.d2i]||'?');
+      if (m.winner===i){wins++;deckW[myDeck]=(deckW[myDeck]||0)+1;}else{losses++;deckL[myDeck]=(deckL[myDeck]||0)+1;}
+    });
+    const total=wins+losses,wr=total?Math.round(wins/total*100):0;
+    const bestDeck=Object.entries(deckW).sort((a,b)=>b[1]-a[1])[0];
+    const worstDeck=Object.entries(deckL).sort((a,b)=>b[1]-a[1])[0];
+    html+=`<div class="stat-player">
+      <div class="stat-player-name ${pClass[i]}">${escH(p.name)}</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Vittorie</div><div class="stat-val win">${wins}</div></div>
+        <div class="stat-card"><div class="stat-label">Sconfitte</div><div class="stat-val loss">${losses}</div></div>
+        <div class="stat-card"><div class="stat-label">Partite</div><div class="stat-val">${total}</div></div>
+        <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-val wr">${wr}%</div></div>
+        <div class="stat-card"><div class="stat-label">Mazzo top</div><div class="stat-val sm">${bestDeck?escH(bestDeck[0])+' ('+bestDeck[1]+'V)':'—'}</div></div>
+        <div class="stat-card"><div class="stat-label">Mazzo peggiore</div><div class="stat-val sm">${worstDeck?escH(worstDeck[0])+' ('+worstDeck[1]+'S)':'—'}</div></div>
+      </div>
+    </div>`;
+  });
+  c.innerHTML=html;
+}
+
+// ── INIT ──────────────────────────────────────────────────
+loadLocal();
+if (cfg.apiKey && cfg.binId) {
+  document.getElementById('apikey-input').value = cfg.apiKey;
+  onConnected();
+  syncDown();
+} else {
+  setSync('', 'non configurato');
+}
+renderPlayers(); updateSelects(); renderTab();
+</script>
+</body>
+</html>
