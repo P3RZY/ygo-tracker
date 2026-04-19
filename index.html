@@ -324,18 +324,34 @@ async function createBin() {
 }
 
 /**
- * Legge il bin e restituisce DIRETTAMENTE il record (già estratto da data.record).
- * La struttura JSONBin GET /latest è: { record: {...}, metadata: {...} }
+ * Legge il bin e restituisce il record normalizzato { players, matches }.
+ * JSONBin GET /latest → { record: <quello che hai scritto>, metadata: {...} }
+ *
+ * Il bin attuale è corrotto con doppio wrapping { record: { record: { players, matches } } }
+ * causato da writeBin che wrappava erroneamente in { record: state }.
+ * Questa funzione gestisce entrambi i casi: normale e doppio-wrappato.
  */
 async function readBin() {
   console.log('[YGO] Lettura bin:', cfg.binId);
   const data = await apiFetch('GET', `/b/${cfg.binId}/latest`);
 
-  // JSONBin GET /latest → { record: { players, matches }, metadata: {...} }
-  const record = data?.record;
+  // JSONBin restituisce sempre { record: <payload>, metadata: {...} }
+  let record = data?.record;
+
   if (!record) {
     console.error('[YGO] readBin: campo "record" assente nella risposta:', data);
     throw new Error('Campo "record" mancante nella risposta');
+  }
+
+  // Gestione doppio wrapping: se record non ha "players" ma ha un sotto-"record", scendi di un livello
+  if (!record.players && record.record) {
+    console.warn('[YGO] readBin: rilevato doppio wrapping — unwrap automatico', record);
+    record = record.record;
+  }
+
+  if (!record?.players) {
+    console.error('[YGO] readBin: struttura non valida dopo unwrap:', record);
+    throw new Error('Struttura dati non valida nel bin');
   }
 
   console.log('[YGO] Record letto:', { players: record.players?.length, matches: record.matches?.length });
@@ -344,13 +360,13 @@ async function readBin() {
 
 /**
  * Scrive lo state corrente nel bin.
- * Il PUT su JSONBin vuole il payload grezzo (non wrappato in { record: ... }).
- * JSONBin lo wrappa automaticamente internamente.
+ * Il PUT su JSONBin vuole il payload grezzo — JSONBin lo wrappa in { record: ... } internamente.
+ * NON wrappare manualmente, altrimenti si ottiene { record: { record: state } }.
  */
 async function writeBin() {
   console.log('[YGO] Scrittura bin:', cfg.binId, '— matches:', state.matches.length);
-  await apiFetch('PUT', `/b/${cfg.binId}`, state);
-  console.log('[YGO] Bin aggiornato con successo');
+  await apiFetch('PUT', `/b/${cfg.binId}`, state); // state grezzo, senza { record: state }
+  console.log('[YGO] Bin aggiornato con successo — struttura ora corretta');
 }
 
 // ─────────────────────────────────────────────
