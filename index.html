@@ -146,14 +146,16 @@
 
   <div class="config-banner" id="config-banner">
     <h3>Configurazione JSONBin.io</h3>
-    <p>Segui questi 3 passi rapidi per sincronizzare i dati tra tutti i dispositivi:</p>
+    <p>Segui questi passi per sincronizzare i dati tra tutti i dispositivi:</p>
     <ol class="config-steps">
       <li data-n="1">Vai su <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> e crea un account gratuito</li>
       <li data-n="2">Vai su <strong>API Keys</strong> nel menu in alto e copia la tua <code>X-Master-Key</code></li>
-      <li data-n="3">Incolla la chiave qui sotto e clicca "Connetti"</li>
+      <li data-n="3"><strong>Primo dispositivo:</strong> incolla solo la chiave e clicca Connetti — il Bin ID viene generato automaticamente</li>
+      <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (lo trovi dopo la connessione, vicino al pallino verde)</li>
     </ol>
     <div class="config-row">
-      <input type="password" id="apikey-input" placeholder="$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" />
+      <input type="password" id="apikey-input" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
+      <input type="text" id="binid-input" placeholder="Bin ID (solo dal 2° dispositivo in poi)" style="flex:1;min-width:140px"/>
       <button class="btn-cfg" onclick="connect()">Connetti</button>
     </div>
     <p class="cfg-error" id="cfg-error"></p>
@@ -373,13 +375,20 @@ async function writeBin() {
 // CONNECT / DISCONNECT
 // ─────────────────────────────────────────────
 async function connect() {
-  const key   = document.getElementById('apikey-input').value.trim();
-  const errEl = document.getElementById('cfg-error');
+  const key        = document.getElementById('apikey-input').value.trim();
+  const binIdInput = document.getElementById('binid-input').value.trim();
+  const errEl      = document.getElementById('cfg-error');
   errEl.style.display = 'none';
 
   if (!key) { showCfgError('Inserisci la API key.'); return; }
 
   cfg.apiKey = key;
+  // Se l'utente ha incollato un Bin ID manualmente, usalo (sovrascrive quello in localStorage)
+  if (binIdInput) {
+    cfg.binId = binIdInput;
+    console.log('[YGO] Bin ID fornito manualmente:', cfg.binId);
+  }
+
   setSync('loading', 'connessione...');
   console.log('[YGO] Tentativo di connessione...');
 
@@ -389,7 +398,7 @@ async function connect() {
       console.log('[YGO] Nessun binId salvato → creo un nuovo bin');
       cfg.binId = await createBin();
     } else {
-      console.log('[YGO] BinId esistente:', cfg.binId, '→ leggo dati remoti');
+      console.log('[YGO] BinId:', cfg.binId, '→ leggo dati remoti');
     }
 
     // Leggo sempre i dati remoti dopo la connessione
@@ -432,8 +441,29 @@ function showCfgError(msg) {
 }
 
 function onConnected() {
-  document.getElementById('config-banner').style.display   = 'none';
-  document.getElementById('btn-disconnect').style.display  = '';
+  document.getElementById('config-banner').style.display  = 'none';
+  document.getElementById('btn-disconnect').style.display = '';
+
+  // Mostra il Bin ID nella sync-status bar così l'utente può copiarlo
+  const existing = document.getElementById('bin-id-display');
+  if (!existing) {
+    const label = document.getElementById('sync-label');
+    const span  = document.createElement('span');
+    span.id        = 'bin-id-display';
+    span.title     = 'Copia questo Bin ID per collegare altri dispositivi';
+    span.style.cssText = 'cursor:pointer;color:var(--gold);font-family:monospace;font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:1px 6px;';
+    span.textContent = cfg.binId;
+    span.onclick = () => {
+      navigator.clipboard.writeText(cfg.binId).then(() => {
+        span.textContent = 'copiato!';
+        setTimeout(() => { span.textContent = cfg.binId; }, 1500);
+      });
+    };
+    label.parentNode.insertBefore(span, label);
+  } else {
+    existing.textContent = cfg.binId;
+  }
+
   renderPlayers();
   updateSelects();
   renderTab();
@@ -844,6 +874,7 @@ loadLocal();
 if (cfg.apiKey && cfg.binId) {
   console.log('[YGO] Account trovato in localStorage, connessione automatica...');
   document.getElementById('apikey-input').value = cfg.apiKey;
+  document.getElementById('binid-input').value  = cfg.binId;
   onConnected();
   syncDown();
 } else {
