@@ -215,10 +215,14 @@
 </div>
 
 <script>
-const LOCAL_KEY = 'ygo_jsonbin_v1';
+// ─────────────────────────────────────────────
+// CONFIG & STATE
+// ─────────────────────────────────────────────
+const LOCAL_KEY   = 'ygo_jsonbin_v1';
 const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
 
 let cfg = { apiKey: '', binId: '' };
+
 let state = {
   players: [
     { name: 'Giocatore 1', decks: ['Dark Magician', 'Blue-Eyes'] },
@@ -228,71 +232,175 @@ let state = {
   matches: []
 };
 
-// ── PERSISTENCE ───────────────────────────────────────────
+// ─────────────────────────────────────────────
+// LOCAL STORAGE
+// ─────────────────────────────────────────────
 function saveLocal() {
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ cfg, state })); } catch(e) {}
-}
-function loadLocal() {
   try {
-    const d = localStorage.getItem(LOCAL_KEY);
-    if (d) { const p = JSON.parse(d); if (p.cfg) cfg = p.cfg; if (p.state) state = p.state; }
-  } catch(e) {}
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ cfg, state }));
+    console.log('[YGO] Salvato in localStorage');
+  } catch(e) {
+    console.error('[YGO] Errore salvataggio localStorage:', e);
+  }
 }
 
-// ── SYNC STATUS ───────────────────────────────────────────
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) { console.log('[YGO] Nessun dato locale trovato'); return; }
+    const parsed = JSON.parse(raw);
+    if (parsed.cfg)   cfg   = parsed.cfg;
+    if (parsed.state) state = parsed.state;
+    console.log('[YGO] Dati locali caricati:', { binId: cfg.binId, players: state.players.length, matches: state.matches.length });
+  } catch(e) {
+    console.error('[YGO] Errore lettura localStorage:', e);
+  }
+}
+
+// ─────────────────────────────────────────────
+// SYNC STATUS UI
+// ─────────────────────────────────────────────
 function setSync(status, label) {
-  document.getElementById('sync-dot').className = 'sync-dot' + (status ? ' '+status : '');
+  document.getElementById('sync-dot').className  = 'sync-dot' + (status ? ' ' + status : '');
   document.getElementById('sync-label').textContent = label;
 }
 
-// ── JSONBIN API ───────────────────────────────────────────
+// ─────────────────────────────────────────────
+// JSONBIN API
+// ─────────────────────────────────────────────
+
+/**
+ * Wrapper fetch verso JSONBin.
+ * Lancia un errore se la risposta HTTP non è ok.
+ */
 async function apiFetch(method, path, body) {
-  const headers = { 'X-Master-Key': cfg.apiKey, 'Content-Type': 'application/json', 'X-Bin-Versioning': 'false' };
-  const res = await fetch(JSONBIN_BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  const url = JSONBIN_BASE + path;
+  const headers = {
+    'X-Master-Key':    cfg.apiKey,
+    'Content-Type':    'application/json',
+    'X-Bin-Versioning': 'false'
+  };
+
+  console.log(`[YGO] ${method} ${url}`, body !== undefined ? body : '');
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+
+  let json;
+  try {
+    json = await res.json();
+  } catch(e) {
+    console.error(`[YGO] Risposta non-JSON da ${method} ${path}:`, e);
+    throw new Error('Risposta non valida dal server');
+  }
+
+  if (!res.ok) {
+    console.error(`[YGO] HTTP ${res.status} su ${method} ${path}:`, json);
+    throw new Error(`HTTP ${res.status}: ${json?.message || 'errore sconosciuto'}`);
+  }
+
+  console.log(`[YGO] Risposta ${method} ${path}:`, json);
+  return json;
 }
 
+/**
+ * Crea un nuovo bin su JSONBin.
+ * Il POST richiede { record: stato } come body.
+ * Restituisce l'id del bin creato.
+ */
 async function createBin() {
+  console.log('[YGO] Creazione nuovo bin...');
   const data = await apiFetch('POST', '/b', { record: state, name: 'YGO Tracker' });
-  return data.metadata.id;
+  const id = data?.metadata?.id;
+  if (!id) {
+    console.error('[YGO] createBin: metadata.id mancante nella risposta:', data);
+    throw new Error('ID bin non ricevuto');
+  }
+  console.log('[YGO] Bin creato con id:', id);
+  return id;
 }
 
+/**
+ * Legge il bin e restituisce DIRETTAMENTE il record (già estratto da data.record).
+ * La struttura JSONBin GET /latest è: { record: {...}, metadata: {...} }
+ */
 async function readBin() {
+  console.log('[YGO] Lettura bin:', cfg.binId);
   const data = await apiFetch('GET', `/b/${cfg.binId}/latest`);
-  return data.record;
+
+  // JSONBin GET /latest → { record: { players, matches }, metadata: {...} }
+  const record = data?.record;
+  if (!record) {
+    console.error('[YGO] readBin: campo "record" assente nella risposta:', data);
+    throw new Error('Campo "record" mancante nella risposta');
+  }
+
+  console.log('[YGO] Record letto:', { players: record.players?.length, matches: record.matches?.length });
+  return record; // { players, matches }
 }
 
+/**
+ * Scrive lo state corrente nel bin.
+ * Il PUT su JSONBin vuole il payload grezzo (non wrappato in { record: ... }).
+ * JSONBin lo wrappa automaticamente internamente.
+ */
 async function writeBin() {
-  await apiFetch('PUT', `/b/${cfg.binId}`, { record: state });
+  console.log('[YGO] Scrittura bin:', cfg.binId, '— matches:', state.matches.length);
+  await apiFetch('PUT', `/b/${cfg.binId}`, state);
+  console.log('[YGO] Bin aggiornato con successo');
 }
 
-// ── CONNECT / DISCONNECT ──────────────────────────────────
+// ─────────────────────────────────────────────
+// CONNECT / DISCONNECT
+// ─────────────────────────────────────────────
 async function connect() {
-  const key = document.getElementById('apikey-input').value.trim();
+  const key   = document.getElementById('apikey-input').value.trim();
   const errEl = document.getElementById('cfg-error');
-  if (!key) { showCfgError('Inserisci la API key.'); return; }
   errEl.style.display = 'none';
+
+  if (!key) { showCfgError('Inserisci la API key.'); return; }
+
   cfg.apiKey = key;
   setSync('loading', 'connessione...');
+  console.log('[YGO] Tentativo di connessione...');
+
   try {
+    // Se non abbiamo ancora un bin, lo creiamo
     if (!cfg.binId) {
+      console.log('[YGO] Nessun binId salvato → creo un nuovo bin');
       cfg.binId = await createBin();
+    } else {
+      console.log('[YGO] BinId esistente:', cfg.binId, '→ leggo dati remoti');
     }
+
+    // Leggo sempre i dati remoti dopo la connessione
     const remote = await readBin();
-    if (remote && remote.players) state = remote;
+    if (remote?.players) {
+      console.log('[YGO] Dati remoti validi, aggiorno state locale');
+      state = remote;
+    } else {
+      console.warn('[YGO] Dati remoti privi di "players", mantengo state locale:', remote);
+    }
+
     saveLocal();
     onConnected();
     setSync('ok', 'sincronizzato');
+    console.log('[YGO] Connessione riuscita');
+
   } catch(e) {
+    console.error('[YGO] Errore durante connect():', e);
     cfg.apiKey = '';
     setSync('err', 'errore');
-    showCfgError('API key non valida o errore di rete. Riprova.');
+    showCfgError('API key non valida o errore di rete. Riprova. (Dettagli in console)');
   }
 }
 
 function disconnect() {
-  if (!confirm('Scollegare l\'account? I dati locali restano, ma non si sincronizzeranno più.')) return;
+  if (!confirm("Scollegare l'account? I dati locali restano, ma non si sincronizzeranno più.")) return;
+  console.log('[YGO] Disconnessione account');
   cfg = { apiKey: '', binId: '' };
   saveLocal();
   document.getElementById('config-banner').style.display = '';
@@ -303,56 +411,99 @@ function disconnect() {
 
 function showCfgError(msg) {
   const el = document.getElementById('cfg-error');
-  el.textContent = msg; el.style.display = 'block';
+  el.textContent  = msg;
+  el.style.display = 'block';
 }
 
 function onConnected() {
-  document.getElementById('config-banner').style.display = 'none';
-  document.getElementById('btn-disconnect').style.display = '';
-  renderPlayers(); updateSelects(); renderTab();
+  document.getElementById('config-banner').style.display   = 'none';
+  document.getElementById('btn-disconnect').style.display  = '';
+  renderPlayers();
+  updateSelects();
+  renderTab();
+}
+
+// ─────────────────────────────────────────────
+// SYNC UP / DOWN
+// ─────────────────────────────────────────────
+
+/** Carica i dati dal bin remoto e aggiorna l'UI. */
+async function syncDown() {
+  if (!cfg.apiKey || !cfg.binId) {
+    console.log('[YGO] syncDown saltato: account non configurato');
+    return;
+  }
+
+  setSync('loading', 'aggiornamento...');
+  console.log('[YGO] syncDown start');
+
+  try {
+    const remote = await readBin(); // già { players, matches }
+
+    if (!remote?.players) {
+      console.warn('[YGO] syncDown: dati remoti non validi o privi di "players":', remote);
+      setSync('err', 'dati remoti non validi');
+      return;
+    }
+
+    state = remote;
+    saveLocal();
+    renderPlayers();
+    updateSelects();
+    renderTab();
+    setSync('ok', 'sincronizzato');
+    console.log('[YGO] syncDown completato:', { players: state.players.length, matches: state.matches.length });
+
+  } catch(e) {
+    console.error('[YGO] syncDown error:', e);
+    setSync('err', 'errore lettura');
+  }
+}
+
+/** Salva lo state corrente sul bin remoto. */
+async function syncUp() {
+  if (!cfg.apiKey || !cfg.binId) {
+    console.log('[YGO] syncUp saltato: account non configurato');
+    return;
+  }
+
+  setSync('loading', 'salvataggio...');
+  console.log('[YGO] syncUp start — matches:', state.matches.length);
+
+  try {
+    await writeBin();
+    setSync('ok', 'salvato');
+    console.log('[YGO] syncUp completato');
+  } catch(e) {
+    console.error('[YGO] syncUp error:', e);
+    setSync('err', 'errore salvataggio');
+  }
 }
 
 async function manualRefresh() {
   const btn = document.getElementById('btn-refresh');
   btn.classList.add('spinning');
+  console.log('[YGO] Refresh manuale avviato');
   await syncDown();
   btn.classList.remove('spinning');
 }
 
-async function syncUp() {
-  if (!cfg.apiKey || !cfg.binId) return;
-  setSync('loading', 'salvataggio...');
-  try { await writeBin(); setSync('ok', 'salvato'); }
-  catch(e) { setSync('err', 'errore salvataggio'); }
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+const pClass = ['p0', 'p1', 'p2'];
+
+function escH(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-async function syncDown() {
-  if (!cfg.apiKey || !cfg.binId) return;
-
-  setSync('loading', 'aggiornamento...');
-  try {
-    const remote = await readBin();
-
-    const data = remote?.record || remote;
-
-    if (data?.players) {
-      state = data;
-      saveLocal();
-      renderPlayers();
-      updateSelects();
-      renderTab();
-    }
-
-    setSync('ok', 'sincronizzato');
-  } catch (e) {
-    setSync('err', 'errore');
-  }
-}
-
-// ── HELPERS ───────────────────────────────────────────────
-const pClass = ['p0','p1','p2'];
-function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
+// ─────────────────────────────────────────────
+// RENDER PLAYERS
+// ─────────────────────────────────────────────
 function renderPlayers() {
   const c = document.getElementById('players-ui');
   c.innerHTML = '';
@@ -361,14 +512,15 @@ function renderPlayers() {
     div.className = `player-card ${pClass[i]}`;
     div.innerHTML = `
       <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore"
-        oninput="state.players[${i}].name=this.value;saveLocal();updateSelects();renderTab();"
+        oninput="state.players[${i}].name = this.value; saveLocal(); updateSelects(); renderTab();"
         onblur="syncUp()"/>
       <div class="deck-add-row">
-        <input type="text" placeholder="Aggiungi mazzo..." id="ni${i}" onkeydown="if(event.key==='Enter')addDeck(${i})"/>
+        <input type="text" placeholder="Aggiungi mazzo..." id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
         <button class="btn-icon" onclick="addDeck(${i})">+</button>
       </div>
       <div class="decks-tags" id="dt${i}"></div>`;
     c.appendChild(div);
+
     const dt = document.getElementById(`dt${i}`);
     p.decks.forEach((dk, j) => {
       const t = document.createElement('div');
@@ -381,154 +533,312 @@ function renderPlayers() {
 
 function addDeck(pi) {
   const inp = document.getElementById(`ni${pi}`);
-  const v = inp.value.trim(); if (!v) return;
-  state.players[pi].decks.push(v); inp.value = '';
-  saveLocal(); renderPlayers(); updateSelects(); syncUp();
-}
-function removeDeck(pi, di) {
-  state.players[pi].decks.splice(di, 1);
+  const v   = inp.value.trim();
+  if (!v) return;
+  state.players[pi].decks.push(v);
+  inp.value = '';
+  console.log(`[YGO] Mazzo aggiunto al giocatore ${pi}:`, v);
   saveLocal(); renderPlayers(); updateSelects(); syncUp();
 }
 
+function removeDeck(pi, di) {
+  const removed = state.players[pi].decks.splice(di, 1);
+  console.log(`[YGO] Mazzo rimosso dal giocatore ${pi}:`, removed[0]);
+  saveLocal(); renderPlayers(); updateSelects(); syncUp();
+}
+
+// ─────────────────────────────────────────────
+// SELECT HELPERS
+// ─────────────────────────────────────────────
 function updateSelects() {
-  ['p1sel','p2sel'].forEach((id, idx) => {
-    const sel = document.getElementById(id); const prev = sel.value;
-    sel.innerHTML = state.players.map((p,i) => `<option value="${i}">${escH(p.name)}</option>`).join('');
-    sel.value = prev || String(idx===0?0:1);
+  ['p1sel', 'p2sel'].forEach((id, idx) => {
+    const sel  = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = state.players
+      .map((p, i) => `<option value="${i}">${escH(p.name)}</option>`)
+      .join('');
+    sel.value = prev || String(idx === 0 ? 0 : 1);
   });
   updateDeckSelects();
 }
+
 function updateDeckSelects() {
-  const p1i = parseInt(document.getElementById('p1sel').value)||0;
-  const p2i = parseInt(document.getElementById('p2sel').value)||0;
-  ['d1sel','d2sel'].forEach((id, idx) => {
-    const sel = document.getElementById(id); const pi = idx===0?p1i:p2i;
-    sel.innerHTML = (state.players[pi]?.decks||[]).map((d,i) => `<option value="${i}">${escH(d)}</option>`).join('');
+  const p1i = parseInt(document.getElementById('p1sel').value) || 0;
+  const p2i = parseInt(document.getElementById('p2sel').value) || 0;
+  ['d1sel', 'd2sel'].forEach((id, idx) => {
+    const sel = document.getElementById(id);
+    const pi  = idx === 0 ? p1i : p2i;
+    sel.innerHTML = (state.players[pi]?.decks || [])
+      .map((d, i) => `<option value="${i}">${escH(d)}</option>`)
+      .join('');
   });
 }
 
-function matchKey(p1,d1n,p2,d2n) { const a=`${p1}::${d1n}`,b=`${p2}::${d2n}`; return a<b?`${a}|||${b}`:`${b}|||${a}`; }
-
+// ─────────────────────────────────────────────
+// ADD / REMOVE MATCH
+// ─────────────────────────────────────────────
 async function addMatch() {
-  const p1i=parseInt(document.getElementById('p1sel').value);
-  const p2i=parseInt(document.getElementById('p2sel').value);
-  const d1i=parseInt(document.getElementById('d1sel').value);
-  const d2i=parseInt(document.getElementById('d2sel').value);
-  const ws=parseInt(document.getElementById('winner').value);
-  const err=document.getElementById('match-error');
-  if (p1i===p2i){err.textContent='Seleziona due giocatori diversi.';return;}
-  const d1=state.players[p1i]?.decks[d1i], d2=state.players[p2i]?.decks[d2i];
-  if (!d1||!d2){err.textContent='Entrambi i giocatori devono avere almeno un mazzo.';return;}
-  err.textContent='';
-  state.matches.push({p1i,p2i,d1i,d2i,winner:ws===1?p1i:p2i,ts:Date.now()});
+  const p1i = parseInt(document.getElementById('p1sel').value);
+  const p2i = parseInt(document.getElementById('p2sel').value);
+  const d1i = parseInt(document.getElementById('d1sel').value);
+  const d2i = parseInt(document.getElementById('d2sel').value);
+  const ws  = parseInt(document.getElementById('winner').value);
+  const err = document.getElementById('match-error');
+
+  if (p1i === p2i) {
+    err.textContent = 'Seleziona due giocatori diversi.';
+    console.warn('[YGO] addMatch: stessi giocatori selezionati');
+    return;
+  }
+
+  const d1 = state.players[p1i]?.decks[d1i];
+  const d2 = state.players[p2i]?.decks[d2i];
+
+  if (!d1 || !d2) {
+    err.textContent = 'Entrambi i giocatori devono avere almeno un mazzo.';
+    console.warn('[YGO] addMatch: mazzo mancante', { d1, d2 });
+    return;
+  }
+
+  err.textContent = '';
+
+  const match = {
+    p1i,
+    p2i,
+    d1i,
+    d2i,
+    winner: ws === 1 ? p1i : p2i,
+    ts: Date.now()
+  };
+
+  state.matches.push(match);
+  console.log('[YGO] Partita aggiunta:', {
+    giocatore1: state.players[p1i].name,
+    mazzo1:     d1,
+    giocatore2: state.players[p2i].name,
+    mazzo2:     d2,
+    vincitore:  state.players[match.winner].name
+  });
+
   saveLocal(); renderTab(); await syncUp();
 }
 
 function removeMatch(i) {
-  if (confirm('Eliminare questa partita?')) {
-    state.matches.splice(i,1); saveLocal(); renderTab(); syncUp();
-  }
+  if (!confirm('Eliminare questa partita?')) return;
+  const removed = state.matches.splice(i, 1);
+  console.log('[YGO] Partita eliminata (indice', i, '):', removed[0]);
+  saveLocal(); renderTab(); syncUp();
 }
 
-// ── TABS ──────────────────────────────────────────────────
-let currentTab='matches';
+// ─────────────────────────────────────────────
+// MATCHUP KEY
+// ─────────────────────────────────────────────
+function matchKey(p1, d1n, p2, d2n) {
+  const a = `${p1}::${d1n}`, b = `${p2}::${d2n}`;
+  return a < b ? `${a}|||${b}` : `${b}|||${a}`;
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+let currentTab = 'matches';
+
 function switchTab(t) {
-  currentTab=t;
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['matches','matchups','stats'][i]===t));
-  ['matches','matchups','stats'].forEach(id=>document.getElementById(`tab-${id}`).style.display=id===t?'':'none');
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach((el, i) =>
+    el.classList.toggle('active', ['matches', 'matchups', 'stats'][i] === t)
+  );
+  ['matches', 'matchups', 'stats'].forEach(id =>
+    document.getElementById(`tab-${id}`).style.display = id === t ? '' : 'none'
+  );
   renderTab();
 }
+
 function renderTab() {
-  if (currentTab==='matches') renderMatches();
-  else if (currentTab==='matchups') renderMatchups();
-  else renderStats();
+  if      (currentTab === 'matches')  renderMatches();
+  else if (currentTab === 'matchups') renderMatchups();
+  else                                renderStats();
 }
 
+// ─────────────────────────────────────────────
+// RENDER: STORICO
+// ─────────────────────────────────────────────
 function renderMatches() {
-  const c=document.getElementById('tab-matches');
-  if (!state.matches.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
-  const rows=[...state.matches].reverse().map((m,ri)=>{
-    const realIdx=state.matches.length-1-ri;
-    const p1=state.players[m.p1i],p2=state.players[m.p2i];
-    const d1=p1?.decks[m.d1i]||'?',d2=p2?.decks[m.d2i]||'?';
-    const p1w=m.winner===m.p1i;
-    const dt=new Date(m.ts).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const c = document.getElementById('tab-matches');
+  if (!state.matches.length) {
+    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    return;
+  }
+
+  const rows = [...state.matches].reverse().map((m, ri) => {
+    const realIdx = state.matches.length - 1 - ri;
+    const p1   = state.players[m.p1i];
+    const p2   = state.players[m.p2i];
+    const d1   = p1?.decks[m.d1i] || '?';
+    const d2   = p2?.decks[m.d2i] || '?';
+    const p1w  = m.winner === m.p1i;
+    const dt   = new Date(m.ts).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
     return `<tr>
-      <td><span class="badge ${pClass[m.p1i]}">${escH(p1?.name||'?')}</span></td>
+      <td><span class="badge ${pClass[m.p1i]}">${escH(p1?.name || '?')}</span></td>
       <td>${escH(d1)}</td>
-      <td style="text-align:center"><span class="${p1w?'win':'loss'}">${p1w?'V':'S'}</span> · <span class="${p1w?'loss':'win'}">${p1w?'S':'V'}</span></td>
+      <td style="text-align:center">
+        <span class="${p1w ? 'win' : 'loss'}">${p1w ? 'V' : 'S'}</span>
+        &nbsp;·&nbsp;
+        <span class="${p1w ? 'loss' : 'win'}">${p1w ? 'S' : 'V'}</span>
+      </td>
       <td>${escH(d2)}</td>
-      <td><span class="badge ${pClass[m.p2i]}">${escH(p2?.name||'?')}</span></td>
+      <td><span class="badge ${pClass[m.p2i]}">${escH(p2?.name || '?')}</span></td>
       <td style="color:var(--text3);font-size:11px">${dt}</td>
       <td><button class="btn-rm" onclick="removeMatch(${realIdx})">×</button></td>
     </tr>`;
   }).join('');
-  c.innerHTML=`<div class="table-wrap"><table><thead><tr><th>G1</th><th>Mazzo</th><th style="text-align:center">Ris.</th><th>Mazzo</th><th>G2</th><th>Data</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
 
-function renderMatchups() {
-  const c=document.getElementById('tab-matchups');
-  const map={};
-  state.matches.forEach(m=>{
-    const p1=state.players[m.p1i],p2=state.players[m.p2i];
-    if (!p1||!p2) return;
-    const d1n=p1.decks[m.d1i]||'?',d2n=p2.decks[m.d2i]||'?';
-    const key=matchKey(m.p1i,d1n,m.p2i,d2n);
-    if (!map[key]){const aF=`${m.p1i}::${d1n}`<`${m.p2i}::${d2n}`;map[key]={p1i:aF?m.p1i:m.p2i,d1:aF?d1n:d2n,p2i:aF?m.p2i:m.p1i,d2:aF?d2n:d1n,w1:0,w2:0,total:0};}
-    const mu=map[key]; mu.total++;
-    if (m.winner===mu.p1i) mu.w1++; else mu.w2++;
-  });
-  const keys=Object.keys(map);
-  if (!keys.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
-  c.innerHTML='<div>'+keys.map(k=>{
-    const mu=map[k];const p1=state.players[mu.p1i],p2=state.players[mu.p2i];
-    return `<div class="matchup-row">
-      <div><div class="matchup-deck">${escH(mu.d1)}</div><div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}">${escH(p1?.name||'?')}</span></div></div>
-      <div><div class="matchup-score">${mu.w1} – ${mu.w2}</div><div class="matchup-games">${mu.total} ${mu.total===1?'partita':'partite'}</div></div>
-      <div style="text-align:right"><div class="matchup-deck">${escH(mu.d2)}</div><div style="margin-top:4px;display:flex;justify-content:flex-end"><span class="badge ${pClass[mu.p2i]}">${escH(p2?.name||'?')}</span></div></div>
+  c.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>G1</th><th>Mazzo</th><th style="text-align:center">Ris.</th>
+          <th>Mazzo</th><th>G2</th><th>Data</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
-  }).join('')+'</div>';
 }
 
+// ─────────────────────────────────────────────
+// RENDER: SCONTRI
+// ─────────────────────────────────────────────
+function renderMatchups() {
+  const c   = document.getElementById('tab-matchups');
+  const map = {};
+
+  state.matches.forEach(m => {
+    const p1 = state.players[m.p1i];
+    const p2 = state.players[m.p2i];
+    if (!p1 || !p2) return;
+
+    const d1n = p1.decks[m.d1i] || '?';
+    const d2n = p2.decks[m.d2i] || '?';
+    const key = matchKey(m.p1i, d1n, m.p2i, d2n);
+
+    if (!map[key]) {
+      const aFirst = `${m.p1i}::${d1n}` < `${m.p2i}::${d2n}`;
+      map[key] = {
+        p1i:   aFirst ? m.p1i : m.p2i,
+        d1:    aFirst ? d1n   : d2n,
+        p2i:   aFirst ? m.p2i : m.p1i,
+        d2:    aFirst ? d2n   : d1n,
+        w1:    0, w2: 0, total: 0
+      };
+    }
+
+    const mu = map[key];
+    mu.total++;
+    if (m.winner === mu.p1i) mu.w1++; else mu.w2++;
+  });
+
+  const keys = Object.keys(map);
+  if (!keys.length) {
+    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    return;
+  }
+
+  c.innerHTML = '<div>' + keys.map(k => {
+    const mu = map[k];
+    const p1 = state.players[mu.p1i];
+    const p2 = state.players[mu.p2i];
+    return `<div class="matchup-row">
+      <div>
+        <div class="matchup-deck">${escH(mu.d1)}</div>
+        <div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}">${escH(p1?.name || '?')}</span></div>
+      </div>
+      <div>
+        <div class="matchup-score">${mu.w1} – ${mu.w2}</div>
+        <div class="matchup-games">${mu.total} ${mu.total === 1 ? 'partita' : 'partite'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="matchup-deck">${escH(mu.d2)}</div>
+        <div style="margin-top:4px;display:flex;justify-content:flex-end">
+          <span class="badge ${pClass[mu.p2i]}">${escH(p2?.name || '?')}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ─────────────────────────────────────────────
+// RENDER: STATISTICHE
+// ─────────────────────────────────────────────
 function renderStats() {
-  const c=document.getElementById('tab-stats');
-  if (!state.matches.length){c.innerHTML='<div class="empty">Nessuna partita registrata</div>';return;}
-  let html='';
-  state.players.forEach((p,i)=>{
-    let wins=0,losses=0,deckW={},deckL={};
-    state.matches.forEach(m=>{
-      const isP1=m.p1i===i,isP2=m.p2i===i; if (!isP1&&!isP2) return;
-      const myDeck=isP1?(state.players[i]?.decks[m.d1i]||'?'):(state.players[i]?.decks[m.d2i]||'?');
-      if (m.winner===i){wins++;deckW[myDeck]=(deckW[myDeck]||0)+1;}else{losses++;deckL[myDeck]=(deckL[myDeck]||0)+1;}
+  const c = document.getElementById('tab-stats');
+  if (!state.matches.length) {
+    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    return;
+  }
+
+  let html = '';
+  state.players.forEach((p, i) => {
+    let wins = 0, losses = 0;
+    const deckW = {}, deckL = {};
+
+    state.matches.forEach(m => {
+      const isP1 = m.p1i === i, isP2 = m.p2i === i;
+      if (!isP1 && !isP2) return;
+      const myDeck = isP1
+        ? (state.players[i]?.decks[m.d1i] || '?')
+        : (state.players[i]?.decks[m.d2i] || '?');
+
+      if (m.winner === i) {
+        wins++;
+        deckW[myDeck] = (deckW[myDeck] || 0) + 1;
+      } else {
+        losses++;
+        deckL[myDeck] = (deckL[myDeck] || 0) + 1;
+      }
     });
-    const total=wins+losses,wr=total?Math.round(wins/total*100):0;
-    const bestDeck=Object.entries(deckW).sort((a,b)=>b[1]-a[1])[0];
-    const worstDeck=Object.entries(deckL).sort((a,b)=>b[1]-a[1])[0];
-    html+=`<div class="stat-player">
+
+    const total      = wins + losses;
+    const wr         = total ? Math.round(wins / total * 100) : 0;
+    const bestDeck   = Object.entries(deckW).sort((a, b) => b[1] - a[1])[0];
+    const worstDeck  = Object.entries(deckL).sort((a, b) => b[1] - a[1])[0];
+
+    html += `<div class="stat-player">
       <div class="stat-player-name ${pClass[i]}">${escH(p.name)}</div>
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Vittorie</div><div class="stat-val win">${wins}</div></div>
         <div class="stat-card"><div class="stat-label">Sconfitte</div><div class="stat-val loss">${losses}</div></div>
         <div class="stat-card"><div class="stat-label">Partite</div><div class="stat-val">${total}</div></div>
         <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-val wr">${wr}%</div></div>
-        <div class="stat-card"><div class="stat-label">Mazzo top</div><div class="stat-val sm">${bestDeck?escH(bestDeck[0])+' ('+bestDeck[1]+'V)':'—'}</div></div>
-        <div class="stat-card"><div class="stat-label">Mazzo peggiore</div><div class="stat-val sm">${worstDeck?escH(worstDeck[0])+' ('+worstDeck[1]+'S)':'—'}</div></div>
+        <div class="stat-card"><div class="stat-label">Mazzo top</div><div class="stat-val sm">${bestDeck  ? escH(bestDeck[0])  + ' (' + bestDeck[1]  + 'V)' : '—'}</div></div>
+        <div class="stat-card"><div class="stat-label">Mazzo peggiore</div><div class="stat-val sm">${worstDeck ? escH(worstDeck[0]) + ' (' + worstDeck[1] + 'S)' : '—'}</div></div>
       </div>
     </div>`;
   });
-  c.innerHTML=html;
+
+  c.innerHTML = html;
 }
 
-// ── INIT ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+console.log('[YGO] Inizializzazione tracker...');
 loadLocal();
+
 if (cfg.apiKey && cfg.binId) {
+  console.log('[YGO] Account trovato in localStorage, connessione automatica...');
   document.getElementById('apikey-input').value = cfg.apiKey;
   onConnected();
   syncDown();
 } else {
+  console.log('[YGO] Nessun account configurato, modalità locale');
   setSync('', 'non configurato');
 }
-renderPlayers(); updateSelects(); renderTab();
+
+renderPlayers();
+updateSelects();
+renderTab();
+console.log('[YGO] Tracker pronto');
 </script>
 </body>
 </html>
