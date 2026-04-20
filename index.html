@@ -112,14 +112,20 @@
   .matchup-score { text-align: center; font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold2); white-space: nowrap; }
   .matchup-games { font-size: 10px; color: var(--text3); text-align: center; text-transform: uppercase; letter-spacing: 0.1em; }
 
-  .stat-player { margin-bottom: 1.5rem; }
-  .stat-player-name { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .stat-player { margin-bottom: 1.75rem; }
+  .stat-player-name { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
   .stat-player-name.p0 { color: var(--p0l); } .stat-player-name.p1 { color: var(--p1l); } .stat-player-name.p2 { color: var(--p2l); }
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-  .stat-card { background: var(--bg3); border-radius: 8px; padding: 10px 14px; }
-  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 4px; }
-  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); }
-  .stat-val.win { color: var(--green); } .stat-val.loss { color: var(--red); } .stat-val.wr { color: var(--gold2); } .stat-val.sm { font-size: 14px; margin-top: 4px; }
+
+  .stat-decks-list { display: flex; flex-direction: column; gap: 10px; }
+  .stat-deck-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat-deck-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .stat-deck-name { font-size: 14px; font-weight: 600; }
+  .stat-deck-name.p0 { color: var(--p0l); } .stat-deck-name.p1 { color: var(--p1l); } .stat-deck-name.p2 { color: var(--p2l); }
+  .stat-deck-wr { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; }
+  .stat-deck-bar-bg { height: 5px; background: var(--border2); border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
+  .stat-deck-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .stat-deck-nums { font-size: 13px; }
+
   .empty { text-align: center; color: var(--text3); padding: 2rem 0; font-size: 14px; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -814,7 +820,7 @@ function renderMatchups() {
 }
 
 // ─────────────────────────────────────────────
-// RENDER: STATISTICHE
+// RENDER: STATISTICHE (per deck × giocatore)
 // ─────────────────────────────────────────────
 function renderStats() {
   const c = document.getElementById('tab-stats');
@@ -823,43 +829,59 @@ function renderStats() {
     return;
   }
 
+  // Raccoglie statistiche per ogni coppia (playerIndex, deckName)
+  // key: "pi::deckName"
+  const deckStats = {}; // key → { pi, deckName, wins, losses }
+
+  state.matches.forEach(m => {
+    [[m.p1i, m.d1i], [m.p2i, m.d2i]].forEach(([pi, di]) => {
+      const deckName = state.players[pi]?.decks[di] || '?';
+      const key = `${pi}::${deckName}`;
+      if (!deckStats[key]) {
+        deckStats[key] = { pi, deckName, wins: 0, losses: 0 };
+      }
+      if (m.winner === pi) deckStats[key].wins++;
+      else                 deckStats[key].losses++;
+    });
+  });
+
+  // Raggruppa per giocatore
   let html = '';
   state.players.forEach((p, i) => {
-    let wins = 0, losses = 0;
-    const deckW = {}, deckL = {};
+    const decks = Object.values(deckStats)
+      .filter(d => d.pi === i)
+      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses)); // ordine per partite giocate
 
-    state.matches.forEach(m => {
-      const isP1 = m.p1i === i, isP2 = m.p2i === i;
-      if (!isP1 && !isP2) return;
-      const myDeck = isP1
-        ? (state.players[i]?.decks[m.d1i] || '?')
-        : (state.players[i]?.decks[m.d2i] || '?');
+    if (!decks.length) return;
 
-      if (m.winner === i) {
-        wins++;
-        deckW[myDeck] = (deckW[myDeck] || 0) + 1;
-      } else {
-        losses++;
-        deckL[myDeck] = (deckL[myDeck] || 0) + 1;
-      }
-    });
-
-    const total      = wins + losses;
-    const wr         = total ? Math.round(wins / total * 100) : 0;
-    const bestDeck   = Object.entries(deckW).sort((a, b) => b[1] - a[1])[0];
-    const worstDeck  = Object.entries(deckL).sort((a, b) => b[1] - a[1])[0];
-
+    // Intestazione giocatore
     html += `<div class="stat-player">
       <div class="stat-player-name ${pClass[i]}">${escH(p.name)}</div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Vittorie</div><div class="stat-val win">${wins}</div></div>
-        <div class="stat-card"><div class="stat-label">Sconfitte</div><div class="stat-val loss">${losses}</div></div>
-        <div class="stat-card"><div class="stat-label">Partite</div><div class="stat-val">${total}</div></div>
-        <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-val wr">${wr}%</div></div>
-        <div class="stat-card"><div class="stat-label">Mazzo top</div><div class="stat-val sm">${bestDeck  ? escH(bestDeck[0])  + ' (' + bestDeck[1]  + 'V)' : '—'}</div></div>
-        <div class="stat-card"><div class="stat-label">Mazzo peggiore</div><div class="stat-val sm">${worstDeck ? escH(worstDeck[0]) + ' (' + worstDeck[1] + 'S)' : '—'}</div></div>
-      </div>
-    </div>`;
+      <div class="stat-decks-list">`;
+
+    decks.forEach(d => {
+      const total = d.wins + d.losses;
+      const wr    = total ? Math.round(d.wins / total * 100) : 0;
+      const barW  = wr; // percentuale diretta per la barra
+
+      html += `<div class="stat-deck-row">
+        <div class="stat-deck-header">
+          <span class="stat-deck-name ${pClass[i]}">${escH(d.deckName)}</span>
+          <span class="stat-deck-wr" style="color:${wr >= 50 ? 'var(--green)' : 'var(--red)'}">${wr}%</span>
+        </div>
+        <div class="stat-deck-bar-bg">
+          <div class="stat-deck-bar" style="width:${barW}%;background:${wr >= 50 ? 'var(--green)' : 'var(--red)'}"></div>
+        </div>
+        <div class="stat-deck-nums">
+          <span class="win">${d.wins}V</span>
+          <span style="color:var(--text3)"> / </span>
+          <span class="loss">${d.losses}S</span>
+          <span style="color:var(--text3);font-size:11px;margin-left:6px">${total} partite</span>
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
   });
 
   c.innerHTML = html;
