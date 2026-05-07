@@ -216,6 +216,97 @@
 
   .empty { text-align: center; color: var(--text3); padding: 2rem 0; font-size: 14px; }
 
+  /* ── DUEL ── */
+  .duel-setup { display: flex; flex-direction: column; gap: 14px; }
+  .duel-slots-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start; }
+  .duel-slot { display: flex; flex-direction: column; gap: 0; }
+  .duel-slot select { width: 100%; }
+  .duel-vs-sep { font-family: 'Cinzel', serif; font-size: 13px; color: var(--text3); letter-spacing: 0.1em; display: flex; align-items: center; padding-top: 22px; }
+  .btn-start-duel { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--bg); border: none; border-radius: 10px; font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; padding: 14px; cursor: pointer; width: 100%; letter-spacing: 0.08em; transition: opacity 0.15s; }
+  .btn-start-duel:hover { opacity: 0.88; }
+
+  .duel-arena { display: flex; flex-direction: column; gap: 10px; }
+  .duel-player-card { border-radius: 14px; padding: 16px; position: relative; overflow: hidden; transition: all 0.3s; }
+  .duel-player-card.p0 { background: linear-gradient(135deg, rgba(123,94,167,0.18), rgba(123,94,167,0.06)); border: 1px solid rgba(123,94,167,0.35); }
+  .duel-player-card.p1 { background: linear-gradient(135deg, rgba(46,125,107,0.18), rgba(46,125,107,0.06)); border: 1px solid rgba(46,125,107,0.35); }
+  .duel-player-card.p2 { background: linear-gradient(135deg, rgba(193,122,46,0.18), rgba(193,122,46,0.06)); border: 1px solid rgba(193,122,46,0.35); }
+  .duel-player-card.dead { opacity: 0.55; filter: grayscale(0.5); }
+  .duel-player-card.winner-glow { box-shadow: 0 0 24px rgba(201,168,76,0.45); border-color: var(--gold) !important; }
+
+  .duel-player-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .duel-player-name { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; }
+  .duel-player-name.p0 { color: var(--p0l); } .duel-player-name.p1 { color: var(--p1l); } .duel-player-name.p2 { color: var(--p2l); }
+  .duel-deck-badge { font-size: 11px; color: var(--text3); background: var(--bg2); border-radius: 10px; padding: 2px 10px; }
+  .duel-dead-label { font-family: 'Cinzel', serif; font-size: 12px; color: var(--red); font-weight: 700; letter-spacing: 0.1em; }
+  .duel-winner-label { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold2); font-weight: 700; letter-spacing: 0.1em; }
+
+  .duel-lp-display { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 700; text-align: center; line-height: 1; margin: 8px 0; transition: color 0.3s; }
+  .duel-lp-display.p0 { color: var(--p0l); } .duel-lp-display.p1 { color: var(--p1l); } .duel-lp-display.p2 { color: var(--p2l); }
+  .duel-lp-display.danger { color: var(--red) !important; animation: lp-pulse 1.2s ease-in-out infinite; }
+  @keyframes lp-pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .duel-lp-bar-bg { height: 6px; background: var(--border2); border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
+  .duel-lp-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease, background 0.4s; }
+
+  /* ── LP Controls ── */
+  .duel-controls { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+
+  /* Quick shortcuts row */
+  .duel-quick-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .duel-quick-btn { flex: 1; min-width: 52px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text2); border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; padding: 7px 3px; cursor: pointer; text-align: center; transition: all 0.1s; white-space: nowrap; }
+  .duel-quick-btn:active { transform: scale(0.93); }
+  .duel-quick-btn.q-hundreds { border-color: rgba(193,74,74,0.3); color: #d08888; }
+  .duel-quick-btn.q-hundreds:hover { background: rgba(193,74,74,0.15); border-color: rgba(193,74,74,0.6); color: #e07070; }
+  .duel-quick-btn.q-thousands { border-color: rgba(193,74,74,0.5); color: #e07070; }
+  .duel-quick-btn.q-thousands:hover { background: rgba(193,74,74,0.22); border-color: var(--red); color: #ff8888; }
+
+  /* Display + keypad */
+  .duel-keypad-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .duel-display { display: flex; align-items: center; justify-content: space-between; background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 14px; min-height: 52px; }
+  .duel-display-num { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700; color: var(--text); letter-spacing: 0.04em; flex: 1; text-align: right; }
+  .duel-display-num.empty { color: var(--text3); font-size: 1rem; font-weight: 400; font-family: 'Outfit', sans-serif; }
+  .duel-display-back { background: none; border: none; color: var(--text3); font-size: 1.3rem; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: all 0.1s; flex-shrink: 0; }
+  .duel-display-back:hover { color: var(--text); background: var(--border2); }
+
+  .duel-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600; padding: 14px 6px; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; }
+  .duel-key:hover { background: var(--border2); }
+  .duel-key:active { transform: scale(0.93); background: rgba(201,168,76,0.1); border-color: var(--gold); }
+  .duel-key.zero { grid-column: span 3; }
+
+  .duel-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .duel-btn-dmg { background: rgba(193,74,74,0.15); border: 1px solid rgba(193,74,74,0.4); color: #e07070; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
+  .duel-btn-dmg:hover { background: rgba(193,74,74,0.28); }
+  .duel-btn-dmg:active { transform: scale(0.96); }
+  .duel-btn-heal { background: rgba(58,158,110,0.15); border: 1px solid rgba(58,158,110,0.4); color: #6ecfa8; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
+  .duel-btn-heal:hover { background: rgba(58,158,110,0.28); }
+  .duel-btn-heal:active { transform: scale(0.96); }
+
+  /* ── Dice roller ── */
+  .dice-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 10px; }
+  .dice-label-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+  .dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; width: 54px; height: 54px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .dice-btn:hover { border-color: var(--gold); color: var(--gold2); background: rgba(201,168,76,0.08); }
+  .dice-btn:active { transform: scale(0.88); }
+  .dice-result-wrap { text-align: center; min-width: 54px; }
+  .dice-result { font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 700; color: var(--gold2); line-height: 1; }
+  .dice-result.roll { animation: dice-pop 0.3s ease-out; }
+  @keyframes dice-pop { 0%{transform:scale(0.5) rotate(-20deg);opacity:0.3} 60%{transform:scale(1.25) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+  .dice-faces { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .duel-log { margin-top: 10px; max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+  .duel-log-entry { font-size: 11px; color: var(--text3); background: var(--bg2); border-radius: 5px; padding: 4px 8px; }
+  .duel-log-entry.dmg { color: #e07070; }
+  .duel-log-entry.heal { color: #6ecfa8; }
+
+  .duel-over-banner { background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05)); border: 1px solid rgba(201,168,76,0.3); border-radius: 12px; padding: 20px; text-align: center; }
+  .duel-over-title { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; color: var(--gold2); margin-bottom: 4px; }
+  .duel-over-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+  .duel-over-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn-save-result { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; padding: 10px 22px; cursor: pointer; }
+  .btn-save-result:hover { background: var(--gold2); }
+  .btn-new-duel { background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; padding: 10px 22px; cursor: pointer; }
+  .btn-new-duel:hover { border-color: var(--gold); color: var(--gold); }
+
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg2); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
@@ -295,6 +386,15 @@
       </div>
     </div>
     <div id="match-error" class="form-error"></div>
+  </div>
+
+  <!-- DUELLO PANEL -->
+  <div class="panel" id="duel-panel">
+    <div class="panel-title" style="justify-content:space-between">
+      <span>⚔ Duello</span>
+      <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px">Abbandona</button>
+    </div>
+    <div id="duel-content"></div>
   </div>
 
   <div class="panel">
@@ -1147,6 +1247,327 @@ function renderRanking(deckStats) {
 }
 
 // ─────────────────────────────────────────────
+// DUELLO — LP TRACKER
+// ─────────────────────────────────────────────
+
+const STARTING_LP   = 8000;
+const DANGER_LP     = 2000;
+
+// duelState è separato dallo state principale (non viene salvato nel bin)
+let duelState = null;
+
+function renderDuel() {
+  const c = document.getElementById('duel-content');
+  const resetBtn = document.getElementById('duel-reset-btn');
+
+  if (!duelState) {
+    // ── Setup screen: scelta giocatore + mazzo per ciascuno dei 2 slot ──
+    resetBtn.style.display = 'none';
+
+    const slotSelect = (slot) => {
+      const prevPi   = slot === 0 ? 0 : 1;
+      const playerOpts = state.players.map((p, pi) =>
+        `<option value="${pi}">${escH(p.name)}</option>`).join('');
+      const deckOpts = (state.players[prevPi]?.decks || []).map((d, di) =>
+        `<option value="${di}">${escH(d)}</option>`).join('');
+      return `
+        <div class="duel-slot">
+          <div class="form-label" style="margin-bottom:6px">Giocatore ${slot + 1}</div>
+          <select id="duel-p${slot}" onchange="onDuelPlayerChange(${slot})">${playerOpts}</select>
+          <select id="duel-d${slot}" style="margin-top:6px">${deckOpts}</select>
+        </div>`;
+    };
+
+    c.innerHTML = `
+      <div class="duel-setup">
+        <div class="duel-slots-row">
+          ${slotSelect(0)}
+          <div class="duel-vs-sep">VS</div>
+          ${slotSelect(1)}
+        </div>
+        <div id="duel-setup-err" class="form-error"></div>
+        <button class="btn-start-duel" onclick="startDuel()">⚔ Inizia Duello</button>
+      </div>`;
+
+    // Init slot 1 to default player 1 (so they differ)
+    const p1sel = document.getElementById('duel-p1');
+    if (p1sel && state.players.length > 1) {
+      p1sel.value = '1';
+      onDuelPlayerChange(1);
+    }
+    return;
+  }
+
+  resetBtn.style.display = '';
+
+  if (duelState.over) {
+    // ── Game over screen ──────────────────────────────────────────────
+    const winner = duelState.winner;
+    const loser  = duelState.players.find(p => p.slot !== winner.slot);
+    c.innerHTML = `
+      <div class="duel-over-banner">
+        <div class="duel-over-title">🏆 ${escH(winner.name)} vince!</div>
+        <div class="duel-over-sub">${escH(winner.deck)} batte ${escH(loser.name)} (${escH(loser.deck)})</div>
+        <div class="duel-over-btns">
+          <button class="btn-save-result" onclick="saveDuelResult()">💾 Salva nel tracker</button>
+          <button class="btn-new-duel" onclick="resetDuel()">↺ Nuovo duello</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // ── Active duel ───────────────────────────────────────────────────
+  const cards = duelState.players.map(p => {
+    const pct      = Math.max(0, p.lp / STARTING_LP * 100);
+    const danger   = p.lp <= DANGER_LP && p.lp > 0;
+    const dead     = p.lp <= 0;
+    const barColor = dead || danger ? 'var(--red)' : `var(--${pClass[p.pi]})`;
+
+    return `
+    <div class="duel-player-card ${pClass[p.pi]}${dead ? ' dead' : ''}">
+      <div class="duel-player-header">
+        <div>
+          <div class="duel-player-name ${pClass[p.pi]}">${escH(p.name)}</div>
+          <div class="duel-deck-badge">${escH(p.deck)}</div>
+        </div>
+        ${dead ? '<div class="duel-dead-label">💀 KO</div>' : ''}
+      </div>
+
+      <div class="duel-lp-display ${pClass[p.pi]}${danger && !dead ? ' danger' : ''}">${p.lp.toLocaleString('it-IT')}</div>
+      <div class="duel-lp-bar-bg">
+        <div class="duel-lp-bar" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+
+      ${!dead ? `
+      <div class="duel-controls">
+        <div class="duel-quick-row">
+          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-100)">−100</button>
+          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-200)">−200</button>
+          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-300)">−300</button>
+          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-500)">−500</button>
+          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-1000)">−1k</button>
+          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-2000)">−2k</button>
+          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-3000)">−3k</button>
+        </div>
+        <div class="duel-keypad-wrap">
+          <div class="duel-display">
+            <button class="duel-display-back" onclick="kbBack(${p.slot})">⌫</button>
+            <div class="duel-display-num ${duelState.buf[p.slot]?'':'empty'}" id="kdisp-${p.slot}">
+              ${duelState.buf[p.slot] ? parseInt(duelState.buf[p.slot]).toLocaleString('it-IT') : 'inserisci LP…'}
+            </div>
+          </div>
+          <div class="duel-keypad">
+            ${[7,8,9,4,5,6,1,2,3].map(n=>`<button class="duel-key" onclick="kbPress(${p.slot},${n})">${n}</button>`).join('')}
+            <button class="duel-key zero" onclick="kbPress(${p.slot},0)">0</button>
+          </div>
+          <div class="duel-action-row">
+            <button class="duel-btn-dmg" onclick="applyDmg(${p.slot})">− Danno</button>
+            <button class="duel-btn-heal" onclick="applyHl(${p.slot})">+ Cura</button>
+          </div>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  const logEntries = [...duelState.log].reverse().slice(0, 12)
+    .map(e => `<div class="duel-log-entry ${e.type}">${escH(e.msg)}</div>`).join('');
+
+  c.innerHTML = `
+    <div class="duel-arena">
+      ${cards}
+      ${duelState.log.length ? `<div class="duel-log">${logEntries}</div>` : ''}
+    </div>
+    <div class="dice-panel">
+      <div class="dice-label-title">🎲 Dado</div>
+      <button class="dice-btn" onclick="rollDice()">⚄</button>
+      <div class="dice-result-wrap">
+        <div class="dice-result" id="dice-result">—</div>
+        <div class="dice-faces">d6</div>
+      </div>
+    </div>`;
+}
+
+function onDuelPlayerChange(slot) {
+  const pi      = parseInt(document.getElementById(`duel-p${slot}`)?.value ?? slot);
+  const deckSel = document.getElementById(`duel-d${slot}`);
+  if (!deckSel) return;
+  const decks = state.players[pi]?.decks || [];
+  deckSel.innerHTML = decks.map((d, di) => `<option value="${di}">${escH(d)}</option>`).join('');
+}
+
+function startDuel() {
+  const pi0 = parseInt(document.getElementById('duel-p0').value);
+  const pi1 = parseInt(document.getElementById('duel-p1').value);
+  const di0 = parseInt(document.getElementById('duel-d0').value || 0);
+  const di1 = parseInt(document.getElementById('duel-d1').value || 0);
+  const err = document.getElementById('duel-setup-err');
+
+  if (pi0 === pi1) {
+    err.textContent = 'Seleziona due giocatori diversi.';
+    return;
+  }
+  err.textContent = '';
+
+  const p0 = state.players[pi0];
+  const p1 = state.players[pi1];
+
+  if (!p0?.decks?.length || !p1?.decks?.length) {
+    err.textContent = 'Entrambi i giocatori devono avere almeno un mazzo.';
+    return;
+  }
+
+  const players = [
+    { slot: 0, pi: pi0, name: p0.name, di: di0, deck: p0.decks[di0] || '?', lp: STARTING_LP },
+    { slot: 1, pi: pi1, name: p1.name, di: di1, deck: p1.decks[di1] || '?', lp: STARTING_LP },
+  ];
+
+  duelState = { players, log: [], over: false, winner: null, buf: { 0: '', 1: '' } };
+  console.log('[YGO] Duello iniziato:', players.map(p => `${p.name} (${p.deck})`));
+  renderDuel();
+}
+
+function resetDuel() {
+  if (duelState && !duelState.over) {
+    if (!confirm('Abbandonare il duello in corso?')) return;
+  }
+  duelState = null;
+  renderDuel();
+}
+
+// ── Keypad buffer (per slot) ──────────────────────────────────────────────
+function kbPress(slot, digit) {
+  const cur = duelState.buf[slot] || '';
+  if (cur.length >= 6) return; // max 6 cifre (99999)
+  duelState.buf[slot] = cur + String(digit);
+  refreshDisplay(slot);
+}
+
+function kbBack(slot) {
+  const cur = duelState.buf[slot] || '';
+  duelState.buf[slot] = cur.slice(0, -1);
+  refreshDisplay(slot);
+}
+
+function refreshDisplay(slot) {
+  const el = document.getElementById(`kdisp-${slot}`);
+  if (!el) return;
+  const buf = duelState.buf[slot] || '';
+  if (buf) {
+    el.className = 'duel-display-num';
+    el.textContent = parseInt(buf).toLocaleString('it-IT');
+  } else {
+    el.className = 'duel-display-num empty';
+    el.textContent = 'inserisci LP…';
+  }
+}
+
+function getBufAmount(slot) {
+  return parseInt(duelState.buf[slot] || '0') || 0;
+}
+
+function clearBuf(slot) {
+  duelState.buf[slot] = '';
+}
+
+// ── Quick shortcut (direct apply, no buffer needed) ───────────────────────
+function quickApply(slot, delta) {
+  const p = duelState.players.find(pl => pl.slot === slot);
+  if (!p || p.lp <= 0) return;
+  const prev = p.lp;
+  const amount = Math.abs(delta);
+  if (delta < 0) {
+    p.lp = Math.max(0, p.lp - amount);
+    duelState.log.push({ type: 'dmg', msg: `${p.name}: −${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
+    console.log(`[YGO] Scorciatoia danno ${amount} a ${p.name} → ${p.lp} LP`);
+    checkDuelOver();
+  }
+  renderDuel();
+}
+
+function applyDmg(slot) {
+  const p = duelState.players.find(pl => pl.slot === slot);
+  if (!p || p.lp <= 0) return;
+  const amount = getBufAmount(slot);
+  if (!amount) return;
+  const prev = p.lp;
+  p.lp = Math.max(0, p.lp - amount);
+  duelState.log.push({ type: 'dmg', msg: `${p.name}: −${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
+  console.log(`[YGO] Danno ${amount} a ${p.name} → ${p.lp} LP`);
+  clearBuf(slot);
+  checkDuelOver();
+  renderDuel();
+}
+
+function applyHl(slot) {
+  const p = duelState.players.find(pl => pl.slot === slot);
+  if (!p || p.lp <= 0) return;
+  const amount = getBufAmount(slot);
+  if (!amount) return;
+  const prev = p.lp;
+  p.lp = Math.min(99999, p.lp + amount);
+  duelState.log.push({ type: 'heal', msg: `${p.name}: +${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
+  console.log(`[YGO] Cura ${amount} a ${p.name} → ${p.lp} LP`);
+  clearBuf(slot);
+  renderDuel();
+}
+
+function rollDice() {
+  const faces  = [1,2,3,4,5,6];
+  const result = faces[Math.floor(Math.random() * 6)];
+  const el     = document.getElementById('dice-result');
+  const glyphs = ['', '⚀','⚁','⚂','⚃','⚄','⚅'];
+  if (el) {
+    el.textContent = glyphs[result] || result;
+    el.classList.remove('roll');
+    void el.offsetWidth;
+    el.classList.add('roll');
+  }
+  console.log(`[YGO] Dado d6: ${result}`);
+}
+
+// Legacy stubs
+function applyDamage() {} function applyHeal() {} function applyCustom(s) { applyDmg(s); }
+function setMult() {} function getAmount() { return 0; } function updatePreview() {}
+
+function checkDuelOver() {
+  const dead = duelState.players.filter(p => p.lp <= 0);
+  if (!dead.length) return;
+
+  // If multiple die simultaneously, both lose (draw — pick first as "winner" display)
+  const alive = duelState.players.filter(p => p.lp > 0);
+  duelState.over   = true;
+  duelState.winner = alive.length ? alive[0] : duelState.players[0];
+  console.log('[YGO] Duello terminato. Vincitore:', duelState.winner.name);
+}
+
+async function saveDuelResult() {
+  if (!duelState?.over || !duelState.winner) return;
+  const winner = duelState.winner;
+  const loser  = duelState.players.find(p => p.slot !== winner.slot);
+
+  const match = {
+    p1i:    winner.pi,
+    p2i:    loser.pi,
+    d1i:    winner.di,
+    d2i:    loser.di,
+    winner: winner.pi,
+    ts:     Date.now()
+  };
+  state.matches.push(match);
+  console.log('[YGO] Risultato duello salvato:', match);
+
+  saveLocal();
+  renderTab();
+  await syncUp();
+
+  // Switch to history tab to show the new match
+  switchTab('matches');
+  duelState = null;
+  renderDuel();
+  alert('Risultato salvato nel tracker! ✓');
+}
+
+// ─────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────
 console.log('[YGO] Inizializzazione tracker...');
@@ -1166,6 +1587,7 @@ if (cfg.apiKey && cfg.binId) {
 renderPlayers();
 updateSelects();
 renderTab();
+renderDuel();
 console.log('[YGO] Tracker pronto');
 </script>
 </body>
