@@ -64,12 +64,22 @@
   .cfg-error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
 
   /* ── LAYOUT ── */
-  .container { max-width: 900px; margin: 0 auto; padding: 1rem 0.75rem 5rem; }
-  @media (min-width: 600px) { .container { padding: 1.5rem 1.5rem 5rem; } }
+  .page { display: block; }
+  .container { max-width: 900px; margin: 0 auto; padding: 1rem 0.75rem 5.5rem; }
+  @media (min-width: 600px) { .container { padding: 1.5rem 1.5rem 5.5rem; } }
   .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1rem; margin-bottom: 0.9rem; }
   @media (min-width: 600px) { .panel { padding: 1.25rem 1.5rem; } }
   .panel-title { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
   .panel-title::before { content: ''; display: inline-block; width: 12px; height: 1px; background: var(--gold); opacity: 0.5; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--bg2); border-top: 1px solid var(--border2); display: flex; padding-bottom: env(safe-area-inset-bottom, 0); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 4px 12px; background: none; border: none; cursor: pointer; color: var(--text3); transition: color 0.15s; position: relative; }
+  .nav-btn::after { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--gold); border-radius: 0 0 2px 2px; transition: width 0.2s; }
+  .nav-btn.active { color: var(--gold2); }
+  .nav-btn.active::after { width: 32px; }
+  .nav-icon { font-size: 1.25rem; line-height: 1; }
+  .nav-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
 
   /* ── PLAYERS GRID ── */
   .players-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
@@ -112,7 +122,7 @@
   .winner-select { flex: 1; }
   .form-error { font-size: 12px; color: var(--red); margin-top: 6px; }
 
-  /* ── TABS ── */
+  /* ── TABS (stats page) ── */
   .tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .tab { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 14px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; flex: 1; text-align: center; }
   .tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); }
@@ -151,6 +161,7 @@
   .stat-deck-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .stat-deck-chevron { font-size: 12px; color: var(--text3); flex-shrink: 0; transition: transform 0.2s; }
   .stat-deck-row.open .stat-deck-chevron { transform: rotate(90deg); }
+  .rank-row.open .stat-deck-chevron { transform: rotate(90deg); }
   .stat-deck-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stat-deck-name.p0 { color: var(--p0l); } .stat-deck-name.p1 { color: var(--p1l); } .stat-deck-name.p2 { color: var(--p2l); }
   .stat-deck-wr { font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; flex-shrink: 0; }
@@ -161,6 +172,7 @@
   /* Matchup detail panel (inside stat card) */
   .stat-deck-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
   .stat-deck-row.open .stat-deck-detail { display: block; }
+  .rank-row.open .stat-deck-detail { display: block; }
   .detail-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 6px; margin-top: 10px; }
   .detail-section-title:first-child { margin-top: 0; }
   .detail-opponent-list { display: flex; flex-direction: column; gap: 4px; }
@@ -202,7 +214,9 @@
   .ranking-subtitle { font-size: 11px; color: var(--text3); margin-bottom: 12px; }
   .ranking-list { display: flex; flex-direction: column; gap: 6px; }
 
-  .rank-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; background: var(--bg3); border-radius: 8px; padding: 10px 12px; }
+  .rank-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+  .rank-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+  .rank-row-header { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; }
   .rank-pos { font-size: 1.2rem; text-align: center; flex-shrink: 0; }
   .rank-info { min-width: 0; }
   .rank-deck-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -281,17 +295,29 @@
   .duel-btn-heal:hover { background: rgba(58,158,110,0.28); }
   .duel-btn-heal:active { transform: scale(0.96); }
 
-  /* ── Dice roller ── */
-  .dice-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 10px; }
-  .dice-label-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
-  .dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; width: 54px; height: 54px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  /* ── Dice + Coin ── */
+  .tools-panel { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .dice-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .dice-label-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+  .dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; width: 56px; height: 56px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .dice-btn:hover { border-color: var(--gold); color: var(--gold2); background: rgba(201,168,76,0.08); }
   .dice-btn:active { transform: scale(0.88); }
-  .dice-result-wrap { text-align: center; min-width: 54px; }
-  .dice-result { font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 700; color: var(--gold2); line-height: 1; }
+  .dice-result-wrap { text-align: center; }
+  .dice-result { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: var(--gold2); line-height: 1; min-height: 2rem; display: block; }
   .dice-result.roll { animation: dice-pop 0.3s ease-out; }
   @keyframes dice-pop { 0%{transform:scale(0.5) rotate(-20deg);opacity:0.3} 60%{transform:scale(1.25) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
   .dice-faces { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .coin-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .coin-label-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+  .coin-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 50%; width: 56px; height: 56px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; transition: all 0.15s; }
+  .coin-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .coin-btn:active { transform: scale(0.88); }
+  .coin-result-wrap { text-align: center; }
+  .coin-result { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; color: var(--gold2); min-height: 1.4rem; display: block; }
+  .coin-result.flip { animation: coin-flip 0.35s ease-out; }
+  @keyframes coin-flip { 0%{transform:scaleY(0);opacity:0.3} 50%{transform:scaleY(1.2)} 100%{transform:scaleY(1);opacity:1} }
+  .coin-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
   .duel-log { margin-top: 10px; max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
   .duel-log-entry { font-size: 11px; color: var(--text3); background: var(--bg2); border-radius: 5px; padding: 4px 8px; }
@@ -327,88 +353,121 @@
   </div>
 </header>
 
-<div class="container">
-
-  <div class="config-banner" id="config-banner">
-    <h3>Configurazione JSONBin.io</h3>
-    <p>Segui questi passi per sincronizzare i dati tra tutti i dispositivi:</p>
-    <ol class="config-steps">
-      <li data-n="1">Vai su <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> e crea un account gratuito</li>
-      <li data-n="2">Vai su <strong>API Keys</strong> nel menu in alto e copia la tua <code>X-Master-Key</code></li>
-      <li data-n="3"><strong>Primo dispositivo:</strong> incolla solo la chiave e clicca Connetti — il Bin ID viene generato automaticamente</li>
-      <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (lo trovi dopo la connessione, vicino al pallino verde)</li>
-    </ol>
-    <div class="config-row">
-      <input type="password" id="apikey-input" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
-      <input type="text" id="binid-input" placeholder="Bin ID (solo dal 2° dispositivo in poi)" style="flex:1;min-width:140px"/>
-      <button class="btn-cfg" onclick="connect()">Connetti</button>
+<!-- ── PAGES ───────────────────────────────────────────── -->
+<div class="page" id="page-duel">
+  <div class="container">
+    <div class="panel" id="duel-panel">
+      <div class="panel-title" style="justify-content:space-between">
+        <span>⚔ Duello</span>
+        <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px">Abbandona</button>
+      </div>
+      <div id="duel-content"></div>
     </div>
-    <p class="cfg-error" id="cfg-error"></p>
   </div>
+</div>
 
-  <div class="panel">
-    <div class="panel-title" style="justify-content:space-between">
-      <span>Giocatori &amp; Mazzi</span>
-      <button class="btn-cfg-sec" id="btn-disconnect" style="display:none;font-size:11px;padding:4px 10px" onclick="disconnect()">Scollega account</button>
-    </div>
-    <div class="players-grid" id="players-ui"></div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-title">Registra Partita</div>
-    <div class="match-form">
-      <div class="form-group">
-        <span class="form-label">Giocatore 1</span>
-        <select id="p1sel" onchange="updateDeckSelects()"></select>
-      </div>
-      <div class="form-group">
-        <span class="form-label">Mazzo 1</span>
-        <select id="d1sel"></select>
-      </div>
-      <div class="vs-col">VS</div>
-      <div class="form-group">
-        <span class="form-label">Giocatore 2</span>
-        <select id="p2sel" onchange="updateDeckSelects()"></select>
-      </div>
-      <div class="form-group">
-        <span class="form-label">Mazzo 2</span>
-        <select id="d2sel"></select>
-      </div>
-      <div class="form-group add-btn">
-        <span class="form-label">Vince il</span>
-        <div class="winner-row">
-          <select id="winner" class="winner-select">
-            <option value="1">G1</option>
-            <option value="2">G2</option>
-          </select>
-          <button class="btn-add" onclick="addMatch()">+ Aggiungi</button>
+<div class="page" id="page-matches" style="display:none">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-title">Registra Partita</div>
+      <div class="match-form">
+        <div class="form-group">
+          <span class="form-label">Giocatore 1</span>
+          <select id="p1sel" onchange="updateDeckSelects()"></select>
+        </div>
+        <div class="form-group">
+          <span class="form-label">Mazzo 1</span>
+          <select id="d1sel"></select>
+        </div>
+        <div class="vs-col">VS</div>
+        <div class="form-group">
+          <span class="form-label">Giocatore 2</span>
+          <select id="p2sel" onchange="updateDeckSelects()"></select>
+        </div>
+        <div class="form-group">
+          <span class="form-label">Mazzo 2</span>
+          <select id="d2sel"></select>
+        </div>
+        <div class="form-group add-btn">
+          <span class="form-label">Vince il</span>
+          <div class="winner-row">
+            <select id="winner" class="winner-select">
+              <option value="1">G1</option>
+              <option value="2">G2</option>
+            </select>
+            <button class="btn-add" onclick="addMatch()">+ Aggiungi</button>
+          </div>
         </div>
       </div>
+      <div id="match-error" class="form-error"></div>
     </div>
-    <div id="match-error" class="form-error"></div>
-  </div>
-
-  <!-- DUELLO PANEL -->
-  <div class="panel" id="duel-panel">
-    <div class="panel-title" style="justify-content:space-between">
-      <span>⚔ Duello</span>
-      <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px">Abbandona</button>
+    <div class="panel">
+      <div class="panel-title">Storico Partite</div>
+      <div id="tab-matches"></div>
     </div>
-    <div id="duel-content"></div>
   </div>
-
-  <div class="panel">
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('matches')">Storico</div>
-      <div class="tab" onclick="switchTab('matchups')">Scontri</div>
-      <div class="tab" onclick="switchTab('stats')">Statistiche</div>
-    </div>
-    <div id="tab-matches"></div>
-    <div id="tab-matchups" style="display:none"></div>
-    <div id="tab-stats" style="display:none"></div>
-  </div>
-
 </div>
+
+<div class="page" id="page-stats" style="display:none">
+  <div class="container">
+    <div class="panel">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('matchups')">Scontri</div>
+        <div class="tab" onclick="switchTab('stats')">Statistiche</div>
+      </div>
+      <div id="tab-matchups"></div>
+      <div id="tab-stats" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-settings" style="display:none">
+  <div class="container">
+    <div class="config-banner" id="config-banner">
+      <h3>Configurazione JSONBin.io</h3>
+      <p>Segui questi passi per sincronizzare i dati tra tutti i dispositivi:</p>
+      <ol class="config-steps">
+        <li data-n="1">Vai su <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> e crea un account gratuito</li>
+        <li data-n="2">Vai su <strong>API Keys</strong> nel menu in alto e copia la tua <code>X-Master-Key</code></li>
+        <li data-n="3"><strong>Primo dispositivo:</strong> incolla solo la chiave e clicca Connetti — il Bin ID viene generato automaticamente</li>
+        <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (lo trovi dopo la connessione, vicino al pallino verde)</li>
+      </ol>
+      <div class="config-row">
+        <input type="password" id="apikey-input" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
+        <input type="text" id="binid-input" placeholder="Bin ID (solo dal 2° dispositivo in poi)" style="flex:1;min-width:140px"/>
+        <button class="btn-cfg" onclick="connect()">Connetti</button>
+      </div>
+      <p class="cfg-error" id="cfg-error"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-title" style="justify-content:space-between">
+        <span>Giocatori &amp; Mazzi</span>
+        <button class="btn-cfg-sec" id="btn-disconnect" style="display:none;font-size:11px;padding:4px 10px" onclick="disconnect()">Scollega account</button>
+      </div>
+      <div class="players-grid" id="players-ui"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ───────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-duel" onclick="switchPage('duel')">
+    <span class="nav-icon">⚔</span>
+    <span class="nav-label">Duello</span>
+  </button>
+  <button class="nav-btn" id="nav-matches" onclick="switchPage('matches')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Partite</span>
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Statistiche</span>
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="switchPage('settings')">
+    <span class="nav-icon">⚙</span>
+    <span class="nav-label">Impostazioni</span>
+  </button>
+</nav>
 
 <script>
 // ─────────────────────────────────────────────
@@ -622,8 +681,10 @@ function disconnect() {
   console.log('[YGO] Disconnessione account');
   cfg = { apiKey: '', binId: '' };
   saveLocal();
-  document.getElementById('config-banner').style.display = '';
-  document.getElementById('btn-disconnect').style.display = 'none';
+  const cb2 = document.getElementById('config-banner');
+  if (cb2) cb2.style.display = '';
+  const bd2 = document.getElementById('btn-disconnect');
+  if (bd2) bd2.style.display = 'none';
   document.getElementById('apikey-input').value = '';
   setSync('', 'non configurato');
 }
@@ -635,8 +696,10 @@ function showCfgError(msg) {
 }
 
 function onConnected() {
-  document.getElementById('config-banner').style.display  = 'none';
-  document.getElementById('btn-disconnect').style.display = '';
+  const cb = document.getElementById('config-banner');
+  if (cb) cb.style.display = 'none';
+  const bd = document.getElementById('btn-disconnect');
+  if (bd) bd.style.display = '';
 
   // Mostra il Bin ID nella sync-status bar così l'utente può copiarlo
   const existing = document.getElementById('bin-id-display');
@@ -660,6 +723,7 @@ function onConnected() {
 
   renderPlayers();
   updateSelects();
+  renderMatches();
   renderTab();
 }
 
@@ -690,6 +754,7 @@ async function syncDown() {
     saveLocal();
     renderPlayers();
     updateSelects();
+    renderMatches();
     renderTab();
     setSync('ok', 'sincronizzato');
     console.log('[YGO] syncDown completato:', { players: state.players.length, matches: state.matches.length });
@@ -860,14 +925,14 @@ async function addMatch() {
     vincitore:  state.players[match.winner].name
   });
 
-  saveLocal(); renderTab(); await syncUp();
+  saveLocal(); renderMatches(); renderTab(); await syncUp();
 }
 
 function removeMatch(i) {
   if (!confirm('Eliminare questa partita?')) return;
   const removed = state.matches.splice(i, 1);
   console.log('[YGO] Partita eliminata (indice', i, '):', removed[0]);
-  saveLocal(); renderTab(); syncUp();
+  saveLocal(); renderMatches(); renderTab(); syncUp();
 }
 
 // ─────────────────────────────────────────────
@@ -879,25 +944,42 @@ function matchKey(p1, d1n, p2, d2n) {
 }
 
 // ─────────────────────────────────────────────
-// TABS
+// PAGE NAVIGATION
 // ─────────────────────────────────────────────
-let currentTab = 'matches';
+let currentPage = 'duel';
+
+function switchPage(p) {
+  currentPage = p;
+  ['duel','matches','stats','settings'].forEach(id => {
+    document.getElementById(`page-${id}`).style.display = id === p ? '' : 'none';
+    document.getElementById(`nav-${id}`).classList.toggle('active', id === p);
+  });
+  // Render the relevant content when switching
+  if (p === 'matches')  { renderMatches(); }
+  if (p === 'stats')    { renderTab(); }
+  if (p === 'settings') { renderPlayers(); }
+}
+
+// ─────────────────────────────────────────────
+// TABS (inside Stats page)
+// ─────────────────────────────────────────────
+let currentTab = 'matchups';
 
 function switchTab(t) {
   currentTab = t;
   document.querySelectorAll('.tab').forEach((el, i) =>
-    el.classList.toggle('active', ['matches', 'matchups', 'stats'][i] === t)
+    el.classList.toggle('active', ['matchups', 'stats'][i] === t)
   );
-  ['matches', 'matchups', 'stats'].forEach(id =>
-    document.getElementById(`tab-${id}`).style.display = id === t ? '' : 'none'
-  );
+  ['matchups', 'stats'].forEach(id => {
+    const el = document.getElementById(`tab-${id}`);
+    if (el) el.style.display = id === t ? '' : 'none';
+  });
   renderTab();
 }
 
 function renderTab() {
-  if      (currentTab === 'matches')  renderMatches();
-  else if (currentTab === 'matchups') renderMatchups();
-  else                                renderStats();
+  if (currentTab === 'matchups') renderMatchups();
+  else                           renderStats();
 }
 
 // ─────────────────────────────────────────────
@@ -1203,7 +1285,6 @@ function buildDeckStats() {
 }
 
 function renderRanking(deckStats) {
-  const MIN_MATCHES = 1; // includi tutti ma segnala quelli con pochi dati
   const ranked = Object.values(deckStats)
     .map(d => {
       const total = d.wins + d.losses;
@@ -1217,6 +1298,17 @@ function renderRanking(deckStats) {
 
   const medals = ['🥇', '🥈', '🥉'];
 
+  const renderOppRows = (list) => list.length
+    ? list.map(o => `
+        <div class="detail-opponent-row">
+          <div>
+            <div class="detail-opponent-deck">${escH(o.oppDeck)}</div>
+            <div class="detail-opponent-player">${escH(state.players[o.oppPi]?.name || '?')}</div>
+          </div>
+          <div class="detail-count">${o.count}×</div>
+        </div>`).join('')
+    : '<div class="detail-empty">—</div>';
+
   const rows = ranked.map((d, idx) => {
     const wr      = Math.round(d.wr * 100);
     const score   = Math.round(d.score * 100);
@@ -1224,24 +1316,39 @@ function renderRanking(deckStats) {
     const medal   = medals[idx] || `#${idx + 1}`;
     const lowData = d.total < 3;
     const p       = state.players[d.pi];
+    const uid     = `rk_${d.pi}_${idx}`;
 
-    return `<div class="rank-row">
-      <div class="rank-pos">${medal}</div>
-      <div class="rank-info">
-        <div class="rank-deck-name ${pClass[d.pi]}">${escH(d.deckName)}</div>
-        <div class="rank-player"><span class="badge ${pClass[d.pi]}">${escH(p?.name || '?')}</span>${lowData ? '<span class="rank-lowdata">pochi dati</span>' : ''}</div>
+    const wonList  = Object.values(d.wonAgainst).sort((a, b) => b.count - a.count);
+    const lostList = Object.values(d.lostAgainst).sort((a, b) => b.count - a.count);
+
+    return `<div class="rank-row" id="${uid}" onclick="toggleDeckDetail('${uid}')">
+      <div class="rank-row-header">
+        <div class="rank-pos">${medal}</div>
+        <div class="rank-info">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="stat-deck-chevron">▶</span>
+            <div class="rank-deck-name ${pClass[d.pi]}">${escH(d.deckName)}</div>
+          </div>
+          <div class="rank-player"><span class="badge ${pClass[d.pi]}">${escH(p?.name || '?')}</span>${lowData ? '<span class="rank-lowdata">pochi dati</span>' : ''}</div>
+        </div>
+        <div class="rank-right">
+          <div class="rank-wr" style="color:${wrColor}">${wr}%</div>
+          <div class="rank-score">score ${score}</div>
+          <div class="rank-games">${d.wins}V ${d.losses}S · ${d.total} pt</div>
+        </div>
       </div>
-      <div class="rank-right">
-        <div class="rank-wr" style="color:${wrColor}">${wr}%</div>
-        <div class="rank-score">score ${score}</div>
-        <div class="rank-games">${d.wins}V ${d.losses}S · ${d.total} pt</div>
+      <div class="stat-deck-detail">
+        <div class="detail-section-title">✓ Vittorie contro</div>
+        <div class="detail-opponent-list">${renderOppRows(wonList)}</div>
+        <div class="detail-section-title" style="margin-top:10px">✗ Sconfitte contro</div>
+        <div class="detail-opponent-list">${renderOppRows(lostList)}</div>
       </div>
     </div>`;
   }).join('');
 
   return `<div class="ranking-panel">
     <div class="ranking-title">🏆 Classifica Mazzi</div>
-    <div class="ranking-subtitle">Ordinati per Wilson Score — penalizza i deck con poche partite</div>
+    <div class="ranking-subtitle">Ordinati per Wilson Score — clicca un mazzo per i dettagli</div>
     <div class="ranking-list">${rows}</div>
   </div>`;
 }
@@ -1377,12 +1484,22 @@ function renderDuel() {
       ${cards}
       ${duelState.log.length ? `<div class="duel-log">${logEntries}</div>` : ''}
     </div>
-    <div class="dice-panel">
-      <div class="dice-label-title">🎲 Dado</div>
-      <button class="dice-btn" onclick="rollDice()">⚄</button>
-      <div class="dice-result-wrap">
-        <div class="dice-result" id="dice-result">—</div>
-        <div class="dice-faces">d6</div>
+    <div class="tools-panel">
+      <div class="dice-panel">
+        <div class="dice-label-title">🎲 Dado d6</div>
+        <button class="dice-btn" onclick="rollDice()">⚄</button>
+        <div class="dice-result-wrap">
+          <span class="dice-result" id="dice-result">—</span>
+          <div class="dice-faces">lancia il dado</div>
+        </div>
+      </div>
+      <div class="coin-panel">
+        <div class="coin-label-title">🪙 Moneta</div>
+        <button class="coin-btn" onclick="flipCoin()">🪙</button>
+        <div class="coin-result-wrap">
+          <span class="coin-result" id="coin-result">—</span>
+          <div class="coin-sub">lancia la moneta</div>
+        </div>
       </div>
     </div>`;
 }
@@ -1512,17 +1629,29 @@ function applyHl(slot) {
 }
 
 function rollDice() {
-  const faces  = [1,2,3,4,5,6];
-  const result = faces[Math.floor(Math.random() * 6)];
-  const el     = document.getElementById('dice-result');
-  const glyphs = ['', '⚀','⚁','⚂','⚃','⚄','⚅'];
+  const result = Math.floor(Math.random() * 6) + 1;
+  const glyphs = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+  const el = document.getElementById('dice-result');
   if (el) {
-    el.textContent = glyphs[result] || result;
+    el.textContent = glyphs[result - 1];
     el.classList.remove('roll');
     void el.offsetWidth;
     el.classList.add('roll');
   }
   console.log(`[YGO] Dado d6: ${result}`);
+}
+
+function flipCoin() {
+  const heads = Math.random() < 0.5;
+  const el    = document.getElementById('coin-result');
+  if (el) {
+    el.textContent = heads ? '⬆ Testa' : '⬇ Croce';
+    el.style.color = heads ? 'var(--gold2)' : 'var(--text2)';
+    el.classList.remove('flip');
+    void el.offsetWidth;
+    el.classList.add('flip');
+  }
+  console.log(`[YGO] Moneta: ${heads ? 'Testa' : 'Croce'}`);
 }
 
 // Legacy stubs
@@ -1561,7 +1690,7 @@ async function saveDuelResult() {
   await syncUp();
 
   // Switch to history tab to show the new match
-  switchTab('matches');
+  switchPage('matches');
   duelState = null;
   renderDuel();
   alert('Risultato salvato nel tracker! ✓');
@@ -1586,8 +1715,10 @@ if (cfg.apiKey && cfg.binId) {
 
 renderPlayers();
 updateSelects();
-renderTab();
+renderMatches();
 renderDuel();
+// Init stats tab with matchups visible
+currentTab = 'matchups';
 console.log('[YGO] Tracker pronto');
 </script>
 </body>
