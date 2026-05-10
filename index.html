@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Yu-Gi-Oh! Score Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -17,10 +17,11 @@
     --p2: #c17a2e; --p2l: #f0c06a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow-x: hidden; }
   body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
 
   /* ── HEADER ── */
-  header { background: var(--bg2); border-bottom: 1px solid var(--border2); padding: 0.9rem 1rem; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+  header { background: var(--bg2); border-bottom: 1px solid var(--border2); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; width: 100%; }
   .logo-eye { width: 32px; height: 32px; background: radial-gradient(circle at 40% 40%, var(--gold2), var(--gold)); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; position: relative; flex-shrink: 0; box-shadow: 0 0 14px rgba(201,168,76,0.4); }
   .logo-eye::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; background: var(--bg); border-radius: 50%; }
   header h1 { font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.06em; color: var(--gold2); white-space: nowrap; }
@@ -65,16 +66,16 @@
 
   /* ── LAYOUT ── */
   .page { display: block; }
-  .container { max-width: 900px; margin: 0 auto; padding: 1rem 0.75rem 5.5rem; }
-  @media (min-width: 600px) { .container { padding: 1.5rem 1.5rem 5.5rem; } }
+  .container { max-width: 900px; margin: 0 auto; padding: 1rem 0.75rem 6rem; width: 100%; }
+  @media (min-width: 600px) { .container { padding: 1.5rem 1.5rem 6rem; } }
   .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1rem; margin-bottom: 0.9rem; }
   @media (min-width: 600px) { .panel { padding: 1.25rem 1.5rem; } }
   .panel-title { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
   .panel-title::before { content: ''; display: inline-block; width: 12px; height: 1px; background: var(--gold); opacity: 0.5; }
 
   /* ── BOTTOM NAV ── */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--bg2); border-top: 1px solid var(--border2); display: flex; padding-bottom: env(safe-area-inset-bottom, 0); }
-  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 4px 12px; background: none; border: none; cursor: pointer; color: var(--text3); transition: color 0.15s; position: relative; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: var(--bg2); border-top: 1px solid var(--border2); display: flex; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 4px 12px; background: none; border: none; cursor: pointer; color: var(--text3); transition: color 0.15s; position: relative; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   .nav-btn::after { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--gold); border-radius: 0 0 2px 2px; transition: width 0.2s; }
   .nav-btn.active { color: var(--gold2); }
   .nav-btn.active::after { width: 32px; }
@@ -83,7 +84,7 @@
 
   /* ── PLAYERS GRID ── */
   .players-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
-  @media (min-width: 480px) { .players-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+  @media (min-width: 560px) { .players-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } }
   .player-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem; }
   .player-card.p0 { border-top: 2px solid var(--p0); }
   .player-card.p1 { border-top: 2px solid var(--p1); }
@@ -104,22 +105,18 @@
   .deck-rm { cursor: pointer; opacity: 0.5; font-size: 14px; } .deck-rm:hover { opacity: 1; color: var(--red); }
 
   /* ── MATCH FORM ── */
-  .match-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .vs-col { display: none; }
-  .add-btn { grid-column: 1 / -1; }
-  @media (min-width: 640px) {
-    .match-form { grid-template-columns: 1fr 1fr auto 1fr 1fr auto; }
-    .vs-col { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 9px; font-family: 'Cinzel', serif; font-size: 11px; color: var(--text3); letter-spacing: 0.1em; }
-    .add-btn { grid-column: auto; }
-  }
-  .form-group { display: flex; flex-direction: column; gap: 4px; }
-  .form-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
-  select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; padding: 9px 10px; outline: none; cursor: pointer; width: 100%; }
+  .match-form { display: flex; flex-direction: column; gap: 10px; }
+  .match-players-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: end; }
+  .vs-col { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; font-family: 'Cinzel', serif; font-size: 11px; color: var(--text3); letter-spacing: 0.1em; }
+  .match-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; padding: 10px; outline: none; cursor: pointer; width: 100%; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239b9587' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   select:focus { border-color: var(--gold); }
-  .btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer; transition: all 0.15s; white-space: nowrap; width: 100%; }
+  .winner-row { display: flex; gap: 6px; align-items: stretch; }
+  .winner-select { flex: 0 0 90px; }
+  .btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; padding: 10px 18px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex: 1; }
   .btn-add:hover { background: var(--gold2); }
-  .winner-row { display: flex; gap: 6px; align-items: center; }
-  .winner-select { flex: 1; }
   .form-error { font-size: 12px; color: var(--red); margin-top: 6px; }
 
   /* ── TABS (stats page) ── */
@@ -127,19 +124,25 @@
   .tab { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 14px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; flex: 1; text-align: center; }
   .tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); }
 
-  /* ── HISTORY TABLE ── */
-  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 420px; }
-  th { text-align: left; padding: 8px 8px; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); }
-  td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; } tr:hover td { background: rgba(255,255,255,0.02); }
+  /* ── HISTORY — card layout su mobile ── */
+  .match-list { display: flex; flex-direction: column; gap: 6px; }
+  .match-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+  .match-card-side { display: flex; flex-direction: column; gap: 3px; }
+  .match-card-side.right { align-items: flex-end; text-align: right; }
+  .match-card-player { font-size: 11px; }
+  .match-card-deck { font-size: 13px; font-weight: 600; color: var(--text); }
+  .match-card-result { font-size: 12px; font-weight: 700; }
+  .match-card-result.win { color: var(--green); } .match-card-result.loss { color: var(--red); }
+  .match-card-center { text-align: center; }
+  .match-card-vs { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3); letter-spacing: 0.1em; }
+  .match-card-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .match-card-rm { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 4px; display: block; margin: 4px auto 0; }
+  .match-card-rm:hover { color: var(--red); }
   .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; display: inline-block; font-weight: 500; white-space: nowrap; }
   .badge.p0 { background: rgba(123,94,167,0.15); color: var(--p0l); }
   .badge.p1 { background: rgba(46,125,107,0.15); color: var(--p1l); }
   .badge.p2 { background: rgba(193,122,46,0.15); color: var(--p2l); }
   .win { color: var(--green); font-weight: 600; } .loss { color: var(--red); }
-  .btn-rm { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 4px; }
-  .btn-rm:hover { color: var(--red); background: rgba(193,74,74,0.1); }
 
   /* ── MATCHUPS ── */
   .matchup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -254,7 +257,7 @@
   .duel-dead-label { font-family: 'Cinzel', serif; font-size: 12px; color: var(--red); font-weight: 700; letter-spacing: 0.1em; }
   .duel-winner-label { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold2); font-weight: 700; letter-spacing: 0.1em; }
 
-  .duel-lp-display { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 700; text-align: center; line-height: 1; margin: 8px 0; transition: color 0.3s; }
+  .duel-lp-display { font-family: 'Cinzel', serif; font-size: clamp(2rem, 10vw, 3rem); font-weight: 700; text-align: center; line-height: 1; margin: 8px 0; transition: color 0.3s; }
   .duel-lp-display.p0 { color: var(--p0l); } .duel-lp-display.p1 { color: var(--p1l); } .duel-lp-display.p2 { color: var(--p2l); }
   .duel-lp-display.danger { color: var(--red) !important; animation: lp-pulse 1.2s ease-in-out infinite; }
   @keyframes lp-pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
@@ -282,7 +285,7 @@
   .duel-display-back:hover { color: var(--text); background: var(--border2); }
 
   .duel-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-  .duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600; padding: 14px 6px; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; }
+  .duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600; padding: clamp(10px,4vw,16px) 6px; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
   .duel-key:hover { background: var(--border2); }
   .duel-key:active { transform: scale(0.93); background: rgba(201,168,76,0.1); border-color: var(--gold); }
   .duel-key.zero { grid-column: span 3; }
@@ -371,30 +374,31 @@
     <div class="panel">
       <div class="panel-title">Registra Partita</div>
       <div class="match-form">
-        <div class="form-group">
-          <span class="form-label">Giocatore 1</span>
-          <select id="p1sel" onchange="updateDeckSelects()"></select>
+        <!-- Riga giocatori + mazzi -->
+        <div class="match-players-row">
+          <div class="form-group">
+            <span class="form-label">Giocatore 1</span>
+            <select id="p1sel" onchange="updateDeckSelects()"></select>
+            <select id="d1sel" style="margin-top:6px"></select>
+          </div>
+          <div class="vs-col">VS</div>
+          <div class="form-group">
+            <span class="form-label">Giocatore 2</span>
+            <select id="p2sel" onchange="updateDeckSelects()"></select>
+            <select id="d2sel" style="margin-top:6px"></select>
+          </div>
         </div>
-        <div class="form-group">
-          <span class="form-label">Mazzo 1</span>
-          <select id="d1sel"></select>
-        </div>
-        <div class="vs-col">VS</div>
-        <div class="form-group">
-          <span class="form-label">Giocatore 2</span>
-          <select id="p2sel" onchange="updateDeckSelects()"></select>
-        </div>
-        <div class="form-group">
-          <span class="form-label">Mazzo 2</span>
-          <select id="d2sel"></select>
-        </div>
-        <div class="form-group add-btn">
-          <span class="form-label">Vince il</span>
-          <div class="winner-row">
-            <select id="winner" class="winner-select">
-              <option value="1">G1</option>
-              <option value="2">G2</option>
+        <!-- Riga vincitore + aggiungi -->
+        <div class="match-bottom-row">
+          <div class="form-group">
+            <span class="form-label">Vince il</span>
+            <select id="winner">
+              <option value="1">Giocatore 1</option>
+              <option value="2">Giocatore 2</option>
             </select>
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <span class="form-label">&nbsp;</span>
             <button class="btn-add" onclick="addMatch()">+ Aggiungi</button>
           </div>
         </div>
@@ -983,49 +987,45 @@ function renderTab() {
 }
 
 // ─────────────────────────────────────────────
-// RENDER: STORICO
+// RENDER: STORICO (card layout)
 // ─────────────────────────────────────────────
 function renderMatches() {
   const c = document.getElementById('tab-matches');
+  if (!c) return;
   if (!state.matches.length) {
     c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
     return;
   }
 
-  const rows = [...state.matches].reverse().map((m, ri) => {
+  const cards = [...state.matches].reverse().map((m, ri) => {
     const realIdx = state.matches.length - 1 - ri;
-    const p1   = state.players[m.p1i];
-    const p2   = state.players[m.p2i];
-    const d1   = p1?.decks[m.d1i] || '?';
-    const d2   = p2?.decks[m.d2i] || '?';
-    const p1w  = m.winner === m.p1i;
-    const dt   = new Date(m.ts).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const p1  = state.players[m.p1i];
+    const p2  = state.players[m.p2i];
+    const d1  = p1?.decks[m.d1i] || '?';
+    const d2  = p2?.decks[m.d2i] || '?';
+    const p1w = m.winner === m.p1i;
+    const dt  = new Date(m.ts).toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
-    return `<tr>
-      <td><span class="badge ${pClass[m.p1i]}">${escH(p1?.name || '?')}</span></td>
-      <td>${escH(d1)}</td>
-      <td style="text-align:center">
-        <span class="${p1w ? 'win' : 'loss'}">${p1w ? 'V' : 'S'}</span>
-        &nbsp;·&nbsp;
-        <span class="${p1w ? 'loss' : 'win'}">${p1w ? 'S' : 'V'}</span>
-      </td>
-      <td>${escH(d2)}</td>
-      <td><span class="badge ${pClass[m.p2i]}">${escH(p2?.name || '?')}</span></td>
-      <td style="color:var(--text3);font-size:11px">${dt}</td>
-      <td><button class="btn-rm" onclick="removeMatch(${realIdx})">×</button></td>
-    </tr>`;
+    return `<div class="match-card">
+      <div class="match-card-side">
+        <div class="match-card-player"><span class="badge ${pClass[m.p1i]}">${escH(p1?.name||'?')}</span></div>
+        <div class="match-card-deck">${escH(d1)}</div>
+        <div class="match-card-result ${p1w?'win':'loss'}">${p1w?'VITTORIA':'SCONFITTA'}</div>
+      </div>
+      <div class="match-card-center">
+        <div class="match-card-vs">VS</div>
+        <div class="match-card-date">${dt}</div>
+        <button class="match-card-rm" onclick="removeMatch(${realIdx})">×</button>
+      </div>
+      <div class="match-card-side right">
+        <div class="match-card-player"><span class="badge ${pClass[m.p2i]}">${escH(p2?.name||'?')}</span></div>
+        <div class="match-card-deck">${escH(d2)}</div>
+        <div class="match-card-result ${p1w?'loss':'win'}">${p1w?'SCONFITTA':'VITTORIA'}</div>
+      </div>
+    </div>`;
   }).join('');
 
-  c.innerHTML = `
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>G1</th><th>Mazzo</th><th style="text-align:center">Ris.</th>
-          <th>Mazzo</th><th>G2</th><th>Data</th><th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+  c.innerHTML = `<div class="match-list">${cards}</div>`;
 }
 
 // ─────────────────────────────────────────────
