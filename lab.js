@@ -842,9 +842,12 @@ function labTapCard(code, ctrl, loc, seq) {
     html = `<div class="lab-card-actions">${acts.map(a => `<button class="lab-opt act" onclick="labCloseCard(); ${a.fn}">${escH(a.label)}</button>`).join('')}</div>`;
   } else if (m) {
     const mine = ctrl === m.player;
+    const meTurn = (m.player ^ labDuel.first) === 0;
     const why = !mine && [labE.ocg.OcgMessageType.SELECT_IDLECMD, labE.ocg.OcgMessageType.SELECT_BATTLECMD].includes(m.type)
-      ? `Adesso sta giocando ${labWho(m.player)}. ${labWho(ctrl)} potrà rispondere solo dopo una sua azione (evocazione, attivazione, attacco o cambio di fase): in quel momento il Laboratorio chiederà se vuole attivare qualcosa.`
-      : `In questo momento non si può usare: le carte utilizzabili sono evidenziate in oro.`;
+      ? (meTurn
+          ? `Adesso tocca a te. L'avversario potrà usare questa carta solo in risposta a una tua azione (evocazione, attivazione, attacco o cambio di fase): in quel momento il Laboratorio gli chiederà se vuole attivarla.`
+          : `Adesso tocca all'avversario. Potrai usare questa carta solo in risposta a una sua azione (evocazione, attivazione, attacco o cambio di fase): in quel momento il Laboratorio ti chiederà se vuoi attivarla.`)
+      : `In questo momento questa carta non si può usare. Le carte utilizzabili sono evidenziate in oro.`;
     html = `<div class="lab-card-note">${escH(why)}</div>`;
   }
   labShowCard(code, html);
