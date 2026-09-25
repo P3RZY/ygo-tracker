@@ -543,7 +543,7 @@ let currentPage = 'duel';
 
 function switchPage(p) {
   currentPage = p;
-  ['duel','matches','stats','settings'].forEach(id => {
+  ['duel','matches','stats','lab','settings'].forEach(id => {
     document.getElementById(`page-${id}`).style.display = id === p ? '' : 'none';
     document.getElementById(`nav-${id}`).classList.toggle('active', id === p);
   });
@@ -551,6 +551,7 @@ function switchPage(p) {
   if (p === 'matches')  { renderMatches(); }
   if (p === 'stats')    { renderTab(); }
   if (p === 'settings') { renderPlayers(); }
+  if (p === 'lab')      { labOnShow(); }
 }
 
 // ─────────────────────────────────────────────
@@ -1625,6 +1626,48 @@ async function searchBoth(fname, num) {
   return { en, it };
 }
 
+/**
+ * Ricerca condivisa (lista carte del mazzo e Laboratorio): EN + IT, con fallback per parole.
+ * Ritorna al massimo 30 risultati { id, name, it?, type } ordinati per pertinenza.
+ * `isCurrent` permette di interrompere una ricerca superata da una più recente.
+ */
+async function searchCardsApi(q, isCurrent = () => true) {
+  const words = normName(q).split(' ').filter(Boolean);
+  let { en, it } = await searchBoth(q, 40);
+
+  if (!en.length && !it.length) {
+    const tokens = [...new Set(words)].filter(w => w.length >= 3).sort((a, b) => b.length - a.length).slice(0, 2);
+    for (const t of tokens) {
+      if (!isCurrent()) return [];
+      const r = await searchBoth(t);
+      const ok = c => { const n = normName(c.name); return words.every(w => n.includes(w)); };
+      en = r.en.filter(ok); it = r.it.filter(ok);
+      if (en.length || it.length) break;
+    }
+  }
+  const playable = c => !/^(Token|Skill Card)$/.test(c.type || "");
+  en = en.filter(playable); it = it.filter(playable);
+
+  const map = new Map();
+  en.forEach(c => { cacheCard(c); map.set(String(c.id), { id: String(c.id), name: c.name, type: c.type }); });
+  it.forEach(c => {
+    const id = String(c.id);
+    if (map.has(id)) { map.get(id).it = c.name; return; }
+    cacheCard(c, false);
+    map.set(id, { id, name: c.name, type: c.type });
+  });
+  saveCardCache();
+
+  const ql = normName(q);
+  const score = r => {
+    const names = [r.name, r.it].filter(Boolean).map(normName);
+    if (names.some(n => n === ql)) return 0;
+    if (names.some(n => n.startsWith(ql))) return 1;
+    return 2;
+  };
+  return [...map.values()].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, 30);
+}
+
 async function runCardSearch(q) {
   const box = document.getElementById('dm-results');
   const seq = ++searchSeq;
@@ -1635,41 +1678,9 @@ async function runCardSearch(q) {
   }
   box.innerHTML = `<div class="dm-empty">Ricerca…</div>`;
   try {
-    const words = normName(q).split(' ').filter(Boolean);
-    let { en, it } = await searchBoth(q, 40);
-
-    if (!en.length && !it.length) {
-      const tokens = [...new Set(words)].filter(w => w.length >= 3).sort((a, b) => b.length - a.length).slice(0, 2);
-      for (const t of tokens) {
-        if (seq !== searchSeq) return;
-        const r = await searchBoth(t);
-        const ok = c => { const n = normName(c.name); return words.every(w => n.includes(w)); };
-        en = r.en.filter(ok); it = r.it.filter(ok);
-        if (en.length || it.length) break;
-      }
-    }
-    const playable = c => !/^(Token|Skill Card)$/.test(c.type || "");
-    en = en.filter(playable); it = it.filter(playable);
+    const results = await searchCardsApi(q, () => seq === searchSeq);
     if (seq !== searchSeq) return;
-
-    const map = new Map();
-    en.forEach(c => { cacheCard(c); map.set(String(c.id), { id: String(c.id), name: c.name, type: c.type }); });
-    it.forEach(c => {
-      const id = String(c.id);
-      if (map.has(id)) { map.get(id).it = c.name; return; }
-      cacheCard(c, false);
-      map.set(id, { id, name: c.name, type: c.type });
-    });
-    saveCardCache();
-
-    const ql = normName(q);
-    const score = r => {
-      const names = [r.name, r.it].filter(Boolean).map(normName);
-      if (names.some(n => n === ql)) return 0;
-      if (names.some(n => n.startsWith(ql))) return 1;
-      return 2;
-    };
-    dmResults = [...map.values()].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, 30);
+    dmResults = results;
     dmResults.q = q;
     renderSearchResults();
   } catch(e) {

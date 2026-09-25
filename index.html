@@ -85,6 +85,15 @@
   </div>
 </div>
 
+<div class="page" id="page-lab" style="display:none">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-title">Laboratorio regole</div>
+      <div id="lab-content"></div>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-settings" style="display:none">
   <div class="container">
     <div class="panel">
@@ -175,6 +184,31 @@
   </div>
 </div>
 
+<!-- ── LABORATORIO: scelta carta e dettaglio carta ─────────── -->
+<div class="dm-overlay" id="lab-picker" onclick="if(event.target===this) labClosePicker()">
+  <div class="dm-box">
+    <div class="dm-head">
+      <div class="dm-title" id="lab-picker-title"></div>
+      <button class="btn-refresh" onclick="labClosePicker()" title="Chiudi">✕</button>
+    </div>
+    <div class="dm-search">
+      <input type="search" id="lab-picker-input" placeholder="🔍 Cerca carta (italiano o inglese)" oninput="labPickerSearch(this.value)" autocomplete="off" enterkeyhint="search"/>
+    </div>
+    <div class="dm-msg" id="lab-picker-msg"></div>
+    <div class="dm-results" id="lab-picker-results"></div>
+    <div class="dm-footer"><button class="btn-cfg" onclick="labClosePicker()">Fatto</button></div>
+  </div>
+</div>
+<div class="dm-overlay" id="lab-card" onclick="if(event.target===this) labCloseCard()">
+  <div class="dm-box">
+    <div class="dm-head">
+      <span></span>
+      <button class="btn-refresh" onclick="labCloseCard()" title="Chiudi">✕</button>
+    </div>
+    <div id="lab-card-body"></div>
+  </div>
+</div>
+
 <!-- ── BOTTOM NAV ───────────────────────────────────────── -->
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-duel" onclick="switchPage('duel')">
@@ -189,6 +223,10 @@
     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 20h20L12 3z"/><path d="M12 3l3.5 17"/><path d="M5.5 14h9.3"/></svg></span>
     <span class="nav-label">Statistiche</span>
   </button>
+  <button class="nav-btn" id="nav-lab" onclick="switchPage('lab')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18L12 21z"/><path d="M7.5 9c2.5-2.2 6.5-2.2 9 0-2.5 2.2-6.5 2.2-9 0z"/><circle cx="12" cy="9" r="1.1" fill="currentColor" stroke="none"/></svg></span>
+    <span class="nav-label">Lab</span>
+  </button>
   <button class="nav-btn" id="nav-settings" onclick="switchPage('settings')">
     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="16" rx="1.5"/><path d="M5 6.5V19.5A1.5 1.5 0 0 0 6.5 21H16"/><path d="M14 8l2 3-2 3-2-3z"/></svg></span>
     <span class="nav-label">Mazzi</span>
@@ -198,5 +236,6 @@
 <div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-btn"></button></div>
 
 <script src="app.js"></script>
+<script src="lab.js"></script>
 </body>
 </html>
