@@ -339,6 +339,48 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg2); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── DECK LIST EDITOR ── */
+  .deck-open { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .deck-open:hover { text-decoration: underline; }
+  .deck-count { font-size: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 0 6px; line-height: 1.6; }
+  .dm-overlay { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,0.75); display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 1rem 0.5rem 2rem; }
+  .dm-overlay.open { display: flex; }
+  .dm-box { background: var(--card); border: 1px solid var(--border2); border-radius: 12px; width: 100%; max-width: 720px; padding: 1rem; }
+  @media (min-width: 600px) { .dm-box { padding: 1.25rem 1.5rem; } }
+  .dm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .dm-title { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; color: var(--gold2); word-break: break-word; }
+  .dm-sub { font-size: 12px; color: var(--text2); }
+  .dm-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .dm-import { display: none; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+  .dm-import.open { display: block; }
+  .dm-import textarea { width: 100%; min-height: 110px; background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: monospace; font-size: 12px; padding: 8px; outline: none; resize: vertical; margin-bottom: 8px; }
+  .dm-import textarea:focus { border-color: var(--gold); }
+  .dm-import-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dm-hint { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .dm-search { display: flex; gap: 6px; margin-bottom: 8px; }
+  .dm-search input, .dm-search select { background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; padding: 8px 10px; outline: none; }
+  .dm-search input { flex: 1; min-width: 0; }
+  .dm-search input:focus, .dm-search select:focus { border-color: var(--gold); }
+  .dm-results { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
+  .dm-results:not(:empty) { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .dm-section { margin-top: 14px; }
+  .dm-section-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .dm-section-title .bad { color: var(--red); }
+  .dm-list { display: flex; flex-direction: column; gap: 4px; }
+  .dm-empty { font-size: 12px; color: var(--text3); font-style: italic; }
+  .card-row { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; }
+  .card-row img { width: 34px; height: 50px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--bg2); }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-type { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-qty { font-family: 'Cinzel', serif; font-weight: 700; color: var(--gold2); min-width: 20px; text-align: center; }
+  .card-btn { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all 0.15s; }
+  .card-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .dm-msg { font-size: 12px; min-height: 1.2em; color: var(--text2); margin-bottom: 6px; }
+  .dm-msg.err { color: var(--red); } .dm-msg.ok { color: var(--green); }
+  .dm-credit { font-size: 10px; color: var(--text3); margin-top: 14px; text-align: right; }
+  .dm-credit a { color: var(--text3); }
 </style>
 </head>
 <body>
@@ -453,6 +495,46 @@
   </div>
 </div>
 
+<!-- ── DECK LIST EDITOR ─────────────────────────────────── -->
+<div class="dm-overlay" id="deck-modal" onclick="if(event.target===this) closeDeckEditor()">
+  <div class="dm-box">
+    <div class="dm-head">
+      <div>
+        <div class="dm-title" id="dm-title"></div>
+        <div class="dm-sub" id="dm-counts"></div>
+      </div>
+      <button class="btn-refresh" onclick="closeDeckEditor()" title="Chiudi">✕</button>
+    </div>
+    <div class="dm-actions">
+      <button class="btn-cfg-sec" onclick="toggleDeckImport()">⇩ Importa</button>
+      <button class="btn-cfg-sec" onclick="exportYdkFile()">⇧ Scarica .ydk</button>
+      <button class="btn-cfg-sec" onclick="copyYdkText()">Copia .ydk</button>
+      <button class="btn-cfg-sec" onclick="copyYdke()">Copia YDKE</button>
+      <button class="btn-cfg-sec" onclick="clearDeckList()">Svuota</button>
+    </div>
+    <div class="dm-import" id="dm-import">
+      <div class="dm-hint">Incolla il contenuto di un file .ydk (Dueling Nexus → Export) oppure un link ydke://</div>
+      <textarea id="dm-import-text" placeholder="#main&#10;14558127&#10;...&#10;#extra&#10;...&#10;!side&#10;..."></textarea>
+      <div class="dm-import-row">
+        <button class="btn-cfg" onclick="importDeckFromText(document.getElementById('dm-import-text').value)">Importa testo</button>
+        <button class="btn-cfg-sec" onclick="document.getElementById('dm-file').click()">Scegli file .ydk</button>
+        <input type="file" id="dm-file" accept=".ydk,.txt" style="display:none" onchange="importDeckFromFile(this)"/>
+      </div>
+    </div>
+    <div class="dm-msg" id="dm-msg"></div>
+    <div class="dm-search">
+      <input type="text" id="dm-search-input" placeholder="Cerca carta (IT o EN, min 3 lettere)..." oninput="onCardSearch(this.value)" autocomplete="off"/>
+      <select id="dm-target" title="Dove aggiungere">
+        <option value="auto">Main/Extra</option>
+        <option value="side">Side</option>
+      </select>
+    </div>
+    <div class="dm-results" id="dm-results"></div>
+    <div id="dm-sections"></div>
+    <div class="dm-credit">Dati carte: <a href="https://ygoprodeck.com" target="_blank" rel="noopener">YGOPRODeck</a></div>
+  </div>
+</div>
+
 <!-- ── BOTTOM NAV ───────────────────────────────────────── -->
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-duel" onclick="switchPage('duel')">
@@ -488,8 +570,15 @@ let state = {
     { name: 'Giocatore 2', decks: ['Exodia', 'Blackwing'] },
     { name: 'Giocatore 3', decks: ['Cyber Dragon'] }
   ],
-  matches: []
+  matches: [],
+  deckLists: {}   // { "<playerIdx>::<nomeMazzo>": { main:[id], extra:[id], side:[id] } }
 };
+
+/** Garantisce i campi introdotti dopo (bin/localStorage vecchi non li hanno). */
+function normalizeState() {
+  if (!state.deckLists || typeof state.deckLists !== 'object') state.deckLists = {};
+  if (!Array.isArray(state.matches)) state.matches = [];
+}
 
 // ─────────────────────────────────────────────
 // LOCAL STORAGE
@@ -510,6 +599,7 @@ function loadLocal() {
     const parsed = JSON.parse(raw);
     if (parsed.cfg)   cfg   = parsed.cfg;
     if (parsed.state) state = parsed.state;
+    normalizeState();
     console.log('[YGO] Dati locali caricati:', { binId: cfg.binId, players: state.players.length, matches: state.matches.length });
   } catch(e) {
     console.error('[YGO] Errore lettura localStorage:', e);
@@ -662,7 +752,7 @@ async function connect() {
     const remote = await readBin();
     if (remote?.players) {
       console.log('[YGO] Dati remoti validi, aggiorno state locale');
-      state = remote;
+      state = remote; normalizeState();
     } else {
       console.warn('[YGO] Dati remoti privi di "players", mantengo state locale:', remote);
     }
@@ -755,7 +845,9 @@ async function syncDown() {
     }
 
     state = remote;
+    normalizeState();
     saveLocal();
+    if (dmCtx) renderDeckEditor();
     renderPlayers();
     updateSelects();
     renderMatches();
@@ -834,7 +926,9 @@ function renderPlayers() {
     p.decks.forEach((dk, j) => {
       const t = document.createElement('div');
       t.className = `deck-tag ${pClass[i]}`;
-      t.innerHTML = `${escH(dk)}<span class="deck-rm" onclick="removeDeck(${i},${j})">×</span>`;
+      const dl = state.deckLists[deckKey(i, dk)];
+      const nMain = dl ? dl.main.length : 0;
+      t.innerHTML = `<span class="deck-open" onclick="openDeckEditor(${i},${j})" title="Lista carte">${escH(dk)}<span class="deck-count">${nMain ? nMain : '📜'}</span></span><span class="deck-rm" onclick="removeDeck(${i},${j})">×</span>`;
       dt.appendChild(t);
     });
   });
@@ -844,6 +938,7 @@ function addDeck(pi) {
   const inp = document.getElementById(`ni${pi}`);
   const v   = inp.value.trim();
   if (!v) return;
+  if (state.players[pi].decks.includes(v)) { alert('Questo giocatore ha già un mazzo con questo nome.'); return; }
   state.players[pi].decks.push(v);
   inp.value = '';
   console.log(`[YGO] Mazzo aggiunto al giocatore ${pi}:`, v);
@@ -851,7 +946,12 @@ function addDeck(pi) {
 }
 
 function removeDeck(pi, di) {
+  const name = state.players[pi].decks[di];
+  const dl   = state.deckLists[deckKey(pi, name)];
+  if (dl && (dl.main.length + dl.extra.length + dl.side.length) > 0 &&
+      !confirm(`Eliminare "${name}" e la sua lista carte?`)) return;
   const removed = state.players[pi].decks.splice(di, 1);
+  if (!state.players[pi].decks.includes(name)) delete state.deckLists[deckKey(pi, name)];
   console.log(`[YGO] Mazzo rimosso dal giocatore ${pi}:`, removed[0]);
   saveLocal(); renderPlayers(); updateSelects(); syncUp();
 }
@@ -1695,6 +1795,421 @@ async function saveDuelResult() {
   renderDuel();
   alert('Risultato salvato nel tracker! ✓');
 }
+
+// ─────────────────────────────────────────────
+// DECK LIST — dati carte da YGOPRODeck, import/export .ydk e YDKE
+// ─────────────────────────────────────────────
+const CARD_CACHE_KEY = 'ygo_cards_v1';
+const YGOPRO_API     = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
+const CARD_IMG       = id => `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`;
+const SECTION_MAX    = { main: 60, extra: 15, side: 15 };
+const SECTION_MIN    = { main: 40, extra: 0,  side: 0  };
+const SECTION_LABEL  = { main: 'Main Deck', extra: 'Extra Deck', side: 'Side Deck' };
+const MAX_COPIES     = 3;
+
+// Cache locale dei dati carta (solo nome/tipo) — NON va nel bin per non gonfiarlo
+let cardCache = {};
+try { cardCache = JSON.parse(localStorage.getItem(CARD_CACHE_KEY) || '{}'); } catch(e) { cardCache = {}; }
+
+function saveCardCache() {
+  try { localStorage.setItem(CARD_CACHE_KEY, JSON.stringify(cardCache)); }
+  catch(e) { console.warn('[YGO] Cache carte piena, reset', e); cardCache = {}; }
+}
+
+function deckKey(pi, name) { return `${pi}::${name}`; }
+
+function getDeckList(create) {
+  if (!dmCtx) return null;
+  const k = deckKey(dmCtx.pi, dmCtx.name);
+  if (!state.deckLists[k] && create) state.deckLists[k] = { main: [], extra: [], side: [] };
+  return state.deckLists[k] || { main: [], extra: [], side: [] };
+}
+
+function isExtraFrame(f) { return /^(fusion|synchro|xyz|link)/.test(f || ''); }
+
+function cacheCard(c, overwrite = true) {
+  const entry = { n: c.name, f: c.frameType || '', t: c.type || '' };
+  const id = String(c.id);
+  if (overwrite || !cardCache[id]) cardCache[id] = entry;
+  // Gli artwork alternativi hanno id propri: li mappiamo sulla stessa carta
+  (c.card_images || []).forEach(im => {
+    const aid = String(im.id);
+    if (overwrite || !cardCache[aid]) cardCache[aid] = entry;
+  });
+  return entry;
+}
+
+async function apiCards(params) {
+  const res = await fetch(`${YGOPRO_API}?${new URLSearchParams(params)}`);
+  if (res.status === 400) return [];            // l'API risponde 400 quando non trova nulla
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const j = await res.json();
+  return j.data || [];
+}
+
+/** Scarica i dati delle carte non ancora in cache. Ritorna gli id sconosciuti. */
+async function ensureCards(ids) {
+  const missing = [...new Set(ids.map(String))].filter(id => !cardCache[id]);
+  if (!missing.length) return [];
+  for (let i = 0; i < missing.length; i += 40) {
+    const chunk = missing.slice(i, i + 40);
+    try { (await apiCards({ id: chunk.join(',') })).forEach(c => cacheCard(c)); }
+    catch(e) { console.error('[YGO] ensureCards chunk:', e); }
+  }
+  // Se un id non valido fa fallire la richiesta multipla, riprova uno per uno
+  const still = missing.filter(id => !cardCache[id]);
+  for (let i = 0; i < still.length && i < 90; i += 10) {
+    await Promise.all(still.slice(i, i + 10).map(id =>
+      apiCards({ id }).then(r => r.forEach(c => cacheCard(c))).catch(() => {})));
+  }
+  saveCardCache();
+  return missing.filter(id => !cardCache[id]);
+}
+
+// ── Formati ──
+function parseYdk(text) {
+  const out = { main: [], extra: [], side: [] };
+  let sec = 'main';
+  text.split(/\r?\n/).forEach(raw => {
+    const l = raw.trim();
+    if (!l) return;
+    if (/^#main/i.test(l))  { sec = 'main';  return; }
+    if (/^#extra/i.test(l)) { sec = 'extra'; return; }
+    if (/^!side/i.test(l))  { sec = 'side';  return; }
+    if (l.startsWith('#') || l.startsWith('!')) return;
+    const m = l.match(/^(\d+)/);
+    if (m) out[sec].push(String(parseInt(m[1], 10)));
+  });
+  return out;
+}
+
+function toYdk(l) {
+  return ['#created by YGO Tracker', '#main', ...l.main, '#extra', ...l.extra, '!side', ...l.side, ''].join('\n');
+}
+
+function b64ToIds(b64) {
+  if (!b64) return [];
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const dv = new DataView(bytes.buffer);
+  const ids = [];
+  for (let i = 0; i + 3 < bytes.length; i += 4) ids.push(String(dv.getUint32(i, true)));
+  return ids;
+}
+
+function idsToB64(ids) {
+  const buf = new ArrayBuffer(ids.length * 4);
+  const dv  = new DataView(buf);
+  ids.forEach((id, i) => dv.setUint32(i * 4, Number(id) >>> 0, true));
+  let s = '';
+  new Uint8Array(buf).forEach(b => { s += String.fromCharCode(b); });
+  return btoa(s);
+}
+
+function parseYdke(url) {
+  const parts = url.trim().replace(/^ydke:\/\//i, '').split('!');
+  if (parts.length < 3) throw new Error('Link YDKE non valido');
+  return { main: b64ToIds(parts[0]), extra: b64ToIds(parts[1]), side: b64ToIds(parts[2]) };
+}
+
+function toYdke(l) {
+  return `ydke://${idsToB64(l.main)}!${idsToB64(l.extra)}!${idsToB64(l.side)}!`;
+}
+
+// ── Editor UI ──
+let dmCtx = null;          // { pi, name }
+let dmSyncTimer = null;
+let searchTimer = null, searchSeq = 0;
+
+function dmMsg(text, cls = '') {
+  const el = document.getElementById('dm-msg');
+  el.textContent = text;
+  el.className = 'dm-msg' + (cls ? ' ' + cls : '');
+}
+
+function scheduleDeckSync() {
+  clearTimeout(dmSyncTimer);
+  dmSyncTimer = setTimeout(() => { dmSyncTimer = null; syncUp(); }, 1500);
+}
+
+function commitDeck() {
+  saveLocal();
+  renderDeckEditor();
+  renderPlayers();
+  scheduleDeckSync();
+}
+
+async function openDeckEditor(pi, di) {
+  const name = state.players[pi]?.decks[di];
+  if (name == null) return;
+  dmCtx = { pi, name };
+  document.getElementById('dm-title').textContent = `${name} — ${state.players[pi].name}`;
+  document.getElementById('dm-search-input').value = '';
+  document.getElementById('dm-results').innerHTML = '';
+  document.getElementById('dm-import').classList.remove('open');
+  document.getElementById('dm-import-text').value = '';
+  dmMsg('');
+  document.getElementById('deck-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderDeckEditor();
+
+  const l = getDeckList(false);
+  const all = [...l.main, ...l.extra, ...l.side];
+  if (all.some(id => !cardCache[id])) {
+    dmMsg('Caricamento dati carte...');
+    const unknown = await ensureCards(all);
+    dmMsg(unknown.length ? `${unknown.length} carte non trovate nel database.` : '', unknown.length ? 'err' : '');
+    if (dmCtx) renderDeckEditor();
+  }
+}
+
+function closeDeckEditor() {
+  dmCtx = null;
+  document.getElementById('deck-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  if (dmSyncTimer) { clearTimeout(dmSyncTimer); dmSyncTimer = null; syncUp(); }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && dmCtx) closeDeckEditor(); });
+
+function typeOrder(c) {
+  if (!c) return 9;
+  if (c.f === 'spell') return 2;
+  if (c.f === 'trap')  return 3;
+  if (c.f.startsWith('fusion'))  return 4;
+  if (c.f.startsWith('synchro')) return 5;
+  if (c.f.startsWith('xyz'))     return 6;
+  if (c.f === 'link')            return 7;
+  return 1;
+}
+
+function cardRowHtml(id, name, type, controls) {
+  return `<div class="card-row">
+    <img src="${CARD_IMG(id)}" loading="lazy" alt="" onerror="this.style.visibility='hidden'"/>
+    <div class="card-info">
+      <div class="card-name">${escH(name)}</div>
+      <div class="card-type">${escH(type)}</div>
+    </div>
+    ${controls}
+  </div>`;
+}
+
+function renderDeckEditor() {
+  if (!dmCtx) return;
+  const l = getDeckList(false);
+  const bad = sec => l[sec].length > SECTION_MAX[sec] || l[sec].length < SECTION_MIN[sec];
+  document.getElementById('dm-counts').innerHTML =
+    ['main', 'extra', 'side'].map(sec =>
+      `<span style="${bad(sec) ? 'color:var(--red)' : ''}">${SECTION_LABEL[sec].split(' ')[0]} ${l[sec].length}</span>`
+    ).join(' · ');
+
+  let html = '';
+  ['main', 'extra', 'side'].forEach(sec => {
+    const counts = new Map();
+    l[sec].forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
+    const rows = [...counts.entries()].sort((a, b) => {
+      const ca = cardCache[a[0]], cb = cardCache[b[0]];
+      return typeOrder(ca) - typeOrder(cb) || (ca?.n || a[0]).localeCompare(cb?.n || b[0]);
+    });
+    html += `<div class="dm-section">
+      <div class="dm-section-title">
+        <span>${SECTION_LABEL[sec]}</span>
+        <span class="${bad(sec) ? 'bad' : ''}">${l[sec].length}${sec === 'main' ? ' / 40–60' : ' / ' + SECTION_MAX[sec]}</span>
+      </div>
+      <div class="dm-list">`;
+    if (!rows.length) html += `<div class="dm-empty">Vuoto</div>`;
+    rows.forEach(([id, n]) => {
+      const c = cardCache[id];
+      const controls = `
+        <button class="card-btn" title="${sec === 'side' ? 'Sposta nel Main/Extra' : 'Sposta nel Side'}" onclick="moveCard('${sec}','${id}')">⇄</button>
+        <button class="card-btn" onclick="changeCard('${sec}','${id}',-1)">−</button>
+        <span class="card-qty">${n}</span>
+        <button class="card-btn" onclick="changeCard('${sec}','${id}',1)">+</button>`;
+      html += cardRowHtml(id, c ? c.n : `#${id}`, c ? c.t : 'caricamento...', controls);
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('dm-sections').innerHTML = html;
+}
+
+function copiesOf(l, id) {
+  const c = cardCache[id];
+  // conta anche gli artwork alternativi della stessa carta
+  const same = x => x === id || (c && cardCache[x] === c);
+  return [...l.main, ...l.extra, ...l.side].filter(same).length;
+}
+
+function canAdd(l, sec, id) {
+  if (copiesOf(l, id) >= MAX_COPIES) { dmMsg(`Massimo ${MAX_COPIES} copie per carta.`, 'err'); return false; }
+  if (l[sec].length >= SECTION_MAX[sec]) { dmMsg(`${SECTION_LABEL[sec]} pieno (${SECTION_MAX[sec]}).`, 'err'); return false; }
+  return true;
+}
+
+function naturalSection(id) { return isExtraFrame(cardCache[id]?.f) ? 'extra' : 'main'; }
+
+function addCard(id) {
+  const l   = getDeckList(true);
+  const sec = document.getElementById('dm-target').value === 'side' ? 'side' : naturalSection(id);
+  if (!canAdd(l, sec, id)) return;
+  l[sec].push(String(id));
+  dmMsg(`+1 ${cardCache[id]?.n || id} → ${SECTION_LABEL[sec]}`, 'ok');
+  commitDeck();
+}
+
+function changeCard(sec, id, delta) {
+  const l = getDeckList(true);
+  if (delta > 0) {
+    if (!canAdd(l, sec, id)) return;
+    l[sec].push(id);
+  } else {
+    const idx = l[sec].lastIndexOf(id);
+    if (idx >= 0) l[sec].splice(idx, 1);
+  }
+  dmMsg('');
+  commitDeck();
+}
+
+function moveCard(sec, id) {
+  const l    = getDeckList(true);
+  const dest = sec === 'side' ? naturalSection(id) : 'side';
+  if (l[dest].length >= SECTION_MAX[dest]) { dmMsg(`${SECTION_LABEL[dest]} pieno.`, 'err'); return; }
+  const idx = l[sec].lastIndexOf(id);
+  if (idx < 0) return;
+  l[sec].splice(idx, 1);
+  l[dest].push(id);
+  dmMsg('');
+  commitDeck();
+}
+
+function clearDeckList() {
+  const l = getDeckList(false);
+  if (!l.main.length && !l.extra.length && !l.side.length) return;
+  if (!confirm('Svuotare la lista carte di questo mazzo?')) return;
+  delete state.deckLists[deckKey(dmCtx.pi, dmCtx.name)];
+  dmMsg('Lista svuotata.', 'ok');
+  commitDeck();
+}
+
+// ── Ricerca carte ──
+function onCardSearch(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => runCardSearch(q.trim()), 350);
+}
+
+async function runCardSearch(q) {
+  const box = document.getElementById('dm-results');
+  if (q.length < 3) { searchSeq++; box.innerHTML = ''; return; }
+  const seq = ++searchSeq;
+  box.innerHTML = `<div class="dm-empty">Ricerca...</div>`;
+  try {
+    const [en, it] = await Promise.all([
+      apiCards({ fname: q, num: 30, offset: 0 }).catch(() => []),
+      apiCards({ fname: q, num: 30, offset: 0, language: 'it' }).catch(() => [])
+    ]);
+    if (seq !== searchSeq) return;
+
+    const map = new Map();
+    en.forEach(c => { cacheCard(c); map.set(String(c.id), { id: String(c.id), name: c.name, type: c.type }); });
+    it.forEach(c => {
+      const id = String(c.id);
+      if (map.has(id)) { map.get(id).it = c.name; return; }
+      cacheCard(c, false);
+      map.set(id, { id, name: c.name, type: c.type });
+    });
+    saveCardCache();
+
+    const ql = q.toLowerCase();
+    const score = r => {
+      const names = [r.name, r.it].filter(Boolean).map(s => s.toLowerCase());
+      if (names.some(n => n === ql)) return 0;
+      if (names.some(n => n.startsWith(ql))) return 1;
+      return 2;
+    };
+    const results = [...map.values()].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, 30);
+
+    if (!results.length) { box.innerHTML = `<div class="dm-empty">Nessuna carta trovata.</div>`; return; }
+    box.innerHTML = results.map(r => cardRowHtml(
+      r.id,
+      r.it && r.it !== r.name ? `${r.name} · ${r.it}` : r.name,
+      r.type || '',
+      `<button class="card-btn" title="Aggiungi" onclick="addCard('${r.id}')">+</button>`
+    )).join('');
+  } catch(e) {
+    console.error('[YGO] Ricerca carte:', e);
+    if (seq === searchSeq) box.innerHTML = `<div class="dm-empty">Errore di rete durante la ricerca.</div>`;
+  }
+}
+
+// ── Import / Export ──
+function toggleDeckImport() {
+  document.getElementById('dm-import').classList.toggle('open');
+}
+
+async function importDeckFromText(text) {
+  if (!dmCtx) return;
+  text = (text || '').trim();
+  let parsed;
+  try {
+    const ydke = text.match(/ydke:\/\/[A-Za-z0-9+/=!]+/i);
+    parsed = ydke ? parseYdke(ydke[0]) : parseYdk(text);
+  } catch(e) {
+    dmMsg('Formato non riconosciuto: ' + e.message, 'err');
+    return;
+  }
+  const total = parsed.main.length + parsed.extra.length + parsed.side.length;
+  if (!total) { dmMsg('Nessuna carta trovata nel testo.', 'err'); return; }
+
+  const cur = getDeckList(false);
+  if ((cur.main.length + cur.extra.length + cur.side.length) > 0 &&
+      !confirm('Sostituire la lista attuale con quella importata?')) return;
+
+  state.deckLists[deckKey(dmCtx.pi, dmCtx.name)] = parsed;
+  document.getElementById('dm-import').classList.remove('open');
+  document.getElementById('dm-import-text').value = '';
+  commitDeck();
+
+  dmMsg(`Importate ${total} carte, caricamento dati...`);
+  const unknown = await ensureCards([...parsed.main, ...parsed.extra, ...parsed.side]);
+  if (!dmCtx) return;
+  renderDeckEditor();
+  dmMsg(unknown.length
+    ? `Importate ${total} carte (${unknown.length} id non riconosciuti).`
+    : `Importate ${total} carte ✓`, unknown.length ? 'err' : 'ok');
+}
+
+async function importDeckFromFile(input) {
+  const f = input.files?.[0];
+  input.value = '';
+  if (!f) return;
+  try { await importDeckFromText(await f.text()); }
+  catch(e) { dmMsg('Impossibile leggere il file.', 'err'); }
+}
+
+function safeFileName(s) { return String(s).replace(/[\\/:*?"<>|]+/g, '_').trim() || 'deck'; }
+
+function exportYdkFile() {
+  const l = getDeckList(false);
+  const blob = new Blob([toYdk(l)], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = safeFileName(dmCtx.name) + '.ydk';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  dmMsg('File .ydk scaricato — in Dueling Nexus: Deck Editor → Import.', 'ok');
+}
+
+async function copyText(text, okMsg) {
+  try {
+    await navigator.clipboard.writeText(text);
+    dmMsg(okMsg, 'ok');
+  } catch(e) {
+    prompt('Copia manualmente:', text);
+  }
+}
+
+function copyYdkText() { copyText(toYdk(getDeckList(false)), 'Testo .ydk copiato ✓'); }
+function copyYdke()    { copyText(toYdke(getDeckList(false)), 'Link YDKE copiato ✓'); }
 
 // ─────────────────────────────────────────────
 // INIT
