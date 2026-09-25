@@ -609,3 +609,9 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .lab-card-info details { margin-top: 10px; font-size: 12px; color: var(--text2); clear: both; }
 .lab-card-info summary { cursor: pointer; }
 #lab-card-body::after { content: ""; display: block; clear: both; }
+.lab-prompt { max-height: 40vh; }
+.lab-prompt-title { cursor: pointer; padding-right: 22px; position: relative; }
+.lab-prompt-title::after { content: "▾"; position: absolute; right: 2px; top: 0; color: var(--gold); font-size: 14px; }
+.lab-prompt.min .lab-prompt-title::after { content: "▴"; }
+.lab-prompt.min > :not(.lab-prompt-title) { display: none; }
+.lab-prompt.min .lab-prompt-title { margin-bottom: 0; }

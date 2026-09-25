@@ -60,6 +60,7 @@ let labSel  = [];              // selezione multipla in corso
 let labPickerCtx = null;       // { side, zone } oppure { announce: msg }
 let labPickerSeq = 0, labPickerTimer = null;
 let labBusy = '';              // messaggio di caricamento
+let labPromptMin = false;      // finestra delle scelte ridotta (per guardare il campo)
 
 // ── Setup (salvato sul dispositivo) ──────────────────────────────────────────
 function labEmptySide() { return { hand: [], mzone: [], szone: [], fzone: [], grave: [], removed: [], deck: [], extra: [] }; }
@@ -387,6 +388,7 @@ function labSend(resp, manual) {
 
 /** Risposta dell'utente a una richiesta del motore. */
 function labRespond(resp) {
+  labPromptMin = false;
   labSend(resp, true);
   try { labProcess(); } catch(e) { labFail(e); return; }
   labRender();
@@ -763,7 +765,8 @@ function labBackToSetup() {
 function labTile(card, extraCls = '') {
   if (!card) return `<div class="lab-zone ${extraCls}"></div>`;
   const P = labE.ocg.OcgPosition, T = labE.ocg.OcgType;
-  const down = card.position & P.FACEDOWN, def = card.position & P.DEFENSE;
+  const inHand = extraCls.includes("hc");                 // in mano il motore le considera coperte: le mostro comunque
+  const down = !inHand && (card.position & P.FACEDOWN), def = !inHand && (card.position & P.DEFENSE);
   const type = labCardData(card.code)?.type || 0;
   const isMon = (type & T.MONSTER) && extraCls.includes("mz");
   const mats = card.overlayCards?.length ? `<span class="lab-mats">${card.overlayCards.length}</span>` : '';
@@ -810,7 +813,7 @@ function labPlayHtml() {
 
   return `${status}
     ${board}
-    <div class="lab-prompt" id="lab-prompt">${labPromptHtml()}</div>
+    <div class="lab-prompt${labPromptMin ? " min" : ""}" id="lab-prompt">${labPromptHtml()}</div>
     <div class="lab-log-head">Registro</div>
     <div class="lab-log" id="lab-log">${log || '<div class="lab-log-line">—</div>'}</div>
     <div class="lab-actions">
@@ -839,7 +842,7 @@ function labPromptHtml() {
   const { ocg } = labE, MT = ocg.OcgMessageType;
   const who = labWho(m.player);
   const hintTxt = d.hint && d.hint.player === m.player && d.hint.hint ? labDesc(d.hint.hint) : '';
-  const title = t => `<div class="lab-prompt-title"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t)}</div>`;
+  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t)}</div>`;
   const I = ocg.SelectIdleCMDAction, B = ocg.SelectBattleCMDAction;
 
   switch (m.type) {
@@ -1071,3 +1074,8 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('lab-card')?.classList.contains('open')) labCloseCard();
   else if (document.getElementById('lab-picker')?.classList.contains('open')) labClosePicker();
 });
+
+function labTogglePrompt() {
+  labPromptMin = !labPromptMin;
+  document.getElementById('lab-prompt')?.classList.toggle('min', labPromptMin);
+}
