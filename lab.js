@@ -276,6 +276,7 @@ function labLoc(lp) {
   if (!lp) return '';
   if (lp.location === 8 && lp.sequence === 5) return 'Zona Terreno';
   if (lp.location & 128) return 'materiale Xyz';
+  if (lp.location === 4 && lp.sequence >= 5) return 'Zona Mostri Extra';
   return LAB_LOC_NAME[lp.location] || 'fuori dal gioco';
 }
 function labCodeAt(lp) {
@@ -438,7 +439,12 @@ function labOnMessage(m) {
     case MT.SPSUMMONING: labLog(`${who(m.controller)} evoca tramite Evocazione Speciale ${name(m.code)}`); break;
     case MT.FLIPSUMMONING: labLog(`${who(m.controller)} evoca per scoperta ${name(m.code)}`); break;
     case MT.SET: labLog(`${who(m.controller)} posiziona ${name(m.code)}`); break;
-    case MT.POS_CHANGE: labLog(`${name(m.code)} cambia posizione`); break;
+    case MT.POS_CHANGE: {
+      const P = labE.ocg.OcgPosition;
+      const flip = (m.prev_position & P.FACEDOWN) && (m.position & P.FACEUP);
+      labLog(flip ? `${name(m.code)} viene scoperta` : `${name(m.code)} passa in ${m.position & P.DEFENSE ? "Posizione di Difesa" : "Posizione di Attacco"}`);
+      break;
+    }
     case MT.CHAINING:
       d.chain[m.chain_size - 1] = m.code;
       labLog(`Catena ${m.chain_size}: ${who(m.controller)} attiva ${name(m.code)}${labEffectSuffix(m.description, m.code)}`, 'chain');
@@ -491,7 +497,8 @@ function labOnMessage(m) {
 // ── Stato del campo ──────────────────────────────────────────────────────────
 function labField() {
   const { ocg, core } = labE, L = ocg.OcgLocation, Q = ocg.OcgQueryFlags;
-  const flags = Q.CODE | Q.POSITION | Q.ATTACK | Q.DEFENSE | Q.TYPE | Q.OVERLAY_CARD;
+  // Niente Q.TYPE: in ocgcore-wasm 0.1.2 la sua lettura fallisce ("eof"); il tipo si ricava dai dati della carta
+  const flags = Q.CODE | Q.POSITION | Q.ATTACK | Q.DEFENSE | Q.OVERLAY_CARD;
   const q = (p, location) => core.duelQueryLocation(labDuel.h, { flags, controller: p, location });
   return [0, 1].map(p => ({
     mzone: q(p, L.MZONE), szone: q(p, L.SZONE), hand: q(p, L.HAND).filter(Boolean),
@@ -757,12 +764,13 @@ function labTile(card, extraCls = '') {
   if (!card) return `<div class="lab-zone ${extraCls}"></div>`;
   const P = labE.ocg.OcgPosition, T = labE.ocg.OcgType;
   const down = card.position & P.FACEDOWN, def = card.position & P.DEFENSE;
-  const isMon = card.type & T.MONSTER && extraCls.includes('mz');
+  const type = labCardData(card.code)?.type || 0;
+  const isMon = (type & T.MONSTER) && extraCls.includes("mz");
   const mats = card.overlayCards?.length ? `<span class="lab-mats">${card.overlayCards.length}</span>` : '';
   return `<div class="lab-zone ${extraCls} has${down ? ' down' : ''}${def ? ' def' : ''}" onclick="labShowCard(${card.code})" title="${escH(labName(card.code))}">
     <img src="${labCardImg(card.code)}" alt="" loading="lazy"/>
     ${down ? '<span class="lab-badge">coperta</span>' : def && isMon ? '<span class="lab-badge">DIF</span>' : ''}
-    ${isMon && !down ? `<span class="lab-stat">${card.attack}/${card.type & T.LINK ? 'L' : card.defense}</span>` : ''}${mats}
+    ${isMon && !down ? `<span class="lab-stat">${card.attack}/${type & T.LINK ? "L" : card.defense}</span>` : ''}${mats}
   </div>`;
 }
 
