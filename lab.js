@@ -383,6 +383,7 @@ function labSend(resp, manual) {
   d.pending = null;
   d.hint = null;
   labSel = [];
+  d.acted = false;
   labE.core.duelSetResponse(d.h, resp);
 }
 
@@ -402,7 +403,11 @@ function labAutoResponse(m) {
   const MT = ocg.OcgMessageType, R = ocg.OcgResponseType;
   switch (m.type) {
     case MT.SELECT_CHAIN:
-      return (!m.selects.length && !m.forced) ? { type: R.SELECT_CHAIN, index: null } : null;
+      if (m.forced) return null;
+      if (!m.selects.length) return { type: R.SELECT_CHAIN, index: null };
+      // Finestre "vuote" (cambio di fase senza azioni né catena aperta): saltate, salvo richiesta esplicita
+      if (!labSetup.askPhases && !labDuel.chain.length && !labDuel.acted) return { type: R.SELECT_CHAIN, index: null };
+      return null;
     case MT.SELECT_POSITION: {
       const opts = [1, 2, 4, 8].filter(p => m.positions & p);
       return opts.length === 1 ? { type: R.SELECT_POSITION, position: opts[0] } : null;
@@ -427,6 +432,8 @@ function labAutoResponse(m) {
 function labOnMessage(m) {
   const MT = labE.ocg.OcgMessageType;
   const d = labDuel, who = labWho, name = labName;
+  if ([MT.SUMMONING, MT.SPSUMMONING, MT.FLIPSUMMONING, MT.SET, MT.MOVE, MT.CHAINING, MT.CHAIN_END, MT.ATTACK,
+       MT.DAMAGE, MT.RECOVER, MT.PAY_LPCOST, MT.POS_CHANGE, MT.BECOME_TARGET].includes(m.type)) d.acted = true;
   switch (m.type) {
     case MT.RETRY: d.retry = true; break;
     case MT.HINT:
@@ -820,6 +827,7 @@ function labPlayHtml() {
       <button class="btn-cfg-sec" onclick="labUndo()" ${canUndo ? '' : 'disabled'}>↶ Annulla mossa</button>
       <button class="btn-cfg-sec" onclick="labRestart()">↺ Ricomincia</button>
       <button class="btn-cfg-sec" onclick="labBackToSetup()">✎ Modifica situazione</button>
+      <button class="btn-cfg-sec" onclick="labToggleAskPhases()" title="Finestre di risposta a inizio fase senza azioni">Finestre di fase: ${labSetup.askPhases ? "chiedi" : "salta"}</button>
     </div>
     ${labCreditsHtml()}`;
 }
@@ -1078,4 +1086,11 @@ document.addEventListener('keydown', e => {
 function labTogglePrompt() {
   labPromptMin = !labPromptMin;
   document.getElementById('lab-prompt')?.classList.toggle('min', labPromptMin);
+}
+
+function labToggleAskPhases() {
+  labSetup.askPhases = !labSetup.askPhases;
+  labSaveSetup();
+  toast(labSetup.askPhases ? 'Ti verrà chiesto di rispondere in ogni fase' : 'Le finestre di fase senza azioni vengono saltate');
+  labRender();
 }
