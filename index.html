@@ -516,6 +516,11 @@
 
   .player-card { background: var(--bg2); }
   ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); }
+  .btn-icon, .card-btn { background: var(--bg3); border-color: var(--border2); color: var(--gold2); }
+  .btn-icon:hover, .card-btn:hover { background: var(--gold-grad); color: #1a1405; border-color: var(--gold); }
+  .duel-quick-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .duel-quick-btn { min-width: 0; padding: 8px 0; }
+  .duel-key { padding: clamp(9px, 3vw, 14px) 6px; }
 </style>
 </head>
 <body>
@@ -537,9 +542,9 @@
 <div class="page" id="page-duel">
   <div class="container">
     <div class="panel" id="duel-panel">
-      <div class="panel-title" style="justify-content:space-between">
-        <span>⚔ Duello</span>
-        <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px">Abbandona</button>
+      <div class="panel-title">
+        <span>Duello</span>
+        <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px;margin-left:auto;letter-spacing:0;text-transform:none;font-family:Outfit,sans-serif">Abbandona</button>
       </div>
       <div id="duel-content"></div>
     </div>
@@ -1632,7 +1637,7 @@ function renderRanking(deckStats) {
 
   return `<div class="ranking-panel">
     <div class="ranking-title">🏆 Classifica Mazzi</div>
-    <div class="ranking-subtitle">Ordinati per Wilson Score — clicca un mazzo per i dettagli</div>
+    <div class="ranking-subtitle">Ordinati per affidabilità: conta il win rate ma anche quante partite ha giocato · tocca un mazzo per i dettagli</div>
     <div class="ranking-list">${rows}</div>
   </div>`;
 }
@@ -2359,6 +2364,8 @@ async function runCardSearch(q) {
         if (en.length || it.length) break;
       }
     }
+    const playable = c => !/^(Token|Skill Card)$/.test(c.type || "");
+    en = en.filter(playable); it = it.filter(playable);
     if (seq !== searchSeq) return;
 
     const map = new Map();
