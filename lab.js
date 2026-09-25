@@ -383,7 +383,6 @@ function labSend(resp, manual) {
   d.pending = null;
   d.hint = null;
   labSel = [];
-  d.acted = false;
   labE.core.duelSetResponse(d.h, resp);
 }
 
@@ -443,7 +442,7 @@ function labOnMessage(m) {
       d.turn++; d.turnPlayer = m.player;
       labLog(`Turno ${d.turn} — ${who(m.player)}`, 'turn');
       break;
-    case MT.NEW_PHASE: d.phase = m.phase; labLog(LAB_PHASE[m.phase] || 'Nuova fase', 'phase'); break;
+    case MT.NEW_PHASE: d.phase = m.phase; d.acted = false; labLog(LAB_PHASE[m.phase] || 'Nuova fase', 'phase'); break;
     case MT.SUMMONING:   labLog(`${who(m.controller)} evoca normalmente ${name(m.code)}`); break;
     case MT.SPSUMMONING: labLog(`${who(m.controller)} evoca tramite Evocazione Speciale ${name(m.code)}`); break;
     case MT.FLIPSUMMONING: labLog(`${who(m.controller)} evoca per scoperta ${name(m.code)}`); break;
