@@ -769,7 +769,7 @@ function labRenderPickerDeck() {
     groups.get(key).n++;
   }));
   const rows = [...groups.values()].sort((a, b) => (a.src > b.src) - (a.src < b.src) || labName(a.code).localeCompare(labName(b.code)));
-  document.getElementById('lab-picker-input').placeholder = '🔍 Oppure cerca un\'altra carta (fuori dal mazzo)';
+  document.getElementById('lab-picker-input').placeholder = '🔍 Cerca un\'altra carta';
   box.innerHTML = `
     <div class="lab-picker-h">Dal mazzo «${escH(labDeckRef(ctx.side).name)}»</div>
     <div class="dm-list lab-picker-decklist">${rows.map(r => cardRowHtml(r.code, r.name || labName(r.code), r.src === 'extra' ? 'Extra Deck' : 'Deck',
