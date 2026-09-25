@@ -1019,12 +1019,15 @@ function renderDuel() {
     </button>`;
   }).join('');
 
-  const target = duelState.players[duelState.sel];
-  const keys = [7,8,9,4,5,6,1,2,3].map(n =>
-    `<button class="duel-key" onclick="kbPress('${n}')">${n}</button>`).join('')
-    + `<button class="duel-key small" onclick="kbPress('00')">00</button>`
-    + `<button class="duel-key" onclick="kbPress('0')">0</button>`
-    + `<button class="duel-key small" onclick="kbPress('000')">000</button>`;
+  // Tastierino a 4 colonne: cifre a sinistra, operazioni a destra.
+  // "−" calcola la differenza (es. ATK 2500 − ATK 1800 = 700 di danno da battaglia).
+  const key = (label, fn, cls = '', title = '') =>
+    `<button class="duel-key ${cls}" onclick="${fn}"${title ? ` title="${title}"` : ''}>${label}</button>`;
+  const keys =
+      key(7, "kbPress('7')") + key(8, "kbPress('8')") + key(9, "kbPress('9')") + key('⌫', 'kbBack()', 'op') +
+      key(4, "kbPress('4')") + key(5, "kbPress('5')") + key(6, "kbPress('6')") + key('−', 'kbMinus()', 'op', 'Differenza: es. 2500 − 1800') +
+      key(1, "kbPress('1')") + key(2, "kbPress('2')") + key(3, "kbPress('3')") + key('C', 'kbClear()', 'op tall', 'Azzera') +
+      key('00', "kbPress('00')", 'small') + key(0, "kbPress('0')") + key('000', "kbPress('000')", 'small');
 
   const logEntries = [...duelState.log].reverse().slice(0, 12)
     .map(e => `<div class="duel-log-entry ${e.type}">${escH(e.msg)}</div>`).join('');
@@ -1032,23 +1035,15 @@ function renderDuel() {
   c.innerHTML = `
     <div class="duel-board">${cards}</div>
     <div class="duel-pad">
-      <div class="duel-quick-row">
-        ${[100, 200, 300, 500, 1000, 2000].map(v =>
-          `<button class="duel-quick-btn ${v >= 1000 ? 'q-thousands' : 'q-hundreds'}" onclick="quickApply(-${v})">−${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}
-        <button class="duel-quick-btn" onclick="halveLp()" title="Dimezza i LP">½</button>
-      </div>
-      <div class="duel-display">
-        <button class="duel-display-back" onclick="kbBack()" title="Cancella">⌫</button>
-        <div class="duel-display-num ${duelState.buf ? '' : 'empty'}" id="kdisp">
-          ${duelState.buf ? parseInt(duelState.buf).toLocaleString('it-IT') : `importo per ${escH(target.name)}…`}
-        </div>
-      </div>
+      <div class="duel-display" id="kdisp"></div>
       <div class="duel-keypad">${keys}</div>
       <div class="duel-action-row">
-        <button class="duel-btn-dmg" onclick="applyDmg()">− Danno</button>
-        <button class="duel-btn-heal" onclick="applyHl()">+ Cura</button>
+        <button class="duel-btn-dmg" onclick="applyDmg()">▼ Danno<span class="duel-prev" id="prev-dmg"></span></button>
+        <button class="duel-btn-heal" onclick="applyHl()">▲ Guadagno<span class="duel-prev" id="prev-heal"></span></button>
       </div>
       <div class="duel-util-row">
+        <button class="btn-cfg-sec" onclick="halveLp()" title="Dimezza i LP del giocatore selezionato">½ LP</button>
+        <button class="btn-cfg-sec" onclick="setLp()" title="I LP diventano esattamente l'importo scritto">= Imposta LP</button>
         <button class="btn-cfg-sec" onclick="undoDuel()" ${canUndo ? '' : 'disabled'}>↶ Annulla</button>
       </div>
     </div>
@@ -1071,6 +1066,7 @@ function renderDuel() {
         </div>
       </div>
     </div>`;
+  refreshDisplay();
 }
 
 function onDuelPlayerChange(slot) {
@@ -1129,6 +1125,7 @@ function selectDuelPlayer(slot) {
 }
 
 // ── Tastierino condiviso ──────────────────────────────────────────────────
+// buf = numero che si sta scrivendo; minuend = primo termine di una differenza (A − B)
 function kbPress(digits) {
   const cur = duelState.buf;
   if (!cur && /^0+$/.test(digits)) return;           // niente zeri iniziali
@@ -1138,16 +1135,52 @@ function kbPress(digits) {
 }
 
 function kbBack() {
-  duelState.buf = duelState.buf.slice(0, -1);
+  if (duelState.buf) duelState.buf = duelState.buf.slice(0, -1);
+  else if (duelState.minuend != null) { duelState.buf = duelState.minuend; duelState.minuend = null; }
   refreshDisplay();
+}
+
+function kbClear() {
+  duelState.buf = '';
+  duelState.minuend = null;
+  refreshDisplay();
+}
+
+function kbMinus() {
+  if (duelState.minuend != null) {
+    if (!duelState.buf) return;
+    duelState.minuend = String(getAmount());         // A − B − C…: si prosegue dal risultato
+  } else {
+    if (!duelState.buf) return;
+    duelState.minuend = duelState.buf;
+  }
+  duelState.buf = '';
+  refreshDisplay();
+}
+
+/** Importo da applicare: il numero scritto, oppure la differenza |A − B|. */
+function getAmount() {
+  const b = parseInt(duelState.buf) || 0;
+  if (duelState.minuend == null) return b;
+  return b ? Math.abs((parseInt(duelState.minuend) || 0) - b) : 0;
 }
 
 function refreshDisplay() {
   const el = document.getElementById('kdisp');
-  if (!el) return;
-  const buf = duelState.buf;
-  el.className   = 'duel-display-num' + (buf ? '' : ' empty');
-  el.textContent = buf ? parseInt(buf).toLocaleString('it-IT') : `importo per ${duelState.players[duelState.sel].name}…`;
+  if (!el || !duelState) return;
+  const fmt = n => n.toLocaleString('it-IT');
+  const target = duelState.players[duelState.sel];
+  const amount = getAmount();
+  const m = duelState.minuend, b = duelState.buf;
+
+  const expr = m != null ? `${fmt(parseInt(m))} − ${b ? fmt(parseInt(b)) : '…'}` : '';
+  el.innerHTML = `
+    <div class="duel-display-expr">${expr ? escH(expr) + ' =' : `LP di ${escH(target.name)}`}</div>
+    <div class="duel-display-num${amount || b ? '' : ' empty'}">${amount || b ? fmt(amount) : 'scrivi un importo'}</div>`;
+
+  const prev = (id, lp) => { const s = document.getElementById(id); if (s) s.textContent = amount ? `${fmt(target.lp)} → ${fmt(lp)}` : ''; };
+  prev('prev-dmg',  Math.max(0, target.lp - amount));
+  prev('prev-heal', Math.min(MAX_LP, target.lp + amount));
 }
 
 // ── Modifica LP (con cronologia per "Annulla") ────────────────────────────
@@ -1163,17 +1196,25 @@ function changeLp(delta, label) {
     msg:  `${p.name}: ${label || (delta < 0 ? '−' : '+') + fmt(Math.abs(delta))} LP  (${fmt(prev)} → ${fmt(p.lp)})`
   });
   duelState.buf = '';
+  duelState.minuend = null;
   checkDuelOver();
   renderDuel();
 }
 
-function quickApply(delta) { changeLp(delta); }
-function applyDmg() { const a = parseInt(duelState.buf) || 0; if (a) changeLp(-a); }
-function applyHl()  { const a = parseInt(duelState.buf) || 0; if (a) changeLp(a); }
+function applyDmg() { const a = getAmount(); if (a) changeLp(-a); }
+function applyHl()  { const a = getAmount(); if (a) changeLp(a); }
 
 function halveLp() {
   const p = duelState.players[duelState.sel];
   changeLp(-Math.floor(p.lp / 2), '½');
+}
+
+/** Per gli effetti che rendono i LP "esattamente X". */
+function setLp() {
+  const p = duelState.players[duelState.sel];
+  const v = getAmount();
+  if (!v && !duelState.buf) { toast('Scrivi prima il valore dei LP'); return; }
+  changeLp(Math.min(MAX_LP, v) - p.lp, `= ${v.toLocaleString('it-IT')}`);
 }
 
 function undoDuel() {
@@ -1186,13 +1227,16 @@ function undoDuel() {
   renderDuel();
 }
 
-// Tastiera fisica: cifre, Backspace, Invio/− = danno, + = cura, ←/→ = bersaglio, Ctrl+Z = annulla
+// Tastiera fisica: cifre, Backspace, Esc = azzera, − = differenza, Invio = danno, + = guadagno,
+// ←/→ = giocatore, Ctrl+Z = annulla
 document.addEventListener('keydown', e => {
   if (currentPage !== 'duel' || !duelState || duelState.over || dmCtx) return;
   if (e.target.closest && e.target.closest('input, textarea, select')) return;
   if (/^\d$/.test(e.key))                       kbPress(e.key);
   else if (e.key === 'Backspace')               kbBack();
-  else if (e.key === 'Enter' || e.key === '-')  applyDmg();
+  else if (e.key === 'Escape' || e.key === 'Delete') kbClear();
+  else if (e.key === '-')                       kbMinus();
+  else if (e.key === 'Enter')                   applyDmg();
   else if (e.key === '+')                       applyHl();
   else if (e.key === 'ArrowLeft')               selectDuelPlayer(0);
   else if (e.key === 'ArrowRight')              selectDuelPlayer(1);
