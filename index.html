@@ -359,10 +359,22 @@
   .dm-import-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .dm-hint { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
   .dm-search { display: flex; gap: 6px; margin-bottom: 8px; }
-  .dm-search input, .dm-search select { background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; padding: 8px 10px; outline: none; }
-  .dm-search input { flex: 1; min-width: 0; }
-  .dm-search input:focus, .dm-search select:focus { border-color: var(--gold); }
-  .dm-results { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
+  .dm-search input { flex: 1; min-width: 0; width: 100%; background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 16px; padding: 10px 12px; outline: none; }
+  .dm-search input:focus { border-color: var(--gold); }
+  .dm-search input::placeholder { color: var(--text3); }
+  .dm-target-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--text2); }
+  .seg { display: inline-flex; background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; padding: 2px; }
+  .seg button { background: none; border: none; color: var(--text2); font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .seg button.on { background: var(--gold); color: var(--bg); }
+  .dm-results { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
+  .dm-results .card-row { cursor: pointer; transition: border-color 0.15s; }
+  .dm-results .card-row:hover { border-color: var(--gold); }
+  .dm-results .card-row.maxed { opacity: 0.45; }
+  .card-have { font-size: 11px; color: var(--gold); white-space: nowrap; }
+  .dm-footer { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(193,74,74,0.4); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 12px; padding: 5px 12px; cursor: pointer; }
+  .btn-danger:hover { background: rgba(193,74,74,0.15); }
+  .dm-export-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .dm-results:not(:empty) { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
   .dm-section { margin-top: 14px; }
   .dm-section-title { font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); display: flex; justify-content: space-between; margin-bottom: 6px; }
@@ -381,20 +393,143 @@
   .dm-msg.err { color: var(--red); } .dm-msg.ok { color: var(--green); }
   .dm-credit { font-size: 10px; color: var(--text3); margin-top: 14px; text-align: right; }
   .dm-credit a { color: var(--text3); }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); z-index: 10002; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.5); color: var(--text); font-size: 13px; padding: 10px 14px; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px); opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast button { background: none; border: none; color: var(--gold2); font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; white-space: nowrap; }
+
+  /* ── HINTS / MISC ── */
+  .hint { font-size: 12px; color: var(--text2); margin: -4px 0 12px; line-height: 1.5; }
+  .hint a { color: var(--gold); cursor: pointer; }
+  .sync-status { cursor: pointer; }
+  .sync-conn-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text2); }
+  .bin-pill { font-family: monospace; font-size: 12px; color: var(--gold); background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 3px 8px; word-break: break-all; }
+
+  /* ── WINNER BUTTONS (match form) ── */
+  .winner-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-win { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; padding: 12px 8px; cursor: pointer; transition: all 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn-win:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2); }
+  .btn-win:active { transform: scale(0.97); }
+
+  /* ── DECK TAGS as buttons ── */
+  button.deck-tag { font-family: 'Outfit', sans-serif; cursor: pointer; padding: 5px 10px 5px 12px; transition: filter 0.15s; }
+  button.deck-tag:hover { filter: brightness(1.3); }
+  .deck-count { opacity: 0.8; }
+
+  /* ── DUEL (shared keypad) ── */
+  .duel-board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button.duel-player-card { text-align: left; font-family: 'Outfit', sans-serif; color: var(--text); cursor: pointer; padding: 12px; width: 100%; min-width: 0; }
+  .duel-player-card.selected { outline: 2px solid var(--gold); outline-offset: -1px; }
+  .duel-player-card .duel-player-header { margin-bottom: 4px; min-width: 0; }
+  .duel-player-card .duel-player-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .duel-player-card .duel-deck-badge { display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
+  .duel-player-card .duel-lp-display { font-size: clamp(1.7rem, 9vw, 2.6rem); margin: 10px 0 8px; }
+  .duel-player-card .duel-lp-bar-bg { margin-bottom: 6px; }
+  .duel-target-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold); font-weight: 600; min-height: 15px; }
+  .duel-pad { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .duel-keypad .duel-key.small { font-size: 0.95rem; }
+  .duel-util-row { display: flex; gap: 6px; }
+  .duel-util-row .btn-cfg-sec { flex: 1; padding: 8px; font-size: 13px; }
+  .duel-util-row .btn-cfg-sec:disabled { opacity: 0.35; cursor: default; border-color: var(--border2); color: var(--text2); }
+
+  /* ════════════════════════════════════════════
+     TEMA — Egitto / Millennium: notte lapislazzuli,
+     oro, linee sottili. Minimal, niente texture pesanti.
+     ════════════════════════════════════════════ */
+  :root {
+    --bg: #07090f; --bg2: #0c1019; --bg3: #121826; --card: #0f1420;
+    --border: rgba(212,175,55,0.10); --border2: rgba(212,175,55,0.20);
+    --gold: #c9a227; --gold2: #f1d27a; --gold-grad: linear-gradient(135deg, #f6dc8c 0%, #d4af37 45%, #9c7a1e 100%);
+    --lapis: #1f3b73; --lapis2: #3d67b5;
+    --text: #efe7d2; --text2: #a79f8a; --text3: #6a6452;
+    --p0: #7b5ea7; --p0l: #c9b0ee;
+    --p1: #1f8a86; --p1l: #7fd6cf;
+    --p2: #c0662b; --p2l: #f2b27a;
+  }
+  body {
+    background:
+      radial-gradient(1200px 500px at 50% -200px, rgba(212,175,55,0.10), transparent 70%),
+      radial-gradient(900px 600px at 50% 120%, rgba(31,59,115,0.35), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+
+  /* Header: occhio del Millennio + titolo in oro */
+  header { background: rgba(12,16,25,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: none; }
+  header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.6; }
+  .logo-eye { background: none; box-shadow: none; border-radius: 0; width: 40px; height: 28px; color: var(--gold2); filter: drop-shadow(0 0 8px rgba(212,175,55,0.45)); }
+  .logo-eye::after { display: none; }
+  .logo-eye svg { width: 100%; height: 100%; display: block; }
+  header h1 { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header .subtitle { color: var(--text3); letter-spacing: 0.22em; }
+
+  /* Pannelli come tavolette: filo d'oro in alto, angoli netti */
+  .panel { position: relative; background: linear-gradient(180deg, rgba(18,24,38,0.9), rgba(15,20,32,0.9)); border: 1px solid var(--border); border-radius: 14px; }
+  .panel::before { content: ''; position: absolute; top: -1px; left: 18%; right: 18%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .panel-title { color: var(--gold2); letter-spacing: 0.2em; }
+  .panel-title::before { width: 0; height: 0; background: none; opacity: 1; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 8px solid var(--gold); }
+
+  /* Bottoni primari: lamina d'oro */
+  .btn-cfg, .btn-add, .btn-save-result, .btn-start-duel, .seg button.on { background: var(--gold-grad); color: #1a1405; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px rgba(212,175,55,0.18); }
+  .btn-cfg:hover, .btn-save-result:hover { background: var(--gold-grad); filter: brightness(1.08); }
+  .btn-start-duel { letter-spacing: 0.14em; border-radius: 12px; }
+  .btn-cfg-sec, .btn-new-duel { border-color: var(--border2); }
+
+  /* Input e select più "incisi" */
+  select, .config-row input, .deck-add-row input, .dm-search input, .dm-import textarea { background-color: var(--bg2); border-color: var(--border2); }
+
+  /* Bottom nav con icone lineari e indicatore a piramide */
+  .bottom-nav { background: rgba(12,16,25,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: none; }
+  .bottom-nav::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.5; }
+  .nav-icon { width: 22px; height: 22px; display: block; }
+  .nav-icon svg { width: 100%; height: 100%; display: block; }
+  .nav-btn::after { width: 0 !important; height: 0; background: none; border-radius: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid transparent; transition: border-color 0.2s; }
+  .nav-btn.active::after { border-top-color: var(--gold); }
+  .nav-btn.active .nav-icon { filter: drop-shadow(0 0 6px rgba(212,175,55,0.55)); }
+  .nav-label { letter-spacing: 0.14em; }
+
+  /* Tabs */
+  .tab.active { border-bottom-color: var(--gold); text-shadow: 0 0 12px rgba(212,175,55,0.35); }
+
+  /* Classifica: medaglie come dischi d'oro/argento/bronzo */
+  .ranking-panel { background: linear-gradient(180deg, rgba(212,175,55,0.07), rgba(212,175,55,0.02)); border-color: var(--border2); }
+  .ranking-title { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Duello: carte-giocatore come tessere di un sarcofago */
+  .duel-player-card.p0, .duel-player-card.p1, .duel-player-card.p2 { background: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15)), var(--bg3); border: 1px solid var(--border); }
+  .duel-player-card.p0 { box-shadow: inset 0 2px 0 var(--p0); }
+  .duel-player-card.p1 { box-shadow: inset 0 2px 0 var(--p1); }
+  .duel-player-card.p2 { box-shadow: inset 0 2px 0 var(--p2); }
+  .duel-player-card.selected { outline: none; border-color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold), 0 0 22px rgba(212,175,55,0.25) !important; }
+  .duel-lp-display { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+  .duel-key { background: var(--bg2); border-color: var(--border); }
+  .duel-key:active { background: rgba(212,175,55,0.12); }
+  .duel-over-banner { border-color: var(--gold); box-shadow: 0 0 30px rgba(212,175,55,0.15); }
+  .duel-over-title { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Deck editor */
+  .dm-overlay { background: rgba(3,5,10,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .dm-box { position: relative; background: var(--card); border-color: var(--border2); border-radius: 16px; }
+  .dm-box::before { content: ''; position: absolute; top: -1px; left: 15%; right: 15%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .card-row { background: var(--bg2); }
+
+  .player-card { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-eye"></div>
+  <div class="logo-eye" aria-hidden="true"><svg viewBox="0 0 48 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8C15 1 33 1 44 7"/><path d="M3 15C13 6 33 5 45 14C34 21 14 23 3 15Z"/><circle cx="24" cy="14" r="5" fill="currentColor" stroke="none"/><path d="M19 21L16 30"/><path d="M28 21C30 27 36 30 40 27C43 25 41 21 38 23"/></svg></div>
   <div>
     <h1>Yu-Gi-Oh! Tracker</h1>
-    <div class="subtitle">Score &amp; Matchup Manager</div>
+    <div class="subtitle">Duel Monsters · Score &amp; Matchup</div>
   </div>
-  <div class="sync-status">
-    <button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()" title="Aggiorna dati">↻</button>
+  <div class="sync-status" onclick="goToSync()" title="Sincronizzazione">
+    <button class="btn-refresh" id="btn-refresh" onclick="event.stopPropagation(); manualRefresh()" title="Aggiorna dati">↻</button>
     <div class="sync-dot" id="sync-dot"></div>
-    <span id="sync-label">non configurato</span>
+    <span id="sync-label">solo locale</span>
   </div>
 </header>
 
@@ -420,28 +555,22 @@
         <div class="match-players-row">
           <div class="form-group">
             <span class="form-label">Giocatore 1</span>
-            <select id="p1sel" onchange="updateDeckSelects()"></select>
+            <select id="p1sel" onchange="updateDeckSelects(1)"></select>
             <select id="d1sel" style="margin-top:6px"></select>
           </div>
           <div class="vs-col">VS</div>
           <div class="form-group">
             <span class="form-label">Giocatore 2</span>
-            <select id="p2sel" onchange="updateDeckSelects()"></select>
+            <select id="p2sel" onchange="updateDeckSelects(2)"></select>
             <select id="d2sel" style="margin-top:6px"></select>
           </div>
         </div>
-        <!-- Riga vincitore + aggiungi -->
-        <div class="match-bottom-row">
-          <div class="form-group">
-            <span class="form-label">Vince il</span>
-            <select id="winner">
-              <option value="1">Giocatore 1</option>
-              <option value="2">Giocatore 2</option>
-            </select>
-          </div>
-          <div class="form-group" style="justify-content:flex-end">
-            <span class="form-label">&nbsp;</span>
-            <button class="btn-add" onclick="addMatch()">+ Aggiungi</button>
+        <!-- Un tocco sul vincitore registra la partita -->
+        <div class="form-group">
+          <span class="form-label">Chi ha vinto? (tocca per registrare)</span>
+          <div class="winner-btns">
+            <button class="btn-win" id="win-btn-1" onclick="addMatch(1)"></button>
+            <button class="btn-win" id="win-btn-2" onclick="addMatch(2)"></button>
           </div>
         </div>
       </div>
@@ -458,25 +587,40 @@
   <div class="container">
     <div class="panel">
       <div class="tabs">
-        <div class="tab active" onclick="switchTab('matchups')">Scontri</div>
-        <div class="tab" onclick="switchTab('stats')">Statistiche</div>
+        <div class="tab active" data-tab="stats" onclick="switchTab('stats')">Classifica</div>
+        <div class="tab" data-tab="matchups" onclick="switchTab('matchups')">Scontri diretti</div>
       </div>
-      <div id="tab-matchups"></div>
-      <div id="tab-stats" style="display:none"></div>
+      <div id="tab-stats"></div>
+      <div id="tab-matchups" style="display:none"></div>
     </div>
   </div>
 </div>
 
 <div class="page" id="page-settings" style="display:none">
   <div class="container">
-    <div class="config-banner" id="config-banner">
-      <h3>Configurazione JSONBin.io</h3>
-      <p>Segui questi passi per sincronizzare i dati tra tutti i dispositivi:</p>
+    <div class="panel">
+      <div class="panel-title">Giocatori &amp; Mazzi</div>
+      <p class="hint">Tocca il nome per modificarlo. Tocca un mazzo per gestire la lista carte, importare/esportare .ydk, rinominarlo o eliminarlo.</p>
+      <div class="players-grid" id="players-ui"></div>
+    </div>
+    <div class="panel" id="sync-panel">
+      <div class="panel-title">Sincronizzazione</div>
+      <div id="sync-connected" style="display:none">
+        <div class="sync-conn-row">
+          <span>Collegato · Bin ID</span>
+          <span class="bin-pill" id="bin-id-display"></span>
+          <button class="btn-cfg-sec" onclick="copyBinId()">Copia</button>
+        </div>
+        <p class="hint" style="margin:10px 0">Per collegare un altro dispositivo inserisci lì la stessa chiave e questo Bin ID.</p>
+        <button class="btn-cfg-sec" onclick="disconnect()">Scollega account</button>
+      </div>
+    <div id="config-banner">
+      <p class="hint">Opzionale: i dati sono già salvati su questo dispositivo. Collega JSONBin.io per condividerli tra più telefoni.</p>
       <ol class="config-steps">
         <li data-n="1">Vai su <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> e crea un account gratuito</li>
         <li data-n="2">Vai su <strong>API Keys</strong> nel menu in alto e copia la tua <code>X-Master-Key</code></li>
         <li data-n="3"><strong>Primo dispositivo:</strong> incolla solo la chiave e clicca Connetti — il Bin ID viene generato automaticamente</li>
-        <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (lo trovi dopo la connessione, vicino al pallino verde)</li>
+        <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (sul primo dispositivo lo trovi qui, dopo la connessione)</li>
       </ol>
       <div class="config-row">
         <input type="password" id="apikey-input" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
@@ -485,12 +629,6 @@
       </div>
       <p class="cfg-error" id="cfg-error"></p>
     </div>
-    <div class="panel">
-      <div class="panel-title" style="justify-content:space-between">
-        <span>Giocatori &amp; Mazzi</span>
-        <button class="btn-cfg-sec" id="btn-disconnect" style="display:none;font-size:11px;padding:4px 10px" onclick="disconnect()">Scollega account</button>
-      </div>
-      <div class="players-grid" id="players-ui"></div>
     </div>
   </div>
 </div>
@@ -506,11 +644,16 @@
       <button class="btn-refresh" onclick="closeDeckEditor()" title="Chiudi">✕</button>
     </div>
     <div class="dm-actions">
-      <button class="btn-cfg-sec" onclick="toggleDeckImport()">⇩ Importa</button>
-      <button class="btn-cfg-sec" onclick="exportYdkFile()">⇧ Scarica .ydk</button>
-      <button class="btn-cfg-sec" onclick="copyYdkText()">Copia .ydk</button>
-      <button class="btn-cfg-sec" onclick="copyYdke()">Copia YDKE</button>
-      <button class="btn-cfg-sec" onclick="clearDeckList()">Svuota</button>
+      <button class="btn-cfg-sec" onclick="toggleDeckPanel('dm-import')">⇩ Importa</button>
+      <button class="btn-cfg-sec" onclick="toggleDeckPanel('dm-export')">⇧ Esporta</button>
+    </div>
+    <div class="dm-import" id="dm-export">
+      <div class="dm-hint">Per Dueling Nexus / EDOPro usa il file .ydk; YDKE è un link da incollare direttamente.</div>
+      <div class="dm-export-row">
+        <button class="btn-cfg" onclick="exportYdkFile()">Scarica .ydk</button>
+        <button class="btn-cfg-sec" onclick="copyYdkText()">Copia testo .ydk</button>
+        <button class="btn-cfg-sec" onclick="copyYdke()">Copia link YDKE</button>
+      </div>
     </div>
     <div class="dm-import" id="dm-import">
       <div class="dm-hint">Incolla il contenuto di un file .ydk (Dueling Nexus → Export) oppure un link ydke://</div>
@@ -521,16 +664,24 @@
         <input type="file" id="dm-file" accept=".ydk,.txt" style="display:none" onchange="importDeckFromFile(this)"/>
       </div>
     </div>
-    <div class="dm-msg" id="dm-msg"></div>
     <div class="dm-search">
-      <input type="text" id="dm-search-input" placeholder="Cerca carta (IT o EN, min 3 lettere)..." oninput="onCardSearch(this.value)" autocomplete="off"/>
-      <select id="dm-target" title="Dove aggiungere">
-        <option value="auto">Main/Extra</option>
-        <option value="side">Side</option>
-      </select>
+      <input type="search" id="dm-search-input" placeholder="🔍 Cerca carta (italiano o inglese)" oninput="onCardSearch(this.value)" onkeydown="onCardSearchKey(event)" autocomplete="off" enterkeyhint="search"/>
     </div>
+    <div class="dm-target-row">
+      <span>Aggiungi a</span>
+      <div class="seg" id="dm-target">
+        <button class="on" data-v="auto" onclick="setDeckTarget('auto')">Main / Extra</button>
+        <button data-v="side" onclick="setDeckTarget('side')">Side</button>
+      </div>
+    </div>
+    <div class="dm-msg" id="dm-msg"></div>
     <div class="dm-results" id="dm-results"></div>
     <div id="dm-sections"></div>
+    <div class="dm-footer">
+      <button class="btn-cfg-sec" onclick="renameDeck()">✎ Rinomina mazzo</button>
+      <button class="btn-cfg-sec" onclick="clearDeckList()">Svuota lista</button>
+      <button class="btn-danger" onclick="deleteDeckFromEditor()">Elimina mazzo</button>
+    </div>
     <div class="dm-credit">Dati carte: <a href="https://ygoprodeck.com" target="_blank" rel="noopener">YGOPRODeck</a></div>
   </div>
 </div>
@@ -538,22 +689,24 @@
 <!-- ── BOTTOM NAV ───────────────────────────────────────── -->
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-duel" onclick="switchPage('duel')">
-    <span class="nav-icon">⚔</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3l11 11M20 3L9 14"/><path d="M13 16l4-4M11 16l-4-4"/><path d="M6 18l-2.5 2.5M18 18l2.5 2.5"/></svg></span>
     <span class="nav-label">Duello</span>
   </button>
   <button class="nav-btn" id="nav-matches" onclick="switchPage('matches')">
-    <span class="nav-icon">📋</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6"/><path d="M6 3a2 2 0 0 0-2 2v1h4V5a2 2 0 0 0-2-2zM6 21a2 2 0 0 1-2-2v-1h4v1"/><path d="M11 8h5M11 12h5M11 16h3"/></svg></span>
     <span class="nav-label">Partite</span>
   </button>
   <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
-    <span class="nav-icon">📊</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 20h20L12 3z"/><path d="M12 3l3.5 17"/><path d="M5.5 14h9.3"/></svg></span>
     <span class="nav-label">Statistiche</span>
   </button>
   <button class="nav-btn" id="nav-settings" onclick="switchPage('settings')">
-    <span class="nav-icon">⚙</span>
-    <span class="nav-label">Impostazioni</span>
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="16" rx="1.5"/><path d="M5 6.5V19.5A1.5 1.5 0 0 0 6.5 21H16"/><path d="M14 8l2 3-2 3-2-3z"/></svg></span>
+    <span class="nav-label">Mazzi</span>
   </button>
 </nav>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-btn"></button></div>
 
 <script>
 // ─────────────────────────────────────────────
@@ -775,12 +928,38 @@ function disconnect() {
   console.log('[YGO] Disconnessione account');
   cfg = { apiKey: '', binId: '' };
   saveLocal();
-  const cb2 = document.getElementById('config-banner');
-  if (cb2) cb2.style.display = '';
-  const bd2 = document.getElementById('btn-disconnect');
-  if (bd2) bd2.style.display = 'none';
+  document.getElementById('config-banner').style.display = '';
+  document.getElementById('sync-connected').style.display = 'none';
   document.getElementById('apikey-input').value = '';
-  setSync('', 'non configurato');
+  document.getElementById('binid-input').value = '';
+  setSync('', 'solo locale');
+}
+
+function copyBinId() {
+  navigator.clipboard.writeText(cfg.binId)
+    .then(() => toast('Bin ID copiato ✓'))
+    .catch(() => prompt('Copia manualmente:', cfg.binId));
+}
+
+function goToSync() {
+  switchPage('settings');
+  document.getElementById('sync-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────────
+// TOAST (sostituisce alert, con azione opzionale es. "Annulla")
+// ─────────────────────────────────────────────
+let toastTimer = null;
+function toast(msg, actionLabel, actionFn) {
+  const el  = document.getElementById('toast');
+  const btn = document.getElementById('toast-btn');
+  document.getElementById('toast-msg').textContent = msg;
+  btn.style.display = actionLabel ? '' : 'none';
+  btn.textContent   = actionLabel || '';
+  btn.onclick = () => { el.classList.remove('show'); if (actionFn) actionFn(); };
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), actionLabel ? 5000 : 2500);
 }
 
 function showCfgError(msg) {
@@ -790,30 +969,9 @@ function showCfgError(msg) {
 }
 
 function onConnected() {
-  const cb = document.getElementById('config-banner');
-  if (cb) cb.style.display = 'none';
-  const bd = document.getElementById('btn-disconnect');
-  if (bd) bd.style.display = '';
-
-  // Mostra il Bin ID nella sync-status bar così l'utente può copiarlo
-  const existing = document.getElementById('bin-id-display');
-  if (!existing) {
-    const label = document.getElementById('sync-label');
-    const span  = document.createElement('span');
-    span.id        = 'bin-id-display';
-    span.title     = 'Copia questo Bin ID per collegare altri dispositivi';
-    span.style.cssText = 'cursor:pointer;color:var(--gold);font-family:monospace;font-size:11px;border:1px solid var(--border2);border-radius:4px;padding:1px 6px;';
-    span.textContent = cfg.binId;
-    span.onclick = () => {
-      navigator.clipboard.writeText(cfg.binId).then(() => {
-        span.textContent = 'copiato!';
-        setTimeout(() => { span.textContent = cfg.binId; }, 1500);
-      });
-    };
-    label.parentNode.insertBefore(span, label);
-  } else {
-    existing.textContent = cfg.binId;
-  }
+  document.getElementById('config-banner').style.display = 'none';
+  document.getElementById('sync-connected').style.display = '';
+  document.getElementById('bin-id-display').textContent = cfg.binId;
 
   renderPlayers();
   updateSelects();
@@ -923,12 +1081,15 @@ function renderPlayers() {
     c.appendChild(div);
 
     const dt = document.getElementById(`dt${i}`);
+    if (!p.decks.length) dt.innerHTML = '<span class="dm-empty">Nessun mazzo: aggiungine uno qui sopra</span>';
     p.decks.forEach((dk, j) => {
-      const t = document.createElement('div');
+      const t = document.createElement('button');
       t.className = `deck-tag ${pClass[i]}`;
+      t.title = 'Apri lista carte';
+      t.onclick = () => openDeckEditor(i, j);
       const dl = state.deckLists[deckKey(i, dk)];
-      const nMain = dl ? dl.main.length : 0;
-      t.innerHTML = `<span class="deck-open" onclick="openDeckEditor(${i},${j})" title="Lista carte">${escH(dk)}<span class="deck-count">${nMain ? nMain : '📜'}</span></span><span class="deck-rm" onclick="removeDeck(${i},${j})">×</span>`;
+      const n  = dl ? dl.main.length + dl.extra.length : 0;
+      t.innerHTML = `${escH(dk)}<span class="deck-count">${n ? n + ' carte' : '+ lista'}</span>`;
       dt.appendChild(t);
     });
   });
@@ -938,22 +1099,42 @@ function addDeck(pi) {
   const inp = document.getElementById(`ni${pi}`);
   const v   = inp.value.trim();
   if (!v) return;
-  if (state.players[pi].decks.includes(v)) { alert('Questo giocatore ha già un mazzo con questo nome.'); return; }
+  if (state.players[pi].decks.includes(v)) { toast('Questo giocatore ha già un mazzo con questo nome.'); return; }
   state.players[pi].decks.push(v);
   inp.value = '';
   console.log(`[YGO] Mazzo aggiunto al giocatore ${pi}:`, v);
   saveLocal(); renderPlayers(); updateSelects(); syncUp();
+  document.getElementById(`ni${pi}`)?.focus();
 }
 
+/**
+ * Le partite referenziano i mazzi per indice: eliminando un mazzo vanno
+ * rimosse le sue partite e scalati gli indici dei mazzi successivi,
+ * altrimenti lo storico punterebbe ai mazzi sbagliati.
+ */
 function removeDeck(pi, di) {
   const name = state.players[pi].decks[di];
+  const uses = m => (m.p1i === pi && m.d1i === di) || (m.p2i === pi && m.d2i === di);
+  const nMatches = state.matches.filter(uses).length;
   const dl   = state.deckLists[deckKey(pi, name)];
-  if (dl && (dl.main.length + dl.extra.length + dl.side.length) > 0 &&
-      !confirm(`Eliminare "${name}" e la sua lista carte?`)) return;
-  const removed = state.players[pi].decks.splice(di, 1);
-  if (!state.players[pi].decks.includes(name)) delete state.deckLists[deckKey(pi, name)];
-  console.log(`[YGO] Mazzo rimosso dal giocatore ${pi}:`, removed[0]);
-  saveLocal(); renderPlayers(); updateSelects(); syncUp();
+  const hasList = dl && (dl.main.length + dl.extra.length + dl.side.length) > 0;
+
+  let msg = `Eliminare il mazzo "${name}"?`;
+  if (nMatches) msg += `\n\nCompare in ${nMatches} ${nMatches === 1 ? 'partita registrata, che verrà eliminata' : 'partite registrate, che verranno eliminate'}.`;
+  if (hasList)  msg += `\nVerrà eliminata anche la lista carte.`;
+  if (!confirm(msg)) return false;
+
+  state.matches = state.matches.filter(m => !uses(m));
+  state.matches.forEach(m => {
+    if (m.p1i === pi && m.d1i > di) m.d1i--;
+    if (m.p2i === pi && m.d2i > di) m.d2i--;
+  });
+  state.players[pi].decks.splice(di, 1);
+  delete state.deckLists[deckKey(pi, name)];
+  console.log(`[YGO] Mazzo rimosso dal giocatore ${pi}:`, name, `(${nMatches} partite rimosse)`);
+  saveLocal(); renderPlayers(); updateSelects(); renderMatches(); renderTab(); syncUp();
+  toast(`Mazzo "${name}" eliminato`);
+  return true;
 }
 
 // ─────────────────────────────────────────────
@@ -971,27 +1152,38 @@ function updateSelects() {
   updateDeckSelects();
 }
 
-function updateDeckSelects() {
-  const p1i = parseInt(document.getElementById('p1sel').value) || 0;
-  const p2i = parseInt(document.getElementById('p2sel').value) || 0;
+function updateDeckSelects(changed) {
+  const s1 = document.getElementById('p1sel'), s2 = document.getElementById('p2sel');
+  // Evita di selezionare lo stesso giocatore da entrambi i lati: sposta l'altro
+  if (s1.value === s2.value && state.players.length > 1) {
+    const other = changed === 2 ? s1 : s2;
+    other.value = String((parseInt(other.value) + 1) % state.players.length);
+  }
+  const p1i = parseInt(s1.value) || 0;
+  const p2i = parseInt(s2.value) || 0;
   ['d1sel', 'd2sel'].forEach((id, idx) => {
-    const sel = document.getElementById(id);
-    const pi  = idx === 0 ? p1i : p2i;
-    sel.innerHTML = (state.players[pi]?.decks || [])
-      .map((d, i) => `<option value="${i}">${escH(d)}</option>`)
-      .join('');
+    const sel  = document.getElementById(id);
+    const pi   = idx === 0 ? p1i : p2i;
+    const prev = sel.dataset.pi == pi ? sel.value : '';
+    const decks = state.players[pi]?.decks || [];
+    sel.innerHTML = decks.length
+      ? decks.map((d, i) => `<option value="${i}">${escH(d)}</option>`).join('')
+      : '<option value="">— nessun mazzo —</option>';
+    sel.dataset.pi = pi;
+    if (prev && decks[prev] != null) sel.value = prev;
   });
+  document.getElementById('win-btn-1').textContent = '🏆 ' + (state.players[p1i]?.name || 'Giocatore 1');
+  document.getElementById('win-btn-2').textContent = '🏆 ' + (state.players[p2i]?.name || 'Giocatore 2');
 }
 
 // ─────────────────────────────────────────────
 // ADD / REMOVE MATCH
 // ─────────────────────────────────────────────
-async function addMatch() {
+async function addMatch(ws) {
   const p1i = parseInt(document.getElementById('p1sel').value);
   const p2i = parseInt(document.getElementById('p2sel').value);
   const d1i = parseInt(document.getElementById('d1sel').value);
   const d2i = parseInt(document.getElementById('d2sel').value);
-  const ws  = parseInt(document.getElementById('winner').value);
   const err = document.getElementById('match-error');
 
   if (p1i === p2i) {
@@ -1029,14 +1221,22 @@ async function addMatch() {
     vincitore:  state.players[match.winner].name
   });
 
-  saveLocal(); renderMatches(); renderTab(); await syncUp();
+  saveLocal(); renderMatches(); renderTab();
+  toast(`Vittoria di ${state.players[match.winner].name} registrata`, 'Annulla', () => {
+    const idx = state.matches.indexOf(match);
+    if (idx >= 0) { state.matches.splice(idx, 1); saveLocal(); renderMatches(); renderTab(); syncUp(); }
+  });
+  await syncUp();
 }
 
 function removeMatch(i) {
-  if (!confirm('Eliminare questa partita?')) return;
-  const removed = state.matches.splice(i, 1);
-  console.log('[YGO] Partita eliminata (indice', i, '):', removed[0]);
+  const [removed] = state.matches.splice(i, 1);
+  console.log('[YGO] Partita eliminata (indice', i, '):', removed);
   saveLocal(); renderMatches(); renderTab(); syncUp();
+  toast('Partita eliminata', 'Annulla', () => {
+    state.matches.splice(Math.min(i, state.matches.length), 0, removed);
+    saveLocal(); renderMatches(); renderTab(); syncUp();
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -1067,12 +1267,12 @@ function switchPage(p) {
 // ─────────────────────────────────────────────
 // TABS (inside Stats page)
 // ─────────────────────────────────────────────
-let currentTab = 'matchups';
+let currentTab = 'stats';
 
 function switchTab(t) {
   currentTab = t;
-  document.querySelectorAll('.tab').forEach((el, i) =>
-    el.classList.toggle('active', ['matchups', 'stats'][i] === t)
+  document.querySelectorAll('.tab').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === t)
   );
   ['matchups', 'stats'].forEach(id => {
     const el = document.getElementById(`tab-${id}`);
@@ -1093,7 +1293,7 @@ function renderMatches() {
   const c = document.getElementById('tab-matches');
   if (!c) return;
   if (!state.matches.length) {
-    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    c.innerHTML = '<div class="empty">Nessuna partita registrata.<br><small>Gioca un duello o registra un risultato da Partite.</small></div>';
     return;
   }
 
@@ -1162,7 +1362,7 @@ function renderMatchups() {
 
   const keys = Object.keys(map);
   if (!keys.length) {
-    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    c.innerHTML = '<div class="empty">Nessuna partita registrata.<br><small>Gioca un duello o registra un risultato da Partite.</small></div>';
     return;
   }
 
@@ -1248,7 +1448,7 @@ function deckScore(ds, deckStats) {
 function renderStats() {
   const c = document.getElementById('tab-stats');
   if (!state.matches.length) {
-    c.innerHTML = '<div class="empty">Nessuna partita registrata</div>';
+    c.innerHTML = '<div class="empty">Nessuna partita registrata.<br><small>Gioca un duello o registra un risultato da Partite.</small></div>';
     return;
   }
 
@@ -1332,22 +1532,6 @@ function renderStats() {
 function toggleDeckDetail(uid) {
   const el = document.getElementById(uid);
   if (el) el.classList.toggle('open');
-}
-
-// ─────────────────────────────────────────────
-// WILSON SCORE (lower bound, 95% confidence)
-// Penalizza deck con poche partite, premia chi
-// ha un alto win rate su molte partite.
-// Formula: (p̂ + z²/2n - z√(p̂(1-p̂)/n + z²/4n²)) / (1 + z²/n)
-// z=1.96 per 95% confidenza
-// ─────────────────────────────────────────────
-function wilsonScore(wins, total) {
-  if (total === 0) return 0;
-  const z  = 1.96;
-  const p  = wins / total;
-  const z2 = z * z;
-  const n  = total;
-  return (p + z2 / (2 * n) - z * Math.sqrt((p * (1 - p) + z2 / (4 * n)) / n)) / (1 + z2 / n);
 }
 
 // ─────────────────────────────────────────────
@@ -1459,8 +1643,10 @@ function renderRanking(deckStats) {
 
 const STARTING_LP   = 8000;
 const DANGER_LP     = 2000;
+const MAX_LP        = 999999;
 
-// duelState è separato dallo state principale (non viene salvato nel bin)
+// duelState è separato dallo state principale (non viene salvato nel bin).
+// Un solo tastierino condiviso: si tocca il giocatore bersaglio (sel) e poi si applica.
 let duelState = null;
 
 function renderDuel() {
@@ -1470,20 +1656,17 @@ function renderDuel() {
   if (!duelState) {
     // ── Setup screen: scelta giocatore + mazzo per ciascuno dei 2 slot ──
     resetBtn.style.display = 'none';
-
     const slotSelect = (slot) => {
-      const prevPi   = slot === 0 ? 0 : 1;
       const playerOpts = state.players.map((p, pi) =>
         `<option value="${pi}">${escH(p.name)}</option>`).join('');
-      const deckOpts = (state.players[prevPi]?.decks || []).map((d, di) =>
-        `<option value="${di}">${escH(d)}</option>`).join('');
       return `
         <div class="duel-slot">
           <div class="form-label" style="margin-bottom:6px">Giocatore ${slot + 1}</div>
           <select id="duel-p${slot}" onchange="onDuelPlayerChange(${slot})">${playerOpts}</select>
-          <select id="duel-d${slot}" style="margin-top:6px">${deckOpts}</select>
+          <select id="duel-d${slot}" style="margin-top:6px"></select>
         </div>`;
     };
+    const noDecks = state.players.some(p => !p.decks.length);
 
     c.innerHTML = `
       <div class="duel-setup">
@@ -1492,31 +1675,36 @@ function renderDuel() {
           <div class="duel-vs-sep">VS</div>
           ${slotSelect(1)}
         </div>
+        ${noDecks ? `<p class="hint" style="margin:0">Qualche giocatore non ha ancora mazzi: aggiungili in <a onclick="switchPage('settings')">Mazzi</a>.</p>` : ''}
         <div id="duel-setup-err" class="form-error"></div>
-        <button class="btn-start-duel" onclick="startDuel()">⚔ Inizia Duello</button>
+        <button class="btn-start-duel" onclick="startDuel()">⚔ Inizia Duello · ${STARTING_LP.toLocaleString('it-IT')} LP</button>
       </div>`;
 
-    // Init slot 1 to default player 1 (so they differ)
     const p1sel = document.getElementById('duel-p1');
-    if (p1sel && state.players.length > 1) {
-      p1sel.value = '1';
-      onDuelPlayerChange(1);
-    }
+    if (p1sel && state.players.length > 1) p1sel.value = '1';
+    onDuelPlayerChange(0);
+    onDuelPlayerChange(1);
     return;
   }
 
-  resetBtn.style.display = '';
+  resetBtn.style.display = duelState.over ? 'none' : '';
+  const canUndo = duelState.history.length > 0;
 
   if (duelState.over) {
     // ── Game over screen ──────────────────────────────────────────────
     const winner = duelState.winner;
-    const loser  = duelState.players.find(p => p.slot !== winner.slot);
+    const loser  = winner && duelState.players.find(p => p.slot !== winner.slot);
     c.innerHTML = `
       <div class="duel-over-banner">
-        <div class="duel-over-title">🏆 ${escH(winner.name)} vince!</div>
-        <div class="duel-over-sub">${escH(winner.deck)} batte ${escH(loser.name)} (${escH(loser.deck)})</div>
+        ${winner ? `
+          <div class="duel-over-title">🏆 ${escH(winner.name)} vince!</div>
+          <div class="duel-over-sub">${escH(winner.deck)} batte ${escH(loser.name)} (${escH(loser.deck)})</div>`
+        : `
+          <div class="duel-over-title">Pareggio</div>
+          <div class="duel-over-sub">Entrambi i giocatori sono a 0 LP — i pareggi non vengono registrati.</div>`}
         <div class="duel-over-btns">
-          <button class="btn-save-result" onclick="saveDuelResult()">💾 Salva nel tracker</button>
+          ${winner ? `<button class="btn-save-result" onclick="saveDuelResult()">💾 Salva risultato</button>` : ''}
+          <button class="btn-new-duel" onclick="undoDuel()">↶ Annulla ultima mossa</button>
           <button class="btn-new-duel" onclick="resetDuel()">↺ Nuovo duello</button>
         </div>
       </div>`;
@@ -1525,65 +1713,56 @@ function renderDuel() {
 
   // ── Active duel ───────────────────────────────────────────────────
   const cards = duelState.players.map(p => {
-    const pct      = Math.max(0, p.lp / STARTING_LP * 100);
-    const danger   = p.lp <= DANGER_LP && p.lp > 0;
-    const dead     = p.lp <= 0;
-    const barColor = dead || danger ? 'var(--red)' : `var(--${pClass[p.pi]})`;
-
+    const pct      = Math.min(100, Math.max(0, p.lp / STARTING_LP * 100));
+    const danger   = p.lp <= DANGER_LP;
+    const barColor = danger ? 'var(--red)' : `var(--${pClass[p.pi]})`;
+    const sel      = duelState.sel === p.slot;
     return `
-    <div class="duel-player-card ${pClass[p.pi]}${dead ? ' dead' : ''}">
-      <div class="duel-player-header">
-        <div>
-          <div class="duel-player-name ${pClass[p.pi]}">${escH(p.name)}</div>
-          <div class="duel-deck-badge">${escH(p.deck)}</div>
-        </div>
-        ${dead ? '<div class="duel-dead-label">💀 KO</div>' : ''}
+    <button class="duel-player-card ${pClass[p.pi]}${sel ? ' selected' : ''}" onclick="selectDuelPlayer(${p.slot})">
+      <div class="duel-player-header" style="display:block">
+        <div class="duel-player-name ${pClass[p.pi]}">${escH(p.name)}</div>
+        <div class="duel-deck-badge">${escH(p.deck)}</div>
       </div>
-
-      <div class="duel-lp-display ${pClass[p.pi]}${danger && !dead ? ' danger' : ''}">${p.lp.toLocaleString('it-IT')}</div>
-      <div class="duel-lp-bar-bg">
-        <div class="duel-lp-bar" style="width:${pct}%;background:${barColor}"></div>
-      </div>
-
-      ${!dead ? `
-      <div class="duel-controls">
-        <div class="duel-quick-row">
-          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-100)">−100</button>
-          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-200)">−200</button>
-          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-300)">−300</button>
-          <button class="duel-quick-btn q-hundreds" onclick="quickApply(${p.slot},-500)">−500</button>
-          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-1000)">−1k</button>
-          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-2000)">−2k</button>
-          <button class="duel-quick-btn q-thousands" onclick="quickApply(${p.slot},-3000)">−3k</button>
-        </div>
-        <div class="duel-keypad-wrap">
-          <div class="duel-display">
-            <button class="duel-display-back" onclick="kbBack(${p.slot})">⌫</button>
-            <div class="duel-display-num ${duelState.buf[p.slot]?'':'empty'}" id="kdisp-${p.slot}">
-              ${duelState.buf[p.slot] ? parseInt(duelState.buf[p.slot]).toLocaleString('it-IT') : 'inserisci LP…'}
-            </div>
-          </div>
-          <div class="duel-keypad">
-            ${[7,8,9,4,5,6,1,2,3].map(n=>`<button class="duel-key" onclick="kbPress(${p.slot},${n})">${n}</button>`).join('')}
-            <button class="duel-key zero" onclick="kbPress(${p.slot},0)">0</button>
-          </div>
-          <div class="duel-action-row">
-            <button class="duel-btn-dmg" onclick="applyDmg(${p.slot})">− Danno</button>
-            <button class="duel-btn-heal" onclick="applyHl(${p.slot})">+ Cura</button>
-          </div>
-        </div>
-      </div>` : ''}
-    </div>`;
+      <div class="duel-lp-display ${pClass[p.pi]}${danger ? ' danger' : ''}">${p.lp.toLocaleString('it-IT')}</div>
+      <div class="duel-lp-bar-bg"><div class="duel-lp-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="duel-target-tag">${sel ? '▲ bersaglio' : ''}</div>
+    </button>`;
   }).join('');
+
+  const target = duelState.players[duelState.sel];
+  const keys = [7,8,9,4,5,6,1,2,3].map(n =>
+    `<button class="duel-key" onclick="kbPress('${n}')">${n}</button>`).join('')
+    + `<button class="duel-key small" onclick="kbPress('00')">00</button>`
+    + `<button class="duel-key" onclick="kbPress('0')">0</button>`
+    + `<button class="duel-key small" onclick="kbPress('000')">000</button>`;
 
   const logEntries = [...duelState.log].reverse().slice(0, 12)
     .map(e => `<div class="duel-log-entry ${e.type}">${escH(e.msg)}</div>`).join('');
 
   c.innerHTML = `
-    <div class="duel-arena">
-      ${cards}
-      ${duelState.log.length ? `<div class="duel-log">${logEntries}</div>` : ''}
+    <div class="duel-board">${cards}</div>
+    <div class="duel-pad">
+      <div class="duel-quick-row">
+        ${[100, 200, 300, 500, 1000, 2000].map(v =>
+          `<button class="duel-quick-btn ${v >= 1000 ? 'q-thousands' : 'q-hundreds'}" onclick="quickApply(-${v})">−${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}
+        <button class="duel-quick-btn" onclick="halveLp()" title="Dimezza i LP">½</button>
+      </div>
+      <div class="duel-display">
+        <button class="duel-display-back" onclick="kbBack()" title="Cancella">⌫</button>
+        <div class="duel-display-num ${duelState.buf ? '' : 'empty'}" id="kdisp">
+          ${duelState.buf ? parseInt(duelState.buf).toLocaleString('it-IT') : `importo per ${escH(target.name)}…`}
+        </div>
+      </div>
+      <div class="duel-keypad">${keys}</div>
+      <div class="duel-action-row">
+        <button class="duel-btn-dmg" onclick="applyDmg()">− Danno</button>
+        <button class="duel-btn-heal" onclick="applyHl()">+ Cura</button>
+      </div>
+      <div class="duel-util-row">
+        <button class="btn-cfg-sec" onclick="undoDuel()" ${canUndo ? '' : 'disabled'}>↶ Annulla</button>
+      </div>
     </div>
+    ${duelState.log.length ? `<div class="duel-log">${logEntries}</div>` : ''}
     <div class="tools-panel">
       <div class="dice-panel">
         <div class="dice-label-title">🎲 Dado d6</div>
@@ -1609,7 +1788,9 @@ function onDuelPlayerChange(slot) {
   const deckSel = document.getElementById(`duel-d${slot}`);
   if (!deckSel) return;
   const decks = state.players[pi]?.decks || [];
-  deckSel.innerHTML = decks.map((d, di) => `<option value="${di}">${escH(d)}</option>`).join('');
+  deckSel.innerHTML = decks.length
+    ? decks.map((d, di) => `<option value="${di}">${escH(d)}</option>`).join('')
+    : '<option value="">— nessun mazzo —</option>';
 }
 
 function startDuel() {
@@ -1634,11 +1815,11 @@ function startDuel() {
   }
 
   const players = [
-    { slot: 0, pi: pi0, name: p0.name, di: di0, deck: p0.decks[di0] || '?', lp: STARTING_LP },
-    { slot: 1, pi: pi1, name: p1.name, di: di1, deck: p1.decks[di1] || '?', lp: STARTING_LP },
+    { slot: 0, pi: pi0, name: p0.name, deck: p0.decks[di0] || '?', lp: STARTING_LP },
+    { slot: 1, pi: pi1, name: p1.name, deck: p1.decks[di1] || '?', lp: STARTING_LP },
   ];
 
-  duelState = { players, log: [], over: false, winner: null, buf: { 0: '', 1: '' } };
+  duelState = { players, log: [], history: [], over: false, winner: null, buf: '', sel: 0 };
   console.log('[YGO] Duello iniziato:', players.map(p => `${p.name} (${p.deck})`));
   renderDuel();
 }
@@ -1651,82 +1832,84 @@ function resetDuel() {
   renderDuel();
 }
 
-// ── Keypad buffer (per slot) ──────────────────────────────────────────────
-function kbPress(slot, digit) {
-  const cur = duelState.buf[slot] || '';
-  if (cur.length >= 6) return; // max 6 cifre (99999)
-  duelState.buf[slot] = cur + String(digit);
-  refreshDisplay(slot);
-}
-
-function kbBack(slot) {
-  const cur = duelState.buf[slot] || '';
-  duelState.buf[slot] = cur.slice(0, -1);
-  refreshDisplay(slot);
-}
-
-function refreshDisplay(slot) {
-  const el = document.getElementById(`kdisp-${slot}`);
-  if (!el) return;
-  const buf = duelState.buf[slot] || '';
-  if (buf) {
-    el.className = 'duel-display-num';
-    el.textContent = parseInt(buf).toLocaleString('it-IT');
-  } else {
-    el.className = 'duel-display-num empty';
-    el.textContent = 'inserisci LP…';
-  }
-}
-
-function getBufAmount(slot) {
-  return parseInt(duelState.buf[slot] || '0') || 0;
-}
-
-function clearBuf(slot) {
-  duelState.buf[slot] = '';
-}
-
-// ── Quick shortcut (direct apply, no buffer needed) ───────────────────────
-function quickApply(slot, delta) {
-  const p = duelState.players.find(pl => pl.slot === slot);
-  if (!p || p.lp <= 0) return;
-  const prev = p.lp;
-  const amount = Math.abs(delta);
-  if (delta < 0) {
-    p.lp = Math.max(0, p.lp - amount);
-    duelState.log.push({ type: 'dmg', msg: `${p.name}: −${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
-    console.log(`[YGO] Scorciatoia danno ${amount} a ${p.name} → ${p.lp} LP`);
-    checkDuelOver();
-  }
+function selectDuelPlayer(slot) {
+  if (!duelState || duelState.over) return;
+  duelState.sel = slot;
   renderDuel();
 }
 
-function applyDmg(slot) {
-  const p = duelState.players.find(pl => pl.slot === slot);
-  if (!p || p.lp <= 0) return;
-  const amount = getBufAmount(slot);
-  if (!amount) return;
+// ── Tastierino condiviso ──────────────────────────────────────────────────
+function kbPress(digits) {
+  const cur = duelState.buf;
+  if (!cur && /^0+$/.test(digits)) return;           // niente zeri iniziali
+  if ((cur + digits).length > 6) return;             // max 999.999
+  duelState.buf = cur + digits;
+  refreshDisplay();
+}
+
+function kbBack() {
+  duelState.buf = duelState.buf.slice(0, -1);
+  refreshDisplay();
+}
+
+function refreshDisplay() {
+  const el = document.getElementById('kdisp');
+  if (!el) return;
+  const buf = duelState.buf;
+  el.className   = 'duel-display-num' + (buf ? '' : ' empty');
+  el.textContent = buf ? parseInt(buf).toLocaleString('it-IT') : `importo per ${duelState.players[duelState.sel].name}…`;
+}
+
+// ── Modifica LP (con cronologia per "Annulla") ────────────────────────────
+function changeLp(delta, label) {
+  const p = duelState.players[duelState.sel];
+  if (!p || !delta) return;
+  duelState.history.push({ lps: duelState.players.map(x => x.lp), logLen: duelState.log.length });
   const prev = p.lp;
-  p.lp = Math.max(0, p.lp - amount);
-  duelState.log.push({ type: 'dmg', msg: `${p.name}: −${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
-  console.log(`[YGO] Danno ${amount} a ${p.name} → ${p.lp} LP`);
-  clearBuf(slot);
+  p.lp = Math.max(0, Math.min(MAX_LP, p.lp + delta));
+  const fmt = n => n.toLocaleString('it-IT');
+  duelState.log.push({
+    type: delta < 0 ? 'dmg' : 'heal',
+    msg:  `${p.name}: ${label || (delta < 0 ? '−' : '+') + fmt(Math.abs(delta))} LP  (${fmt(prev)} → ${fmt(p.lp)})`
+  });
+  duelState.buf = '';
   checkDuelOver();
   renderDuel();
 }
 
-function applyHl(slot) {
-  const p = duelState.players.find(pl => pl.slot === slot);
-  if (!p || p.lp <= 0) return;
-  const amount = getBufAmount(slot);
-  if (!amount) return;
-  const prev = p.lp;
-  p.lp = Math.min(99999, p.lp + amount);
-  duelState.log.push({ type: 'heal', msg: `${p.name}: +${amount.toLocaleString()} LP  (${prev.toLocaleString()} → ${p.lp.toLocaleString()})` });
-  console.log(`[YGO] Cura ${amount} a ${p.name} → ${p.lp} LP`);
-  clearBuf(slot);
+function quickApply(delta) { changeLp(delta); }
+function applyDmg() { const a = parseInt(duelState.buf) || 0; if (a) changeLp(-a); }
+function applyHl()  { const a = parseInt(duelState.buf) || 0; if (a) changeLp(a); }
+
+function halveLp() {
+  const p = duelState.players[duelState.sel];
+  changeLp(-Math.floor(p.lp / 2), '½');
+}
+
+function undoDuel() {
+  const h = duelState?.history.pop();
+  if (!h) return;
+  duelState.players.forEach((p, i) => { p.lp = h.lps[i]; });
+  duelState.log.length = h.logLen;
+  duelState.over = false;
+  duelState.winner = null;
   renderDuel();
 }
+
+// Tastiera fisica: cifre, Backspace, Invio/− = danno, + = cura, ←/→ = bersaglio, Ctrl+Z = annulla
+document.addEventListener('keydown', e => {
+  if (currentPage !== 'duel' || !duelState || duelState.over || dmCtx) return;
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  if (/^\d$/.test(e.key))                       kbPress(e.key);
+  else if (e.key === 'Backspace')               kbBack();
+  else if (e.key === 'Enter' || e.key === '-')  applyDmg();
+  else if (e.key === '+')                       applyHl();
+  else if (e.key === 'ArrowLeft')               selectDuelPlayer(0);
+  else if (e.key === 'ArrowRight')              selectDuelPlayer(1);
+  else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) undoDuel();
+  else return;
+  e.preventDefault();
+});
 
 function rollDice() {
   const result = Math.floor(Math.random() * 6) + 1;
@@ -1754,46 +1937,33 @@ function flipCoin() {
   console.log(`[YGO] Moneta: ${heads ? 'Testa' : 'Croce'}`);
 }
 
-// Legacy stubs
-function applyDamage() {} function applyHeal() {} function applyCustom(s) { applyDmg(s); }
-function setMult() {} function getAmount() { return 0; } function updatePreview() {}
-
 function checkDuelOver() {
-  const dead = duelState.players.filter(p => p.lp <= 0);
-  if (!dead.length) return;
-
-  // If multiple die simultaneously, both lose (draw — pick first as "winner" display)
   const alive = duelState.players.filter(p => p.lp > 0);
+  if (alive.length === duelState.players.length) return;
   duelState.over   = true;
-  duelState.winner = alive.length ? alive[0] : duelState.players[0];
-  console.log('[YGO] Duello terminato. Vincitore:', duelState.winner.name);
+  duelState.winner = alive.length === 1 ? alive[0] : null;   // null = pareggio
+  console.log('[YGO] Duello terminato. Vincitore:', duelState.winner?.name || 'pareggio');
 }
 
 async function saveDuelResult() {
   if (!duelState?.over || !duelState.winner) return;
-  const winner = duelState.winner;
-  const loser  = duelState.players.find(p => p.slot !== winner.slot);
+  const [a, b] = duelState.players;
+  // Risolvo gli indici dei mazzi per nome: potrebbero essere cambiati durante il duello
+  const d1i = state.players[a.pi]?.decks.indexOf(a.deck);
+  const d2i = state.players[b.pi]?.decks.indexOf(b.deck);
+  if (d1i < 0 || d2i < 0) { toast('Un mazzo del duello non esiste più: impossibile salvare.'); return; }
 
-  const match = {
-    p1i:    winner.pi,
-    p2i:    loser.pi,
-    d1i:    winner.di,
-    d2i:    loser.di,
-    winner: winner.pi,
-    ts:     Date.now()
-  };
+  const match = { p1i: a.pi, p2i: b.pi, d1i, d2i, winner: duelState.winner.pi, ts: Date.now() };
   state.matches.push(match);
   console.log('[YGO] Risultato duello salvato:', match);
 
   saveLocal();
   renderTab();
-  await syncUp();
-
-  // Switch to history tab to show the new match
-  switchPage('matches');
   duelState = null;
   renderDuel();
-  alert('Risultato salvato nel tracker! ✓');
+  switchPage('matches');
+  toast('Risultato salvato ✓');
+  await syncUp();
 }
 
 // ─────────────────────────────────────────────
@@ -1934,8 +2104,15 @@ function scheduleDeckSync() {
 function commitDeck() {
   saveLocal();
   renderDeckEditor();
+  renderSearchResults();
   renderPlayers();
   scheduleDeckSync();
+}
+
+let dmTarget = 'auto';     // 'auto' = Main o Extra in base al tipo, 'side' = Side Deck
+function setDeckTarget(v) {
+  dmTarget = v;
+  document.querySelectorAll('#dm-target button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
 }
 
 async function openDeckEditor(pi, di) {
@@ -1944,13 +2121,19 @@ async function openDeckEditor(pi, di) {
   dmCtx = { pi, name };
   document.getElementById('dm-title').textContent = `${name} — ${state.players[pi].name}`;
   document.getElementById('dm-search-input').value = '';
+  dmResults = [];
+  searchSeq++;
   document.getElementById('dm-results').innerHTML = '';
   document.getElementById('dm-import').classList.remove('open');
+  document.getElementById('dm-export').classList.remove('open');
   document.getElementById('dm-import-text').value = '';
+  setDeckTarget('auto');
   dmMsg('');
   document.getElementById('deck-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   renderDeckEditor();
+  // Focus automatico solo con mouse: su telefono aprirebbe la tastiera sopra la lista
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) document.getElementById('dm-search-input').focus();
 
   const l = getDeckList(false);
   const all = [...l.main, ...l.extra, ...l.side];
@@ -1982,8 +2165,8 @@ function typeOrder(c) {
   return 1;
 }
 
-function cardRowHtml(id, name, type, controls) {
-  return `<div class="card-row">
+function cardRowHtml(id, name, type, controls, rowAttrs = '', extraCls = '') {
+  return `<div class="card-row ${extraCls}" ${rowAttrs}>
     <img src="${CARD_IMG(id)}" loading="lazy" alt="" onerror="this.style.visibility='hidden'"/>
     <div class="card-info">
       <div class="card-name">${escH(name)}</div>
@@ -2010,13 +2193,14 @@ function renderDeckEditor() {
       const ca = cardCache[a[0]], cb = cardCache[b[0]];
       return typeOrder(ca) - typeOrder(cb) || (ca?.n || a[0]).localeCompare(cb?.n || b[0]);
     });
+    if (!rows.length && sec !== 'main') return;   // Extra/Side vuoti: niente sezione
     html += `<div class="dm-section">
       <div class="dm-section-title">
         <span>${SECTION_LABEL[sec]}</span>
         <span class="${bad(sec) ? 'bad' : ''}">${l[sec].length}${sec === 'main' ? ' / 40–60' : ' / ' + SECTION_MAX[sec]}</span>
       </div>
       <div class="dm-list">`;
-    if (!rows.length) html += `<div class="dm-empty">Vuoto</div>`;
+    if (!rows.length) html += `<div class="dm-empty">Lista vuota: cerca una carta qui sopra oppure usa ⇩ Importa per caricare un file .ydk.</div>`;
     rows.forEach(([id, n]) => {
       const c = cardCache[id];
       const controls = `
@@ -2048,7 +2232,7 @@ function naturalSection(id) { return isExtraFrame(cardCache[id]?.f) ? 'extra' : 
 
 function addCard(id) {
   const l   = getDeckList(true);
-  const sec = document.getElementById('dm-target').value === 'side' ? 'side' : naturalSection(id);
+  const sec = dmTarget === 'side' ? 'side' : naturalSection(id);
   if (!canAdd(l, sec, id)) return;
   l[sec].push(String(id));
   dmMsg(`+1 ${cardCache[id]?.n || id} → ${SECTION_LABEL[sec]}`, 'ok');
@@ -2089,22 +2273,92 @@ function clearDeckList() {
   commitDeck();
 }
 
+function renameDeck() {
+  if (!dmCtx) return;
+  const { pi, name } = dmCtx;
+  const v = (prompt('Nuovo nome del mazzo:', name) || '').trim();
+  if (!v || v === name) return;
+  const decks = state.players[pi].decks;
+  if (decks.includes(v)) { dmMsg('Esiste già un mazzo con questo nome.', 'err'); return; }
+  const di = decks.indexOf(name);
+  if (di < 0) return;
+  decks[di] = v;   // le partite usano l'indice: restano collegate
+  const oldKey = deckKey(pi, name);
+  if (state.deckLists[oldKey]) { state.deckLists[deckKey(pi, v)] = state.deckLists[oldKey]; delete state.deckLists[oldKey]; }
+  dmCtx.name = v;
+  document.getElementById('dm-title').textContent = `${v} — ${state.players[pi].name}`;
+  updateSelects(); renderMatches(); renderTab();
+  dmMsg('Mazzo rinominato ✓', 'ok');
+  commitDeck();
+}
+
+function deleteDeckFromEditor() {
+  if (!dmCtx) return;
+  const di = state.players[dmCtx.pi].decks.indexOf(dmCtx.name);
+  if (di < 0) return;
+  const pi = dmCtx.pi;
+  dmCtx = null;                                   // evita che il sync ricrei la lista
+  if (removeDeck(pi, di)) closeDeckEditor();
+  else dmCtx = { pi, name: state.players[pi].decks[di] };
+}
+
 // ── Ricerca carte ──
+// L'API cerca per sottostringa esatta ("blue eyes" non trova "Blue-Eyes").
+// Se la query intera non dà risultati, cerco la parola più lunga e filtro in locale
+// richiedendo tutte le parole (ignorando maiuscole, accenti e punteggiatura).
+let dmResults = [];
+
+function normName(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
 function onCardSearch(q) {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => runCardSearch(q.trim()), 350);
 }
 
+function onCardSearchKey(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  clearTimeout(searchTimer);
+  // Invio aggiunge il primo risultato (se la ricerca è già completata)
+  if (dmResults.length && document.getElementById('dm-search-input').value.trim() === dmResults.q) addCard(dmResults[0].id);
+  else runCardSearch(e.target.value.trim());
+}
+
+async function searchBoth(fname, num) {
+  const p = num ? { fname, num, offset: 0 } : { fname };
+  const [en, it] = await Promise.all([
+    apiCards(p).catch(() => []),
+    apiCards({ ...p, language: 'it' }).catch(() => [])
+  ]);
+  return { en, it };
+}
+
 async function runCardSearch(q) {
   const box = document.getElementById('dm-results');
-  if (q.length < 3) { searchSeq++; box.innerHTML = ''; return; }
   const seq = ++searchSeq;
-  box.innerHTML = `<div class="dm-empty">Ricerca...</div>`;
+  if (normName(q).length < 3) {
+    dmResults = [];
+    box.innerHTML = q ? `<div class="dm-empty">Scrivi almeno 3 lettere…</div>` : '';
+    return;
+  }
+  box.innerHTML = `<div class="dm-empty">Ricerca…</div>`;
   try {
-    const [en, it] = await Promise.all([
-      apiCards({ fname: q, num: 30, offset: 0 }).catch(() => []),
-      apiCards({ fname: q, num: 30, offset: 0, language: 'it' }).catch(() => [])
-    ]);
+    const words = normName(q).split(' ').filter(Boolean);
+    let { en, it } = await searchBoth(q, 40);
+
+    if (!en.length && !it.length) {
+      const tokens = [...new Set(words)].filter(w => w.length >= 3).sort((a, b) => b.length - a.length).slice(0, 2);
+      for (const t of tokens) {
+        if (seq !== searchSeq) return;
+        const r = await searchBoth(t);
+        const ok = c => { const n = normName(c.name); return words.every(w => n.includes(w)); };
+        en = r.en.filter(ok); it = r.it.filter(ok);
+        if (en.length || it.length) break;
+      }
+    }
     if (seq !== searchSeq) return;
 
     const map = new Map();
@@ -2117,31 +2371,47 @@ async function runCardSearch(q) {
     });
     saveCardCache();
 
-    const ql = q.toLowerCase();
+    const ql = normName(q);
     const score = r => {
-      const names = [r.name, r.it].filter(Boolean).map(s => s.toLowerCase());
+      const names = [r.name, r.it].filter(Boolean).map(normName);
       if (names.some(n => n === ql)) return 0;
       if (names.some(n => n.startsWith(ql))) return 1;
       return 2;
     };
-    const results = [...map.values()].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, 30);
-
-    if (!results.length) { box.innerHTML = `<div class="dm-empty">Nessuna carta trovata.</div>`; return; }
-    box.innerHTML = results.map(r => cardRowHtml(
-      r.id,
-      r.it && r.it !== r.name ? `${r.name} · ${r.it}` : r.name,
-      r.type || '',
-      `<button class="card-btn" title="Aggiungi" onclick="addCard('${r.id}')">+</button>`
-    )).join('');
+    dmResults = [...map.values()].sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, 30);
+    dmResults.q = q;
+    renderSearchResults();
   } catch(e) {
     console.error('[YGO] Ricerca carte:', e);
-    if (seq === searchSeq) box.innerHTML = `<div class="dm-empty">Errore di rete durante la ricerca.</div>`;
+    if (seq === searchSeq) box.innerHTML = `<div class="dm-empty">Errore di rete durante la ricerca. Riprova.</div>`;
   }
 }
 
+function renderSearchResults() {
+  const box = document.getElementById('dm-results');
+  if (!dmCtx || !dmResults.q) return;
+  if (!dmResults.length) {
+    box.innerHTML = `<div class="dm-empty">Nessuna carta trovata per “${escH(dmResults.q)}”. Prova con meno parole o col nome inglese.</div>`;
+    return;
+  }
+  const l = getDeckList(false);
+  box.innerHTML = dmResults.map(r => {
+    const have = copiesOf(l, r.id);
+    const maxed = have >= MAX_COPIES;
+    return cardRowHtml(
+      r.id,
+      r.it && r.it !== r.name ? `${r.name} · ${r.it}` : r.name,
+      r.type || '',
+      `${have ? `<span class="card-have">${have}/${MAX_COPIES}</span>` : ''}<button class="card-btn" title="Aggiungi" tabindex="-1">+</button>`,
+      `onclick="addCard('${r.id}')" title="Tocca per aggiungere"`, maxed ? 'maxed' : ''
+    );
+  }).join('');
+}
+
 // ── Import / Export ──
-function toggleDeckImport() {
-  document.getElementById('dm-import').classList.toggle('open');
+function toggleDeckPanel(id) {
+  ['dm-import', 'dm-export'].forEach(p =>
+    document.getElementById(p).classList.toggle('open', p === id && !document.getElementById(p).classList.contains('open')));
 }
 
 async function importDeckFromText(text) {
@@ -2225,7 +2495,7 @@ if (cfg.apiKey && cfg.binId) {
   syncDown();
 } else {
   console.log('[YGO] Nessun account configurato, modalità locale');
-  setSync('', 'non configurato');
+  setSync('', 'solo locale');
 }
 
 renderPlayers();
@@ -2233,7 +2503,7 @@ updateSelects();
 renderMatches();
 renderDuel();
 // Init stats tab with matchups visible
-currentTab = 'matchups';
+currentTab = 'stats';
 console.log('[YGO] Tracker pronto');
 </script>
 </body>
