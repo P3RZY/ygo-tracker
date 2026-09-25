@@ -404,8 +404,9 @@ function labAutoResponse(m) {
     case MT.SELECT_CHAIN:
       if (m.forced) return null;
       if (!m.selects.length) return { type: R.SELECT_CHAIN, index: null };
-      // Finestre "vuote" (cambio di fase senza azioni né catena aperta): saltate, salvo richiesta esplicita
-      if (!labSetup.askPhases && !labDuel.chain.length && !labDuel.acted) return { type: R.SELECT_CHAIN, index: null };
+      // Finestre "vuote" di Draw e Standby Phase (nessuna azione né catena aperta): saltate, salvo richiesta esplicita.
+      // Nelle altre fasi si chiede sempre: è lì che l'avversario risponde ai cambi di fase.
+      if (!labSetup.askPhases && labDuel.phase <= 2 && !labDuel.chain.length && !labDuel.acted) return { type: R.SELECT_CHAIN, index: null };
       return null;
     case MT.SELECT_POSITION: {
       const opts = [1, 2, 4, 8].filter(p => m.positions & p);
@@ -768,7 +769,54 @@ function labBackToSetup() {
 }
 
 // ── Campo di gioco ───────────────────────────────────────────────────────────
-function labTile(card, extraCls = '') {
+const LAB_PILE_LOC = { grave: 16, removed: 32, extra: 64, deck: 1 };
+
+/**
+ * Azioni possibili ADESSO per la carta in (controller, location, sequence),
+ * ricavate dalla richiesta in corso del motore.
+ */
+function labActionsFor(ctrl, loc, seq) {
+  const m = labDuel?.pending;
+  if (!m) return [];
+  const { OcgMessageType: MT, SelectIdleCMDAction: I, SelectBattleCMDAction: B } = labE.ocg;
+  const out = [];
+  const add = (list, label, fn) => (list || []).forEach((c, i) => {
+    if (c.controller === ctrl && c.location === loc && c.sequence === seq)
+      out.push({ label: typeof label === 'function' ? label(c) : label, fn: fn(i) });
+  });
+  const act = pre => c => pre + labEffectSuffix(c.description, c.code);
+  switch (m.type) {
+    case MT.SELECT_IDLECMD:
+      add(m.activates, act('Attiva'), i => `labIdle(${I.SELECT_ACTIVATE},${i})`);
+      add(m.summons, 'Evocazione Normale', i => `labIdle(${I.SELECT_SUMMON},${i})`);
+      add(m.special_summons, 'Evocazione Speciale', i => `labIdle(${I.SELECT_SPECIAL_SUMMON},${i})`);
+      add(m.monster_sets, 'Posiziona coperto', i => `labIdle(${I.SELECT_MONSTER_SET},${i})`);
+      add(m.spell_sets, 'Posiziona coperta', i => `labIdle(${I.SELECT_SPELL_SET},${i})`);
+      add(m.pos_changes, 'Cambia posizione', i => `labIdle(${I.SELECT_POS_CHANGE},${i})`);
+      break;
+    case MT.SELECT_BATTLECMD:
+      add(m.attacks, 'Attacca', i => `labBattle(${B.SELECT_BATTLE},${i})`);
+      add(m.chains, act('Attiva'), i => `labBattle(${B.SELECT_CHAIN},${i})`);
+      break;
+    case MT.SELECT_CHAIN:
+      add(m.selects, act('Attiva in risposta'), i => `labChain(${i})`);
+      break;
+    case MT.SELECT_CARD:
+    case MT.SELECT_TRIBUTE:
+    case MT.SELECT_SUM: {
+      const single = m.type !== MT.SELECT_SUM && m.min === 1 && m.max === 1;
+      add(m.selects, single ? 'Scegli questa carta' : 'Aggiungi / togli dalla scelta', i => single ? `labSelectCards([${i}])` : `labToggle(${i})`);
+      break;
+    }
+    case MT.SELECT_UNSELECT_CARD:
+      add(m.select_cards, 'Scegli questa carta', i => `labUnselect(${i})`);
+      add(m.unselect_cards, 'Togli dalla scelta', i => `labUnselect(${m.select_cards.length + i})`);
+      break;
+  }
+  return out;
+}
+
+function labTile(card, extraCls = '', loc = null) {
   if (!card) return `<div class="lab-zone ${extraCls}"></div>`;
   const P = labE.ocg.OcgPosition, T = labE.ocg.OcgType;
   const inHand = extraCls.includes("hc");                 // in mano il motore le considera coperte: le mostro comunque
@@ -776,23 +824,47 @@ function labTile(card, extraCls = '') {
   const type = labCardData(card.code)?.type || 0;
   const isMon = (type & T.MONSTER) && extraCls.includes("mz");
   const mats = card.overlayCards?.length ? `<span class="lab-mats">${card.overlayCards.length}</span>` : '';
-  return `<div class="lab-zone ${extraCls} has${down ? ' down' : ''}${def ? ' def' : ''}" onclick="labShowCard(${card.code})" title="${escH(labName(card.code))}">
+  const can = loc && labActionsFor(loc.controller, loc.location, loc.sequence).length;
+  const tap = loc ? `labTapCard(${card.code},${loc.controller},${loc.location},${loc.sequence})` : `labShowCard(${card.code})`;
+  return `<div class="lab-zone ${extraCls} has${down ? ' down' : ''}${def ? ' def' : ''}${can ? ' can' : ''}" onclick="${tap}" title="${escH(labName(card.code))}">
     <img src="${labCardImg(card.code)}" alt="" loading="lazy"/>
     ${down ? '<span class="lab-badge">coperta</span>' : def && isMon ? '<span class="lab-badge">DIF</span>' : ''}
     ${isMon && !down ? `<span class="lab-stat">${card.attack}/${type & T.LINK ? "L" : card.defense}</span>` : ''}${mats}
   </div>`;
 }
 
+/** Tocco su una carta: azioni disponibili ora (se ce ne sono) + testo della carta. */
+function labTapCard(code, ctrl, loc, seq) {
+  const acts = labActionsFor(ctrl, loc, seq);
+  const m = labDuel?.pending;
+  let html;
+  if (acts.length) {
+    html = `<div class="lab-card-actions">${acts.map(a => `<button class="lab-opt act" onclick="labCloseCard(); ${a.fn}">${escH(a.label)}</button>`).join('')}</div>`;
+  } else if (m) {
+    const mine = ctrl === m.player;
+    const why = !mine && [labE.ocg.OcgMessageType.SELECT_IDLECMD, labE.ocg.OcgMessageType.SELECT_BATTLECMD].includes(m.type)
+      ? `Adesso sta giocando ${labWho(m.player)}. ${labWho(ctrl)} potrà rispondere solo dopo una sua azione (evocazione, attivazione, attacco o cambio di fase): in quel momento il Laboratorio chiederà se vuole attivare qualcosa.`
+      : `In questo momento non si può usare: le carte utilizzabili sono evidenziate in oro.`;
+    html = `<div class="lab-card-note">${escH(why)}</div>`;
+  }
+  labShowCard(code, html);
+}
+
 function labPlayHtml() {
   const d = labDuel, f = labField();
   const me = 0 ^ d.first, opp = 1 ^ d.first;          // giocatori del motore
-  const hand = p => `<div class="lab-hand">${f[p].hand.map(c => labTile(c, 'hc')).join('') || '<span class="lab-empty">mano vuota</span>'}</div>`;
-  const pile = (p, k, label) => `<button class="lab-pile" onclick="labShowPile(${p},'${k}')">${label} <b>${f[p][k].length}</b></button>`;
+  const L = labE.ocg.OcgLocation;
+  const at = (p, location, sequence) => ({ controller: p, location, sequence });
+  const hand = p => `<div class="lab-hand">${f[p].hand.map((c, i) => labTile(c, 'hc', at(p, L.HAND, i))).join('') || '<span class="lab-empty">mano vuota</span>'}</div>`;
+  const pileCan = (p, k) => f[p][k].some((c, i) => labActionsFor(p, LAB_PILE_LOC[k], i).length);
+  const pile = (p, k, label) => `<button class="lab-pile${pileCan(p, k) ? ' can' : ''}" onclick="labShowPile(${p},'${k}')">${label} <b>${f[p][k].length}</b></button>`;
   const piles = p => `<div class="lab-piles">${pile(p, 'grave', 'Cimitero')}${pile(p, 'removed', 'Banditi')}${pile(p, 'extra', 'Extra')}${pile(p, 'deck', 'Deck')}</div>`;
-  const mrow = p => [0, 1, 2, 3, 4].map(i => labTile(f[p].mzone[i], 'mz'));
-  const srow = p => [0, 1, 2, 3, 4].map(i => labTile(f[p].szone[i], 'sz'));
-  // L'avversario è visto "di fronte": le sue zone sono specchiate
-  const emzL = f[me].mzone[5] || f[opp].mzone[6], emzR = f[me].mzone[6] || f[opp].mzone[5];
+  const mrow = p => [0, 1, 2, 3, 4].map(i => labTile(f[p].mzone[i], 'mz', at(p, L.MZONE, i)));
+  const srow = p => [0, 1, 2, 3, 4].map(i => labTile(f[p].szone[i], 'sz', at(p, L.SZONE, i)));
+  const fzone = p => labTile(f[p].szone[5], 'fz', at(p, L.SZONE, 5));
+  // Zone Mostri Extra condivise: la sinistra è la 5 per me e la 6 per l'avversario (e viceversa)
+  const emz = (mySeq, oppSeq) => f[me].mzone[mySeq] ? labTile(f[me].mzone[mySeq], 'mz', at(me, L.MZONE, mySeq))
+                                                    : labTile(f[opp].mzone[oppSeq], 'mz', at(opp, L.MZONE, oppSeq));
   const lp = p => `<span class="lab-lp ${d.lp[p] <= 0 ? 'ko' : ''}">${LAB_SIDES[p ^ d.first]} · <b>${Math.max(0, d.lp[p])}</b> LP</span>`;
 
   const board = `
@@ -800,11 +872,11 @@ function labPlayHtml() {
       <div class="lab-player-bar">${lp(opp)}</div>
       ${hand(opp)}
       ${piles(opp)}
-      <div class="lab-row">${srow(opp).reverse().join('')}${labTile(f[opp].szone[5], 'fz')}</div>
+      <div class="lab-row">${srow(opp).reverse().join('')}${fzone(opp)}</div>
       <div class="lab-row">${mrow(opp).reverse().join('')}<div class="lab-zone blank"></div></div>
-      <div class="lab-row emz"><div class="lab-zone blank"></div>${labTile(emzL, 'mz')}<div class="lab-zone blank"></div>${labTile(emzR, 'mz')}<div class="lab-zone blank"></div><div class="lab-zone blank"></div></div>
+      <div class="lab-row emz"><div class="lab-zone blank"></div>${emz(5, 6)}<div class="lab-zone blank"></div>${emz(6, 5)}<div class="lab-zone blank"></div><div class="lab-zone blank"></div></div>
       <div class="lab-row">${mrow(me).join('')}<div class="lab-zone blank"></div></div>
-      <div class="lab-row">${srow(me).join('')}${labTile(f[me].szone[5], 'fz')}</div>
+      <div class="lab-row">${srow(me).join('')}${fzone(me)}</div>
       ${piles(me)}
       ${hand(me)}
       <div class="lab-player-bar">${lp(me)}</div>
@@ -817,7 +889,20 @@ function labPlayHtml() {
   const log = d.log.map(e => `<div class="lab-log-line ${e.cls}">${escH(e.text)}</div>`).join('');
   const canUndo = d.responses.some(r => r.manual);
 
+  const help = `
+    <details class="lab-help" ${labSetup.helpSeen ? '' : 'open'} ontoggle="labHelpToggled(this)">
+      <summary>Come si gioca nel Laboratorio</summary>
+      <ul>
+        <li><b>Le carte con il bordo dorato si possono usare adesso.</b> Toccane una per vedere le azioni: Attiva, Evoca, Attacca…</li>
+        <li>In alternativa usa la finestra <b>"cosa fai?"</b> in basso, che elenca tutte le azioni possibili.</li>
+        <li>Giochi <b>tu per entrambi</b>: quando l'avversario può rispondere (dopo un'evocazione, un'attivazione, un attacco o un cambio di fase) la finestra in basso lo chiede a lui.</li>
+        <li>Se un effetto non compare, <b>in quel momento non si può attivare</b>: è proprio quello che il Laboratorio ti aiuta a verificare. Tocca la carta per capire perché.</li>
+        <li><b>↶ Annulla mossa</b> torna indietro di una scelta per provare un'altra strada.</li>
+      </ul>
+    </details>`;
+
   return `${status}
+    ${help}
     ${board}
     <div class="lab-prompt${labPromptMin ? " min" : ""}" id="lab-prompt">${labPromptHtml()}</div>
     <div class="lab-log-head">Registro</div>
@@ -826,7 +911,7 @@ function labPlayHtml() {
       <button class="btn-cfg-sec" onclick="labUndo()" ${canUndo ? '' : 'disabled'}>↶ Annulla mossa</button>
       <button class="btn-cfg-sec" onclick="labRestart()">↺ Ricomincia</button>
       <button class="btn-cfg-sec" onclick="labBackToSetup()">✎ Modifica situazione</button>
-      <button class="btn-cfg-sec" onclick="labToggleAskPhases()" title="Finestre di risposta a inizio fase senza azioni">Finestre di fase: ${labSetup.askPhases ? "chiedi" : "salta"}</button>
+      <button class="btn-cfg-sec" onclick="labToggleAskPhases()" title="Finestre di risposta in Draw e Standby Phase quando non succede nulla">Draw/Standby: ${labSetup.askPhases ? "chiedi sempre" : "salta se vuote"}</button>
     </div>
     ${labCreditsHtml()}`;
 }
@@ -1038,7 +1123,7 @@ function labDefault() {
 }
 
 // ── Dettaglio carta e liste (Cimitero, Banditi, …) ───────────────────────────
-async function labShowCard(code) {
+async function labShowCard(code, actionsHtml = '') {
   const box = document.getElementById('lab-card-body');
   document.getElementById('lab-card').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1046,6 +1131,7 @@ async function labShowCard(code) {
     const c = labInfo.get(code);
     const stats = c && c.atk != null ? `<div class="lab-card-stats">ATK ${c.atk}${c.def != null ? ' / DEF ' + c.def : ''}${c.level ? ' · Livello/Rango ' + c.level : ''}${c.linkval ? ' · Link ' + c.linkval : ''}</div>` : '';
     box.innerHTML = `
+      ${actionsHtml || ''}
       <img class="lab-card-img" src="https://images.ygoprodeck.com/images/cards/${code}.jpg" alt=""/>
       <div class="lab-card-info">
         <div class="dm-title">${escH(c?.name || labName(code))}</div>
@@ -1063,10 +1149,15 @@ async function labShowCard(code) {
 function labShowPile(p, k) {
   const f = labField()[p][k];
   const names = { grave: 'Cimitero', removed: 'Banditi', extra: 'Extra Deck', deck: 'Deck (dall\'alto)' };
-  const list = k === 'deck' ? [...f].reverse() : f;
+  // la sequenza reale serve per trovare le azioni possibili (es. effetti che si attivano dal Cimitero)
+  const list = f.map((c, seq) => ({ c, seq }));
+  if (k === 'deck') list.reverse();
+  const loc = LAB_PILE_LOC[k];
   document.getElementById('lab-card-body').innerHTML = `
     <div class="dm-title" style="margin-bottom:8px">${names[k]} di ${labWho(p)} (${f.length})</div>
-    <div class="dm-list">${list.map(c => cardRowHtml(c.code, labName(c.code), labInfo.get(c.code)?.type || '', '', `onclick="labShowCard(${c.code})"`)).join('') || '<div class="dm-empty">Vuoto</div>'}</div>`;
+    <div class="dm-list">${list.map(({ c, seq }) => cardRowHtml(c.code, labName(c.code), labInfo.get(c.code)?.type || '',
+      labActionsFor(p, loc, seq).length ? '<span class="card-have">usabile ora</span>' : '',
+      `onclick="labTapCard(${c.code},${p},${loc},${seq})"`, labActionsFor(p, loc, seq).length ? 'can' : '')).join('') || '<div class="dm-empty">Vuoto</div>'}</div>`;
   document.getElementById('lab-card').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1090,6 +1181,10 @@ function labTogglePrompt() {
 function labToggleAskPhases() {
   labSetup.askPhases = !labSetup.askPhases;
   labSaveSetup();
-  toast(labSetup.askPhases ? 'Ti verrà chiesto di rispondere in ogni fase' : 'Le finestre di fase senza azioni vengono saltate');
+  toast(labSetup.askPhases ? 'Draw e Standby Phase: ti verrà sempre chiesto se rispondere' : 'Draw e Standby Phase: saltate se non succede nulla');
   labRender();
+}
+
+function labHelpToggled(el) {
+  if (!el.open && !labSetup.helpSeen) { labSetup.helpSeen = true; labSaveSetup(); }
 }

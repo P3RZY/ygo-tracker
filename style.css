@@ -614,3 +614,16 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .duel-btn-dmg, .duel-btn-heal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; }
 .duel-prev { font-size: 11px; font-weight: 500; opacity: 0.85; min-height: 14px; font-variant-numeric: tabular-nums; }
 .duel-util-row .btn-cfg-sec { white-space: nowrap; }
+
+/* Laboratorio: carte utilizzabili adesso, azioni sulla carta, guida */
+.lab-zone.can { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 12px rgba(212,175,55,0.55); animation: lab-can 1.8s ease-in-out infinite; }
+@keyframes lab-can { 0%,100% { box-shadow: 0 0 0 1px var(--gold), 0 0 6px rgba(212,175,55,0.35); } 50% { box-shadow: 0 0 0 1px var(--gold2), 0 0 14px rgba(212,175,55,0.7); } }
+.lab-pile.can { border-color: var(--gold); color: var(--gold2); box-shadow: 0 0 8px rgba(212,175,55,0.4); }
+.card-row.can { border-color: var(--gold); }
+.lab-card-actions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.lab-card-actions .lab-opt { font-weight: 600; text-align: center; padding: 11px; }
+.lab-card-note { font-size: 13px; color: var(--text2); background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; line-height: 1.5; }
+.lab-help { background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; font-size: 13px; }
+.lab-help summary { cursor: pointer; color: var(--gold2); font-weight: 600; }
+.lab-help ul { margin: 8px 0 2px 18px; display: flex; flex-direction: column; gap: 5px; color: var(--text2); line-height: 1.45; }
+.lab-help b { color: var(--text); }
