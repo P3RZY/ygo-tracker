@@ -615,3 +615,7 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .lab-prompt.min .lab-prompt-title::after { content: "▴"; }
 .lab-prompt.min > :not(.lab-prompt-title) { display: none; }
 .lab-prompt.min .lab-prompt-title { margin-bottom: 0; }
+.lab-setup-zone { display: flex; gap: 8px; align-items: flex-start; }
+.lab-setup-zone .lab-zone-label { flex: 0 0 92px; margin: 7px 0 0; line-height: 1.3; }
+.lab-setup-zone .lab-chips { flex: 1; min-width: 0; }
+.lab-chip-name { max-width: 120px; }

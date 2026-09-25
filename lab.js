@@ -29,7 +29,7 @@ const LAB_SETUP_ZONES = [
   { k: 'fzone',   label: 'Zona Terreno', max: 1 },
   { k: 'grave',   label: 'Cimitero' },
   { k: 'removed', label: 'Banditi' },
-  { k: 'deck',    label: 'Deck (la prima è in cima)' },
+  { k: 'deck',    label: 'Deck (1ª in cima)' },
   { k: 'extra',   label: 'Extra Deck' },
 ];
 const LAB_POS_CYCLE = { mzone: ['atk', 'def', 'set'], szone: ['up', 'set'], fzone: ['up', 'set'] };
@@ -708,7 +708,7 @@ function labPick(code, el) {
   const list = labSetup.sides[ctx.side][ctx.zone];
   const z = LAB_SETUP_ZONES.find(x => x.k === ctx.zone);
   if (z.max && list.length >= z.max) { document.getElementById('lab-picker-msg').textContent = `${z.label}: al massimo ${z.max} carte.`; return; }
-  list.push({ code, name });
+  list.push({ code, name, ...(LAB_POS_CYCLE[ctx.zone] ? { pos: ctx.zone === "szone" ? "set" : LAB_POS_CYCLE[ctx.zone][0] } : {}) });
   labSaveSetup();
   const msg = document.getElementById('lab-picker-msg');
   msg.textContent = `+ ${name} (${list.length}${z.max ? '/' + z.max : ''})`;
