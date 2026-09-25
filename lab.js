@@ -42,10 +42,10 @@ const LAB_SELECT_TYPES = new Set([10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22
 const LAB_EXAMPLE = {
   first: 0, lp: [8000, 8000],
   sides: [
-    { hand: [{ code: 55144522 }], mzone: [], szone: [], fzone: [], grave: [], removed: [],
-      deck: [{ code: 89631139 }, { code: 46986414 }, { code: 40640057 }], extra: [] },
-    { hand: [{ code: 14558127 }], mzone: [], szone: [], fzone: [], grave: [], removed: [],
-      deck: [{ code: 40640057 }, { code: 40640057 }], extra: [] },
+    { hand: [{ code: 55144522, name: "Pot of Greed" }], mzone: [], szone: [], fzone: [], grave: [], removed: [],
+      deck: [{ code: 89631139, name: "Blue-Eyes White Dragon" }, { code: 46986414, name: "Dark Magician" }, { code: 40640057, name: "Kuriboh" }], extra: [] },
+    { hand: [{ code: 14558127, name: "Ash Blossom & Joyous Spring" }], mzone: [], szone: [], fzone: [], grave: [], removed: [],
+      deck: [{ code: 40640057, name: "Kuriboh" }, { code: 40640057, name: "Kuriboh" }], extra: [] },
   ]
 };
 
@@ -254,17 +254,18 @@ function labSys(id, ...args) {
  * delle carte stanno solo nel database di EDOPro, che non usiamo: mostriamo
  * "opzione N" e il testo completo della carta resta consultabile.
  */
+const LAB_MIN_CARD_DESC = 1000n << 20n;   // sotto questa soglia è un testo di sistema (come nel client EDOPro)
+
 function labDesc(desc) {
   const d = BigInt(desc || 0);
-  const code = Number(d >> 20n), idx = Number(d & 0xfffffn);
-  if (!code) return labSys(idx) || `Opzione ${idx}`;
-  return `${labName(code)}: effetto/opzione ${idx + 1}`;
+  if (d < LAB_MIN_CARD_DESC) return labSys(Number(d));
+  return `${labName(Number(d >> 20n))}: effetto/opzione ${Number(d & 0xfffffn) + 1}`;
 }
 
 function labEffectSuffix(desc, code) {
   const d = BigInt(desc || 0);
+  if (d < LAB_MIN_CARD_DESC) { const s = d ? labSys(Number(d)) : ''; return s ? ` (${s})` : ''; }
   const dcode = Number(d >> 20n), idx = Number(d & 0xfffffn);
-  if (!dcode) return idx ? ` (${labSys(idx)})` : '';
   if (dcode !== code) return ` (effetto concesso da ${labName(dcode)})`;
   return idx ? ` (effetto ${idx + 1})` : '';
 }
@@ -518,6 +519,17 @@ function labRender() {
   if (!c) return;
   if (labBusy) { c.innerHTML = `<div class="lab-busy"><div class="lab-spinner"></div>${escH(labBusy)}</div>`; return; }
   c.innerHTML = labDuel ? labPlayHtml() : labSetupHtml();
+  if (!labDuel) labLoadSetupNames();
+}
+
+// I nomi delle carte importate da un mazzo possono non essere ancora noti: li scarico una volta
+const labNamesTried = new Set();
+function labLoadSetupNames() {
+  const missing = labSetup.sides.flatMap(sd => LAB_SETUP_ZONES.flatMap(z => sd[z.k]))
+    .map(e => Number(e.code)).filter(c => !labInfo.has(c) && !cardCache[c] && !labNamesTried.has(c));
+  if (!missing.length) return;
+  missing.forEach(c => labNamesTried.add(c));
+  labEnsureCards(missing).then(() => { if (!labDuel) labRender(); }).catch(() => {});
 }
 
 function labCardImg(code) { return CARD_IMG(code); }
@@ -803,7 +815,7 @@ function labPlayHtml() {
 
 // ── Richieste del motore → pulsanti ──────────────────────────────────────────
 function labCardRef(c) {
-  const where = c.location ? ` · ${labLoc(c)}${c.controller !== undefined && labDuel ? ' di ' + labWho(c.controller) : ''}` : '';
+  const where = c.location ? ` · ${labLoc(c)}${c.controller !== undefined && labDuel ? ' (' + labWho(c.controller) + ')' : ''}` : '';
   return `${escH(labName(c.code))}<small>${escH(where)}</small>`;
 }
 
@@ -857,11 +869,11 @@ function labPromptHtml() {
       return title(`— attivare l'effetto di ${labName(m.code)}${labEffectSuffix(m.description, m.code)}?`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_YESNO:
-      return title(`— ${labDesc(m.description)}`) +
+      return title(`— ${labDesc(m.description) || 'confermi?'}`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_OPTION:
       return title(hintTxt ? `— ${hintTxt}` : '— scegli un\'opzione') +
-        m.options.map((o, i) => labBtn(escH(labDesc(o)), `labOption(${i})`)).join('');
+        m.options.map((o, i) => labBtn(escH(labDesc(o) || `Opzione ${i + 1}`), `labOption(${i})`)).join('');
     case MT.SELECT_CARD:
     case MT.SELECT_TRIBUTE:
     case MT.SELECT_SUM: {
