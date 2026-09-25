@@ -70,7 +70,7 @@ function labLoadSetup() {
     const s = JSON.parse(localStorage.getItem(LAB_SETUP_KEY));
     if (s?.sides?.length === 2) return s;
   } catch(e) {}
-  return { first: 0, lp: [8000, 8000], sides: [labEmptySide(), labEmptySide()] };
+  return { first: 0, lp: [8000, 8000], sides: [labEmptySide(), labEmptySide()], decks: [null, null] };
 }
 
 function labSaveSetup() {
@@ -551,20 +551,72 @@ function labLoadSetupNames() {
 function labCardImg(code) { return CARD_IMG(code); }
 
 // ── Setup ────────────────────────────────────────────────────────────────────
-function labSetupHtml() {
-  const deckOpts = state.players.flatMap((p, pi) => p.decks.map((dk, di) => {
-    const l = state.deckLists[deckKey(pi, dk)];
-    return l && (l.main.length + l.extra.length) ? `<option value="${pi}:${di}">${escH(p.name)} — ${escH(dk)}</option>` : '';
-  })).join('');
+// ── Mazzo di riferimento per ciascun lato ────────────────────────────────────
+// labSetup.decks[s] = { pi, name }: all'inizio tutte le carte del mazzo stanno in Deck ed Extra Deck;
+// le carte prese dal mazzo si spostano (non si duplicano). Le carte aggiunte dalla ricerca che
+// non fanno parte del mazzo sono ammesse, ma vengono segnalate con un banner.
+function labDeckRef(s) { return labSetup.decks?.[s] || null; }
 
-  const sideHtml = s => `
+function labDeckListOf(s) {
+  const ref = labDeckRef(s);
+  if (!ref) return null;
+  return state.deckLists[deckKey(ref.pi, ref.name)] || null;
+}
+
+/** Stesso id per gli artwork alternativi, così non risultano "fuori mazzo". */
+function labBaseId(code) { const i = labInfo.get(Number(code)); return i ? i.id : Number(code); }
+
+/** Carte del lato s che eccedono il mazzo scelto (lista di codici, con ripetizioni). */
+function labOutsideCards(s) {
+  const l = labDeckListOf(s);
+  if (!l) return [];
+  const allowed = new Map();
+  [...l.main, ...l.extra, ...l.side].forEach(c => { const k = labBaseId(c); allowed.set(k, (allowed.get(k) || 0) + 1); });
+  const out = [];
+  LAB_SETUP_ZONES.forEach(z => labSetup.sides[s][z.k].forEach(e => {
+    const k = labBaseId(e.code), n = allowed.get(k) || 0;
+    if (n > 0) allowed.set(k, n - 1); else out.push(Number(e.code));
+  }));
+  return out;
+}
+
+function labOutsideBannerHtml() {
+  const parts = [0, 1].map(s => {
+    const out = labOutsideCards(s);
+    if (!out.length) return '';
+    const counts = new Map();
+    out.forEach(c => counts.set(c, (counts.get(c) || 0) + 1));
+    const names = [...counts].map(([c, n]) => `${escH(labName(c))}${n > 1 ? ' ×' + n : ''}`).join(', ');
+    return `<div><b>${LAB_SIDES[s]}</b> (mazzo «${escH(labDeckRef(s).name)}»): ${names}</div>`;
+  }).filter(Boolean);
+  if (!parts.length) return '';
+  return `<div class="lab-banner"><div class="lab-banner-title">⚠ Carte non presenti nel mazzo</div>${parts.join('')}</div>`;
+}
+
+function labSetupHtml() {
+  const deckOpts = s => {
+    const ref = labDeckRef(s);
+    return state.players.flatMap((p, pi) => p.decks.map(dk => {
+      const l = state.deckLists[deckKey(pi, dk)];
+      const n = l ? l.main.length + l.extra.length : 0;
+      const sel = ref && ref.pi === pi && ref.name === dk ? ' selected' : '';
+      return `<option value="${pi}:${escH(dk)}"${sel}${n ? '' : ' disabled'}>${escH(p.name)} — ${escH(dk)}${n ? ` (${l.main.length}+${l.extra.length})` : ' (lista vuota)'}</option>`;
+    })).join('');
+  };
+
+  const sideHtml = s => {
+    const ref = labDeckRef(s);
+    return `
     <div class="lab-setup-side ${s ? 'opp' : 'me'}">
       <div class="lab-setup-head">
         <span class="lab-side-name">${LAB_SIDES[s]}</span>
         <label class="lab-lp-input">LP <input type="number" min="1" step="100" value="${labSetup.lp[s]}" onchange="labSetLp(${s}, this.value)"/></label>
       </div>
-      ${deckOpts ? `<select class="lab-deck-sel" onchange="labLoadDeck(${s}, this.value); this.value=''">
-        <option value="">Carica Deck ed Extra da un mazzo del tracker…</option>${deckOpts}</select>` : ''}
+      <select class="lab-deck-sel" onchange="labSelectDeck(${s}, this.value)">
+        <option value=""${ref ? '' : ' selected'}>Nessun mazzo: carte scelte liberamente</option>
+        ${deckOpts(s)}
+      </select>
+      ${ref ? `<p class="lab-deck-note">Tutte le carte di «${escH(ref.name)}» partono da Deck ed Extra Deck: con <b>+ carta</b> puoi prenderle da lì e metterle in mano o sul campo.</p>` : ''}
       ${LAB_SETUP_ZONES.map(z => {
         const list = labSetup.sides[s][z.k];
         const full = z.max && list.length >= z.max;
@@ -576,18 +628,21 @@ function labSetupHtml() {
                 <img src="${labCardImg(e.code)}" alt="" loading="lazy" onclick="labShowCard(${e.code})"/>
                 <span class="lab-chip-name" onclick="labShowCard(${e.code})">${escH(e.name || labName(e.code))}</span>
                 ${LAB_POS_CYCLE[z.k] ? `<button class="lab-pos" onclick="labCyclePos(${s},'${z.k}',${i})" title="Cambia posizione">${LAB_POS_LABEL[e.pos || LAB_POS_CYCLE[z.k][0]]}</button>` : ''}
-                <button class="lab-x" onclick="labRemoveCard(${s},'${z.k}',${i})" title="Togli">×</button>
+                <button class="lab-x" onclick="labRemoveCard(${s},'${z.k}',${i})" title="${ref && z.k !== 'deck' && z.k !== 'extra' ? 'Rimetti nel mazzo' : 'Togli'}">×</button>
               </span>`).join('')}
             ${full ? '' : `<button class="lab-add" onclick="labOpenPicker(${s},'${z.k}')">+ carta</button>`}
+            ${z.k === 'deck' && list.length > 1 ? `<button class="lab-add" onclick="labShuffleDeck(${s})" title="Mescola il Deck">🔀 Mescola</button>` : ''}
           </div>
         </div>`;
       }).join('')}
     </div>`;
+  };
 
   const total = labSetup.sides.reduce((n, sd) => n + LAB_SETUP_ZONES.reduce((m, z) => m + sd[z.k].length, 0), 0);
   return `
     <p class="hint">Prepara una situazione di gioco e poi gioca le mosse per entrambi i giocatori: il motore di EDOPro applica le regole
       e gli effetti ufficiali, e il registro mostra catene, negazioni e risoluzioni passo per passo.</p>
+    ${labOutsideBannerHtml()}
     ${sideHtml(1)}
     ${sideHtml(0)}
     <div class="lab-setup-opts">
@@ -626,30 +681,59 @@ function labCyclePos(s, k, i) {
   labSaveSetup(); labRender();
 }
 
-function labRemoveCard(s, k, i) { labSetup.sides[s][k].splice(i, 1); labSaveSetup(); labRender(); }
+/** Togliendo una carta presa dal mazzo, torna nel Deck (o nell'Extra Deck). */
+function labRemoveCard(s, k, i) {
+  const side = labSetup.sides[s];
+  const l = labDeckListOf(s);
+  const outsideBefore = labOutsideCards(s);
+  const [e] = side[k].splice(i, 1);
+  if (l && k !== 'deck' && k !== 'extra') {
+    const code = Number(e.code);
+    const wasOutside = labOutsideCards(s).length < outsideBefore.length;   // era una carta fuori mazzo: si elimina e basta
+    if (!wasOutside) {
+      const toExtra = l.extra.some(c => labBaseId(c) === labBaseId(code));
+      (toExtra ? side.extra : side.deck).push({ code, name: e.name });
+    }
+  }
+  labSaveSetup(); labRender();
+}
+
+function labShuffleDeck(s) {
+  const d = labSetup.sides[s].deck;
+  for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+  labSaveSetup(); labRender();
+  toast('Deck mescolato');
+}
 
 function labClearSetup() {
   if (!confirm('Svuotare tutta la situazione di gioco?')) return;
-  labSetup = { first: labSetup.first, lp: [8000, 8000], sides: [labEmptySide(), labEmptySide()] };
+  labSetup = { first: labSetup.first, lp: [8000, 8000], sides: [labEmptySide(), labEmptySide()], decks: [null, null], askPhases: labSetup.askPhases, helpSeen: labSetup.helpSeen };
   labSaveSetup(); labRender();
 }
 
 function labLoadExample() {
-  labSetup = JSON.parse(JSON.stringify(LAB_EXAMPLE));
+  labSetup = { ...JSON.parse(JSON.stringify(LAB_EXAMPLE)), decks: [null, null], askPhases: labSetup.askPhases, helpSeen: labSetup.helpSeen };
   labSaveSetup(); labRender();
   toast('Esempio caricato: premi "Avvia la prova"');
 }
 
-function labLoadDeck(s, v) {
-  if (!v) return;
-  const [pi, di] = v.split(':').map(Number);
-  const l = state.deckLists[deckKey(pi, state.players[pi].decks[di])];
-  if (!l) return;
+/** Sceglie il mazzo di un lato: tutte le sue carte vanno in Deck ed Extra Deck. */
+function labSelectDeck(s, v) {
   const side = labSetup.sides[s];
-  side.deck  = l.main.map(code => ({ code: Number(code) }));
-  side.extra = l.extra.map(code => ({ code: Number(code) }));
+  const hasCards = LAB_SETUP_ZONES.some(z => side[z.k].length);
+  if (!labSetup.decks) labSetup.decks = [null, null];
+  if (!v) { labSetup.decks[s] = null; labSaveSetup(); labRender(); return; }
+  const sep = v.indexOf(':');
+  const pi = Number(v.slice(0, sep)), name = v.slice(sep + 1);
+  const l = state.deckLists[deckKey(pi, name)];
+  if (!l) return;
+  if (hasCards && !confirm(`Le carte di ${LAB_SIDES[s]} verranno sostituite con il mazzo «${name}». Continuare?`)) { labRender(); return; }
+  labSetup.sides[s] = labEmptySide();
+  labSetup.sides[s].deck  = l.main.map(code => ({ code: Number(code) }));
+  labSetup.sides[s].extra = l.extra.map(code => ({ code: Number(code) }));
+  labSetup.decks[s] = { pi, name };
   labSaveSetup(); labRender();
-  toast(`Deck ${side.deck.length} + Extra ${side.extra.length} caricati`);
+  toast(`«${name}»: ${l.main.length} carte nel Deck, ${l.extra.length} nell'Extra Deck`);
 }
 
 // ── Scelta carte (setup e "dichiara una carta") ──────────────────────────────
@@ -657,16 +741,65 @@ function labOpenPicker(side, zone) {
   labPickerCtx = { side, zone };
   const z = LAB_SETUP_ZONES.find(x => x.k === zone);
   labShowPicker(`Aggiungi a ${LAB_SIDES[side]} · ${z.label}`);
+  labRenderPickerDeck();
 }
 
 function labShowPicker(title) {
   document.getElementById('lab-picker-title').textContent = title;
   document.getElementById('lab-picker-input').value = '';
   document.getElementById('lab-picker-results').innerHTML = '';
+  document.getElementById('lab-picker-deck').innerHTML = '';
   document.getElementById('lab-picker-msg').textContent = '';
+  document.getElementById('lab-picker-input').placeholder = '🔍 Cerca carta (italiano o inglese)';
   document.getElementById('lab-picker').classList.add('open');
   document.body.style.overflow = 'hidden';
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) document.getElementById('lab-picker-input').focus();
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !labDeckRef(labPickerCtx?.side)) document.getElementById('lab-picker-input').focus();
+}
+
+/** Nel picker, se c'è un mazzo scelto: prima le carte ancora nel suo Deck / Extra Deck. */
+function labRenderPickerDeck() {
+  const ctx = labPickerCtx, box = document.getElementById('lab-picker-deck');
+  if (!ctx || ctx.announce || !labDeckRef(ctx.side) || ctx.zone === 'deck' || ctx.zone === 'extra') { box.innerHTML = ''; return; }
+  const side = labSetup.sides[ctx.side];
+  const sources = ctx.zone === 'hand' || ctx.zone === 'szone' || ctx.zone === 'fzone' ? ['deck'] : ['deck', 'extra'];
+  const groups = new Map();
+  sources.forEach(src => side[src].forEach(e => {
+    const key = src + ':' + e.code;
+    if (!groups.has(key)) groups.set(key, { code: Number(e.code), src, n: 0, name: e.name });
+    groups.get(key).n++;
+  }));
+  const rows = [...groups.values()].sort((a, b) => (a.src > b.src) - (a.src < b.src) || labName(a.code).localeCompare(labName(b.code)));
+  document.getElementById('lab-picker-input').placeholder = '🔍 Oppure cerca un\'altra carta (fuori dal mazzo)';
+  box.innerHTML = `
+    <div class="lab-picker-h">Dal mazzo «${escH(labDeckRef(ctx.side).name)}»</div>
+    <div class="dm-list lab-picker-decklist">${rows.map(r => cardRowHtml(r.code, r.name || labName(r.code), r.src === 'extra' ? 'Extra Deck' : 'Deck',
+      `<span class="card-have">×${r.n}</span><button class="card-btn" tabindex="-1">+</button>`,
+      `onclick="labPickFromDeck(${r.code},'${r.src}')" title="Prendi dal mazzo"`)).join('') || '<div class="dm-empty">Nessuna carta rimasta nel mazzo.</div>'}</div>
+    <div class="lab-picker-h">Altre carte</div>`;
+}
+
+function labAddToZone(ctx, code, name) {
+  const list = labSetup.sides[ctx.side][ctx.zone];
+  const z = LAB_SETUP_ZONES.find(x => x.k === ctx.zone);
+  if (z.max && list.length >= z.max) { document.getElementById('lab-picker-msg').textContent = `${z.label}: al massimo ${z.max} carte.`; return false; }
+  list.push({ code, name, ...(LAB_POS_CYCLE[ctx.zone] ? { pos: ctx.zone === "szone" ? "set" : LAB_POS_CYCLE[ctx.zone][0] } : {}) });
+  labSaveSetup();
+  return true;
+}
+
+function labPickFromDeck(code, src) {
+  const ctx = labPickerCtx;
+  if (!ctx) return;
+  const from = labSetup.sides[ctx.side][src];
+  const idx = from.findIndex(e => Number(e.code) === code);
+  if (idx < 0) return;
+  const [e] = from.splice(idx, 1);
+  if (!labAddToZone(ctx, code, e.name || labName(code))) { from.splice(idx, 0, e); return; }
+  const z = LAB_SETUP_ZONES.find(x => x.k === ctx.zone), n = labSetup.sides[ctx.side][ctx.zone].length;
+  const msg = document.getElementById('lab-picker-msg');
+  msg.textContent = `+ ${e.name || labName(code)} dal mazzo (${n}${z.max ? '/' + z.max : ''})`;
+  msg.className = 'dm-msg ok';
+  if (z.max && n >= z.max) labClosePicker(); else labRenderPickerDeck();
 }
 
 function labClosePicker() {
@@ -712,15 +845,13 @@ function labPick(code, el) {
     labRespond({ type: labE.ocg.OcgResponseType.ANNOUNCE_CARD, card: code });
     return;
   }
-  const list = labSetup.sides[ctx.side][ctx.zone];
-  const z = LAB_SETUP_ZONES.find(x => x.k === ctx.zone);
-  if (z.max && list.length >= z.max) { document.getElementById('lab-picker-msg').textContent = `${z.label}: al massimo ${z.max} carte.`; return; }
-  list.push({ code, name, ...(LAB_POS_CYCLE[ctx.zone] ? { pos: ctx.zone === "szone" ? "set" : LAB_POS_CYCLE[ctx.zone][0] } : {}) });
-  labSaveSetup();
+  if (!labAddToZone(ctx, code, name)) return;
+  const z = LAB_SETUP_ZONES.find(x => x.k === ctx.zone), n = labSetup.sides[ctx.side][ctx.zone].length;
+  const outside = labDeckRef(ctx.side) && labOutsideCards(ctx.side).includes(code);
   const msg = document.getElementById('lab-picker-msg');
-  msg.textContent = `+ ${name} (${list.length}${z.max ? '/' + z.max : ''})`;
-  msg.className = 'dm-msg ok';
-  if (z.max && list.length >= z.max) labClosePicker();
+  msg.textContent = `+ ${name} (${n}${z.max ? '/' + z.max : ''})${outside ? ' — non è nel mazzo: verrà segnalata' : ''}`;
+  msg.className = 'dm-msg ' + (outside ? 'warn' : 'ok');
+  if (z.max && n >= z.max) labClosePicker();
 }
 
 // ── Avvio / controlli della prova ────────────────────────────────────────────
@@ -905,6 +1036,7 @@ function labPlayHtml() {
     </details>`;
 
   return `${status}
+    ${labOutsideBannerHtml()}
     ${help}
     ${board}
     <div class="lab-prompt${labPromptMin ? " min" : ""}" id="lab-prompt">${labPromptHtml()}</div>

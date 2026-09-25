@@ -627,3 +627,16 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .lab-help summary { cursor: pointer; color: var(--gold2); font-weight: 600; }
 .lab-help ul { margin: 8px 0 2px 18px; display: flex; flex-direction: column; gap: 5px; color: var(--text2); line-height: 1.45; }
 .lab-help b { color: var(--text); }
+
+/* Laboratorio: mazzo di riferimento e carte fuori mazzo */
+.lab-banner { background: rgba(212,175,55,0.1); border: 1px solid var(--gold); border-left: 4px solid var(--gold); border-radius: 10px; padding: 9px 12px; margin-bottom: 10px; font-size: 12px; color: var(--text2); line-height: 1.5; }
+.lab-banner-title { color: var(--gold2); font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.lab-banner b { color: var(--text); }
+.lab-deck-note { font-size: 11px; color: var(--text3); margin: -2px 0 8px; line-height: 1.45; }
+.lab-deck-note b { color: var(--text2); }
+.lab-picker-h { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold); margin: 4px 0 6px; }
+.lab-picker-decklist { max-height: 260px; overflow-y: auto; margin-bottom: 10px; }
+.lab-picker-decklist .card-row { cursor: pointer; }
+.lab-picker-decklist .card-row:hover { border-color: var(--gold); }
+#lab-picker-results .card-row { cursor: pointer; }
+.dm-msg.warn { color: var(--gold2); }
