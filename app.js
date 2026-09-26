@@ -570,12 +570,15 @@ function switchPage(p) {
   ['duel','matches','stats','lab','settings'].forEach(id => {
     document.getElementById(`page-${id}`).style.display = id === p ? '' : 'none';
     document.getElementById(`nav-${id}`).classList.toggle('active', id === p);
+    if (id === p) document.getElementById(`nav-${id}`).setAttribute('aria-current', 'page');
+    else document.getElementById(`nav-${id}`).removeAttribute('aria-current');
   });
   // Render the relevant content when switching
   if (p === 'matches')  { renderMatches(); }
   if (p === 'stats')    { renderTab(); }
   if (p === 'settings') { renderPlayers(); }
   if (p === 'lab')      { labOnShow(); }
+  window.scrollTo(0, 0);
 }
 
 // ─────────────────────────────────────────────
@@ -964,6 +967,10 @@ const MAX_LP        = 999999;
 let duelState = null;
 
 function renderDuel() {
+  const heading = document.getElementById('duel-heading');
+  if (heading) heading.hidden = !!duelState;
+  const title = document.querySelector('#duel-panel > .panel-title > span');
+  if (title) title.textContent = duelState ? 'Duello in corso' : 'Nuovo duello';
   const c = document.getElementById('duel-content');
   const resetBtn = document.getElementById('duel-reset-btn');
 

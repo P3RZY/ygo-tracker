@@ -1,16 +1,17 @@
-/* Palette — Egitto Art Déco: notte di lapislazzuli, oro, papiro e pigmenti egizi */
+/* Shared palette and typography */
 :root {
-  --bg: #0A1122; --bg2: #0E1729; --bg3: #152038; --card: #111A2E;
-  --border: rgba(212,175,55,0.13); --border2: rgba(212,175,55,0.26);
-  --gold: #D4AF37; --gold2: #EBCB6B; --gold-grad: linear-gradient(135deg, #F3D98A 0%, #D4AF37 50%, #A8841F 100%);
-  --lapis: #1F3B73; --lapis2: #5B84D0;
-  --green: #3FA97A; --red: #D0583A;              /* malachite (guadagno) · ocra rossa (danno) */
-  --text: #EDE3CB; --text2: #B8AC8F; --text3: #9A8F76;
-  --p0: #8B6CC9; --p0l: #CDB9F2;                 /* ametista */
-  --p1: #2A9C98; --p1l: #7FD6CF;                 /* faïence */
-  --p2: #C9822F; --p2l: #F2BF7A;                 /* corniola */
-  --f-display: 'Bodoni Moda', Didot, Georgia, serif;
-  --f-ui: 'Jost', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+  --bg: #101114; --bg2: #17181d; --bg3: #26282f; --card: #1d1e24;
+  --border: #303239; --border2: #41444d;
+  --gold: #edc56a; --gold2: #f7d88e; --gold-grad: linear-gradient(135deg, #edc56a, #f7d88e);
+  --lapis: #31415d; --lapis2: #a3bce8;
+  --green: #67caa3; --red: #ff929b;
+  --text: #f3f3f5; --text2: #b6b8c2; --text3: #999da9;
+  --p0: #9c88d5; --p0l: #c9bbee;
+  --p1: #54ac98; --p1l: #99dcca;
+  --p2: #d1a761; --p2l: #edc989;
+  --f-ui: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --f-display: var(--f-ui);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow-x: hidden; }
@@ -421,116 +422,141 @@ button.duel-player-card { text-align: left; font-family: var(--f-ui); color: var
 .duel-util-row .btn-cfg-sec { flex: 1; padding: 8px; font-size: 13px; }
 .duel-util-row .btn-cfg-sec:disabled { opacity: 0.35; cursor: default; border-color: var(--border2); color: var(--text2); }
 
-/* ════════════════════════════════════════════
-   TEMA — Egitto Art Déco
-   Un solo elemento audace: il cartiglio che racchiude i LP.
-   Tutto il resto è piatto e sobrio: niente ornamenti ripetuti.
-   ════════════════════════════════════════════ */
-body { background: var(--bg); }
-
-/* Header */
-header { background: var(--bg); border-bottom: 1px solid var(--border2); }
-.logo-eye { background: none; box-shadow: none; border-radius: 0; width: 40px; height: 28px; color: var(--gold); }
+/* Modern UI: neutral surfaces, restrained amber, clear numeric hierarchy. */
+body { background: var(--bg); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+button { touch-action: manipulation; }
+header { height: 76px; padding: 0 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
+header h1 { color: var(--text); font-size: 17px; font-weight: 650; letter-spacing: -0.5px; }
+header .subtitle { color: var(--text3); font-size: 11px; letter-spacing: 0; display: block; margin-top: 1px; }
+.logo-eye { width: 36px; height: 36px; padding: 8px; background: var(--gold); border-radius: 11px; box-shadow: none; color: #151515; }
 .logo-eye::after { display: none; }
 .logo-eye svg { width: 100%; height: 100%; display: block; }
-header h1 { font-weight: 700; font-size: 1.3rem; color: var(--gold2); letter-spacing: 0; }
-header .subtitle { color: var(--text3); font-size: 0.72rem; letter-spacing: 0; }
-
-/* Pannelli: tavolette piatte, la gerarchia la fanno i titoli */
-.panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
-.panel-title { font-size: 1.35rem; font-weight: 700; color: var(--text); letter-spacing: 0; margin-bottom: 0.9rem; line-height: 1.2; }
-.panel-title::before { display: none; }
-.config-banner h3, .global-ranking-title, .ranking-title, .dm-title { letter-spacing: 0; }
-.global-ranking-title::before { display: none; }
-.dm-title { font-size: 1.2rem; }
-
-/* Etichette dei moduli: normali, leggibili */
-.form-label { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: 0; }
-
-/* Bottoni primari: lamina d'oro piena */
-.btn-cfg, .btn-add, .btn-save-result, .btn-start-duel, .seg button.on { background: var(--gold); color: #1A1405; box-shadow: none; }
+.sync-status { color: var(--text2); gap: 9px; }
+.btn-refresh { min-width: 36px; min-height: 36px; border-color: var(--border); border-radius: 10px; }
+.container { max-width: 1100px; padding: 32px 28px 108px; }
+.page-heading { margin-bottom: 24px; }
+.page-heading h2 { color: var(--text); font-size: clamp(25px, 3vw, 34px); line-height: 1.15; font-weight: 700; letter-spacing: -1.1px; }
+.page-heading p { color: var(--text2); margin-top: 9px; font-size: 14px; line-height: 1.5; }
+.panel { padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 20px; background: var(--card); }
+.panel-title { color: var(--text); font-size: 17px; font-weight: 650; letter-spacing: -0.3px; margin-bottom: 22px; }
+.panel-title::before, .global-ranking-title::before { display: none; }
+.form-label { font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--text2); }
+select, .config-row input, .deck-add-row input, .dm-search input, .dm-import textarea { background-color: var(--bg2); border-color: var(--border2); border-radius: 10px; min-height: 44px; }
+select { padding: 12px 34px 12px 12px; font-size: 14px; }
+.hint { color: var(--text2); font-size: 13px; line-height: 1.65; }
+.btn-cfg, .btn-add, .btn-save-result, .btn-start-duel, .seg button.on { background: var(--gold); color: #17140d; box-shadow: none; border: 0; font-weight: 650; }
 .btn-cfg:hover, .btn-add:hover, .btn-save-result:hover, .btn-start-duel:hover { background: var(--gold2); opacity: 1; }
-.btn-start-duel { font-family: var(--f-ui); font-weight: 600; font-size: 1.1rem; letter-spacing: 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.btn-start-duel small { font-size: 12px; font-weight: 500; opacity: 0.75; }
-.btn-cfg-sec, .btn-new-duel { border-color: var(--border2); color: var(--text2); }
-
-/* Campi */
-select, .config-row input, .deck-add-row input, .dm-search input, .dm-import textarea { background-color: var(--bg2); border-color: var(--border2); }
-
-/* Barra in basso */
-.bottom-nav { background: var(--bg2); border-top: 1px solid var(--border2); box-shadow: none; }
-.nav-icon { width: 22px; height: 22px; display: block; }
-.nav-icon svg { width: 100%; height: 100%; display: block; }
-.nav-btn { color: var(--text3); }
-.nav-btn::after { width: 0; height: 2px; background: var(--gold); border-radius: 0 0 2px 2px; transition: width 0.2s; }
-.nav-btn.active::after { width: 28px; }
-.nav-btn.active { color: var(--gold2); }
-.nav-label { font-size: 11px; font-weight: 500; letter-spacing: 0; }
-
-/* Schede */
-.tab { font-size: 14px; font-weight: 500; letter-spacing: 0; }
-.tab.active { border-bottom-color: var(--gold); color: var(--gold2); }
-
-/* Classifica */
-.ranking-panel { background: var(--bg2); border-color: var(--border2); }
-.ranking-title { font-size: 1.15rem; color: var(--gold2); }
-
-/* ── Duello: il cartiglio ──
-   Nell'antico Egitto il nome del faraone era racchiuso in un ovale con un nodo
-   a un'estremità. Qui il cartiglio racchiude i LP del giocatore. */
-.duel-player-card.p0, .duel-player-card.p1, .duel-player-card.p2 { background: var(--bg2); border: 1px solid var(--border); box-shadow: none; }
-.duel-player-card { padding: 12px 10px 10px; text-align: center; }
-.duel-player-card .duel-player-header { text-align: center; }
-.duel-player-card .duel-player-name { font-family: var(--f-ui); font-weight: 600; font-size: 0.95rem; }
-.duel-player-card .duel-deck-badge { background: none; padding: 0; font-size: 12px; color: var(--text3); }
-.duel-lp-display {
-  position: relative; margin: 10px 4px 8px; padding: 6px 18px 6px 12px;
-  border: 1.5px solid currentColor; border-radius: 999px;
-  outline: 1px solid currentColor; outline-offset: 3px;
-  font-family: var(--f-display); font-weight: 800; font-variant-numeric: lining-nums tabular-nums; letter-spacing: 0;
-  font-size: clamp(1.6rem, 8.5vw, 2.4rem); line-height: 1.1;
-}
-.duel-lp-display::after {                /* il nodo del cartiglio */
-  content: ''; position: absolute; right: 7px; top: 22%; bottom: 22%; width: 2px; background: currentColor; border-radius: 1px;
-}
+.btn-start-duel { font-family: var(--f-ui); font-size: 15px; padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 14px; letter-spacing: 0; }
+.btn-start-duel small { font-size: 12px; font-weight: 500; opacity: 0.8; }
+.btn-cfg-sec, .btn-new-duel { min-height: 36px; border-color: var(--border2); border-radius: 9px; font-size: 12px; color: var(--text2); }
+.duel-setup { gap: 24px; }
+.duel-slot { padding: 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg2); }
+.duel-slot select { background-color: var(--card); }
+.duel-slot .form-label { margin-bottom: 16px !important; }
+.duel-vs-sep, .vs-col { font-family: var(--f-ui); font-style: normal; color: var(--text3); font-size: 12px; font-weight: 600; letter-spacing: 0; align-self: center; padding: 0; }
+.duel-slots-row { gap: 16px; }
+.duel-board { gap: 12px; }
+.duel-player-card.p0, .duel-player-card.p1, .duel-player-card.p2 { background: var(--bg2); border: 1px solid var(--border2); box-shadow: none; }
+.duel-player-card { padding: 20px 18px 14px; border-radius: 16px; text-align: left; transition: background 150ms, border-color 150ms; }
+.duel-player-card .duel-player-header { text-align: left; margin-bottom: 18px; }
+.duel-player-card .duel-player-name { font-family: var(--f-ui); font-weight: 600; font-size: 14px; }
+.duel-player-card .duel-deck-badge { padding: 0; margin-top: 3px; background: none; color: var(--text3); font-size: 12px; }
+.duel-lp-display { color: var(--text) !important; position: relative; font-family: var(--f-ui); font-size: clamp(32px, 8vw, 52px); font-weight: 700; letter-spacing: -2px; font-variant-numeric: tabular-nums; text-align: left; line-height: 1.1; margin: 0 0 18px; padding: 0; border: 0; outline: 0; border-radius: 0; }
+.duel-lp-display::after { content: 'LP'; font-size: 11px; letter-spacing: 0; color: var(--text3); font-weight: 600; margin-left: 8px; }
 .duel-lp-display.danger { animation: none; color: var(--red) !important; }
-.duel-player-card.selected { border-color: var(--gold) !important; background: rgba(212,175,55,0.07); box-shadow: none !important; outline: none; }
-.duel-target-tag { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text3); text-align: center; }
+.duel-lp-bar-bg { height: 3px; background: var(--border); margin: 0 0 10px; }
+.duel-player-card.selected { border-color: var(--gold) !important; background: #242117; box-shadow: none !important; outline: none; }
+.duel-target-tag { text-align: left; font-size: 10px; height: auto; color: var(--text3); }
 .duel-player-card.selected .duel-target-tag { color: var(--gold2); }
-.duel-lp-bar-bg { height: 3px; margin: 0 10px 6px; }
-.duel-vs-sep, .vs-col { font-family: var(--f-display); font-style: italic; font-size: 1.3rem; color: var(--gold); letter-spacing: 0; }
-
-.duel-key { background: var(--bg2); border-color: var(--border); font-family: var(--f-display); font-weight: 600; }
-.duel-key:active { background: rgba(212,175,55,0.12); }
-.duel-key.op { font-family: var(--f-ui); }
-.duel-btn-dmg  { background: rgba(208,88,58,0.14); border-color: rgba(208,88,58,0.5); color: #F08A6E; }
-.duel-btn-heal { background: rgba(63,169,122,0.14); border-color: rgba(63,169,122,0.5); color: #7DD3A8; }
-.duel-over-banner { border-color: var(--gold); box-shadow: none; }
-.duel-over-title { color: var(--gold2); font-weight: 700; }
-.duel-log-entry.dmg { color: #F08A6E; }
-.duel-log-entry.heal { color: #7DD3A8; }
-
-/* Popup */
-.dm-overlay { background: rgba(4,7,15,0.82); }
-.dm-box { position: relative; background: var(--card); border-color: var(--border2); border-radius: 16px; }
-.card-row { background: var(--bg2); }
-
-.player-card { background: var(--bg2); }
-::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); }
-.btn-icon, .card-btn { background: var(--bg3); border-color: var(--border2); color: var(--gold2); }
-.btn-icon:hover, .card-btn:hover { background: var(--gold); color: #1A1405; border-color: var(--gold); }
-.duel-key { padding: clamp(9px, 3vw, 14px) 6px; }
-
-/* ── Accessibilità ── */
-:focus-visible { outline: 2px solid var(--gold2); outline-offset: 2px; }
-.duel-player-card:focus-visible, .lab-zone:focus-visible { outline-offset: 3px; }
+.duel-pad { gap: 8px; margin-top: 20px; }
+.duel-display { background: transparent; border: 0; padding: 8px 4px 16px; min-height: 72px; }
+.duel-display-num { font-family: var(--f-ui); font-size: 30px; font-weight: 600; letter-spacing: -1px; }
+.duel-display-num.empty { font-size: 16px; letter-spacing: 0; }
+.duel-display-expr { color: var(--text2); font-size: 12px; }
+.duel-keypad { gap: 7px; }
+.duel-key { background: var(--bg3); border: 1px solid transparent; border-radius: 11px; padding: 13px 6px; font-family: var(--f-ui); font-size: 22px; font-weight: 500; }
+.duel-key:hover { background: #33353c; }
+.duel-key.op { background: var(--bg2); color: var(--text2); }
+.duel-key:active { background: #3b3628; border-color: var(--gold); transform: scale(.97); }
+.duel-btn-dmg { background: #342125; border-color: transparent; color: #ff9ca4; }
+.duel-btn-heal { background: #1c302b; border-color: transparent; color: #89debd; }
+.duel-action-row { gap: 8px; margin-top: 4px; }
+.duel-util-row { gap: 8px; margin-top: 4px; }
+.duel-util-row .btn-cfg-sec { border-color: transparent; color: var(--text2); }
+.duel-over-banner { background: var(--bg2); border-color: var(--border); }
+.duel-log-entry { font-size: 12px; padding: 7px 10px; }
+.dice-panel, .coin-panel { background: var(--bg2); border-color: var(--border); }
+.dice-label-title, .coin-label-title { color: var(--text2); font-size: 12px; }
+.bottom-nav { background: var(--bg2); border-top: 1px solid var(--border); box-shadow: none; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.nav-btn { min-height: 54px; color: var(--text3); padding: 8px 4px; gap: 5px; border-radius: 10px; }
+.nav-btn::after { display: none; }
+.nav-btn.active { color: var(--gold2); background: #2a261c; }
+.nav-btn:hover { color: var(--text); }
+.nav-icon { width: 20px; height: 20px; display: block; }
+.nav-icon svg { width: 100%; height: 100%; display: block; }
+.nav-label { font-size: 11px; font-weight: 550; letter-spacing: 0; }
+.tabs { background: var(--bg2); border: 0; border-radius: 12px; padding: 4px; gap: 4px; }
+.tab { padding: 10px 16px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0; }
+.tab.active { background: var(--bg3); color: var(--text); border: 0; }
+.player-card { background: var(--bg2); padding: 20px; border-radius: 14px; }
+.player-name-input { padding-bottom: 12px; font-size: 16px; }
+.deck-tag { padding: 8px 12px; border-radius: 8px; }
+.ranking-panel { background: var(--bg2); border-color: var(--border); border-radius: 14px; }
+.ranking-title, .global-ranking-title { color: var(--text); font-size: 16px; font-weight: 600; letter-spacing: -.3px; }
+.ranking-subtitle { color: var(--text2); line-height: 1.6; }
+.match-card { border-radius: 14px; border-color: var(--border); background: var(--bg2); }
+.dm-overlay { background: rgba(0,0,0,.75); padding-top: 32px; }
+.dm-box { position: relative; background: var(--card); border-color: var(--border2); border-radius: 20px; padding: 24px; box-shadow: 0 24px 80px #0006; }
+.dm-title { color: var(--text); font-size: 19px; font-weight: 650; letter-spacing: -.4px; }
+.card-row { background: var(--bg2); border-color: var(--border); border-radius: 10px; padding: 8px; }
+.card-name { font-size: 13px; }
+.btn-icon, .card-btn { background: var(--bg3); border-color: var(--border); color: var(--text); }
+.btn-icon:hover, .card-btn:hover { background: var(--gold); color: #17140d; }
+:focus-visible { outline: 2px solid var(--gold2); outline-offset: 3px; }
+.duel-player-card:focus-visible { outline: 2px solid var(--gold2) !important; outline-offset: 3px; }
+::-webkit-scrollbar-thumb { background: #44464e; border-radius: 8px; }
+@media (min-width: 1000px) {
+  body { padding-left: 208px; }
+  header { padding: 0 32px; }
+  .container { padding-top: 42px; }
+  .bottom-nav { top: 0; right: auto; bottom: 0; width: 208px; flex-direction: column; justify-content: flex-start; gap: 7px; padding: 106px 16px 24px; border-top: 0; border-right: 1px solid var(--border); }
+  .bottom-nav::before { content: 'YGO / TRACKER'; position: absolute; top: 30px; left: 26px; color: var(--text); font-size: 13px; font-weight: 750; letter-spacing: 1px; }
+  .nav-btn { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 16px; min-height: 48px; }
+  .nav-label { font-size: 13px; }
+  #duel-panel { max-width: 740px; margin-left: auto; margin-right: auto; }
+  .toast { left: calc(50% + 104px); }
+}
 @media (max-width: 600px) {
-  /* 16px evita lo zoom automatico di iOS quando si tocca un campo */
+  header { height: 66px; padding: 0 16px; }
+  header h1 { font-size: 15px; }
+  .container { padding: 22px 14px calc(100px + env(safe-area-inset-bottom, 0px)); }
+  .page-heading { margin-bottom: 20px; }
+  .page-heading h2 { font-size: 27px; }
+  .page-heading p { font-size: 13px; margin-top: 7px; }
+  .panel { padding: 16px; border-radius: 16px; }
+  .panel-title { font-size: 15px; margin-bottom: 18px; }
+  .duel-slots-row { gap: 8px; }
+  .duel-slot { padding: 12px 10px; min-width: 0; }
+  .duel-slot select { font-size: 16px; padding-left: 8px; padding-right: 24px; }
+  .duel-player-card { padding: 14px 12px 10px; }
+  .duel-player-card .duel-player-header { margin-bottom: 12px; }
+  .duel-player-card .duel-player-name { font-size: 13px; }
+  .duel-lp-display { font-size: 36px; margin-bottom: 12px; }
+  .duel-board { gap: 8px; }
+  .duel-pad { margin-top: 8px; }
+  .duel-display { min-height: 60px; padding-bottom: 10px; }
+  .duel-key { padding: 10px 4px; font-size: 20px; }
+  .duel-target-tag { font-size: 9px; }
+  .btn-start-duel { flex-direction: column; gap: 3px; }
+  .dm-overlay { padding: 12px 8px 24px; }
+  .dm-box { padding: 16px; border-radius: 16px; }
   input, select, textarea { font-size: 16px !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
 
 /* ════════════════════════════════════════════
    LABORATORIO REGOLE
@@ -596,7 +622,7 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .lab-pile b { color: var(--gold2); }
 
 /* Richiesta del motore: resta visibile in basso mentre si guarda il campo */
-.lab-prompt { position: sticky; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); z-index: 50; margin-top: 10px; background: rgba(15,20,32,0.97); border: 1px solid var(--gold); border-radius: 12px; padding: 10px; max-height: 46vh; overflow-y: auto; box-shadow: 0 -6px 24px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 5px; }
+.lab-prompt { position: sticky; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); z-index: 50; margin-top: 10px; background: #202127; border: 1px solid var(--gold); border-radius: 12px; padding: 10px; max-height: 46vh; overflow-y: auto; box-shadow: 0 -6px 24px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 5px; }
 .lab-prompt-title { font-size: 13px; color: var(--text); margin-bottom: 3px; }
 .lab-prompt-who { font-family: var(--f-ui); font-weight: 700; font-size: 12px; padding: 1px 8px; border-radius: 10px; }
 .lab-prompt-who.me  { background: rgba(212,175,55,0.18); color: var(--gold2); }
@@ -653,7 +679,7 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .duel-util-row .btn-cfg-sec { white-space: nowrap; }
 
 /* Laboratorio: carte utilizzabili adesso, azioni sulla carta, guida */
-.lab-zone.can { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 12px rgba(212,175,55,0.55); animation: lab-can 1.8s ease-in-out infinite; }
+.lab-zone.can { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 12px rgba(212,175,55,0.55);  }
 @keyframes lab-can { 0%,100% { box-shadow: 0 0 0 1px var(--gold), 0 0 6px rgba(212,175,55,0.35); } 50% { box-shadow: 0 0 0 1px var(--gold2), 0 0 14px rgba(212,175,55,0.7); } }
 .lab-pile.can { border-color: var(--gold); color: var(--gold2); box-shadow: 0 0 8px rgba(212,175,55,0.4); }
 .card-row.can { border-color: var(--gold); }
@@ -678,3 +704,28 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 #lab-picker-results .card-row { cursor: pointer; }
 .dm-msg.warn { color: var(--gold2); }
 .lab-deck-note.warn { color: var(--gold2); }
+
+/* Lab: consistent surfaces; only actionable cards carry an accent. */
+.lab-setup-side { background: var(--bg2); border-radius: 14px; padding: 16px; }
+.lab-side-name { font-size: 15px; letter-spacing: 0; }
+.lab-zone-label, .lab-picker-h, .lab-log-head { letter-spacing: 0; font-weight: 600; }
+.lab-board { background: var(--bg2); border-color: var(--border); padding: 12px; border-radius: 14px; }
+.lab-prompt { border-color: var(--border2); box-shadow: 0 8px 32px #0006; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+.lab-prompt-title { line-height: 1.6; }
+.lab-zone.can { box-shadow: 0 0 0 1px var(--gold); }
+.lab-pile.can { box-shadow: none; }
+.lab-help { background: var(--bg2); border-color: var(--border); }
+.lab-banner { background: #2a251b; border-color: #72603b; }
+.lab-log { background: var(--bg2); }
+.lab-opt { min-height: 42px; border-color: var(--border2); }
+@media (min-width: 1000px) { .lab-prompt { bottom: 20px; } }
+@media (max-width: 600px) {
+  .duel-slots-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .duel-slots-row .duel-vs-sep { display: none; }
+  .duel-slot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .duel-slot .form-label { grid-column: 1 / -1; margin-bottom: 2px !important; }
+  .duel-slot select { margin-top: 0 !important; }
+  .duel-key { padding: 8px 4px; }
+  .duel-player-card .duel-player-header { margin-bottom: 8px; }
+  .duel-display { min-height: 54px; }
+}
