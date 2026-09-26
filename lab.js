@@ -321,7 +321,13 @@ function labCreate(d) {
     team1: team(0 ^ d.first), team2: team(1 ^ d.first),
     cardReader: labCardData,
     scriptReader: labScriptReader,
-    errorHandler: (t, s) => { console.warn('[YGO] Motore:', s); labDuel?.log.push({ text: 'Motore: ' + s, cls: 'warn' }); }
+    errorHandler: (t, s) => {
+      console.warn('[YGO] Motore:', s);
+      // Script mancante: è già segnalato in chiaro all'avvio, il messaggio tecnico del motore non aggiunge nulla
+      const m = String(s).match(/c(\d+)\.initial_effect/);
+      if (m && !labScripts.get(`c${m[1]}.lua`)) return;
+      labDuel?.log.push({ text: 'Motore: ' + s, cls: 'warn' });
+    }
   });
   if (!h) throw new Error('Impossibile creare il duello');
   core.loadScript(h, 'constant.lua', labScriptReader('constant.lua'));
