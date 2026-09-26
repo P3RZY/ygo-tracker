@@ -495,7 +495,7 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 }
 .duel-lp-display.danger { animation: none; color: var(--red) !important; }
 .duel-player-card.selected { border-color: var(--gold) !important; background: rgba(212,175,55,0.07); box-shadow: none !important; outline: none; }
-.duel-target-tag { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text3); }
+.duel-target-tag { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text3); text-align: center; }
 .duel-player-card.selected .duel-target-tag { color: var(--gold2); }
 .duel-lp-bar-bg { height: 3px; margin: 0 10px 6px; }
 .duel-vs-sep, .vs-col { font-family: var(--f-display); font-style: italic; font-size: 1.3rem; color: var(--gold); letter-spacing: 0; }
