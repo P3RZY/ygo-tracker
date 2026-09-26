@@ -677,3 +677,4 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 .lab-picker-decklist .card-row:hover { border-color: var(--gold); }
 #lab-picker-results .card-row { cursor: pointer; }
 .dm-msg.warn { color: var(--gold2); }
+.lab-deck-note.warn { color: var(--gold2); }

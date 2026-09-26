@@ -20,6 +20,10 @@ let state = {
 function normalizeState() {
   if (!state.deckLists || typeof state.deckLists !== 'object') state.deckLists = {};
   if (!Array.isArray(state.matches)) state.matches = [];
+  // I codici carta finiscono in attributi HTML (src, onclick): dal bin condiviso accetto solo numeri
+  Object.values(state.deckLists).filter(l => l && typeof l === 'object').forEach(l => ['main', 'extra', 'side'].forEach(sec => {
+    l[sec] = Array.isArray(l?.[sec]) ? l[sec].map(String).filter(id => /^\d{1,10}$/.test(id)) : [];
+  }));
 }
 
 // ─────────────────────────────────────────────
@@ -278,6 +282,11 @@ async function syncDown() {
     console.log('[YGO] syncDown saltato: account non configurato');
     return;
   }
+  // Con un salvataggio in corso i dati remoti sono vecchi: scaricarli ora annullerebbe le modifiche locali
+  if (syncInFlight || syncDirty) {
+    console.log('[YGO] syncDown rimandato: salvataggio in corso');
+    return;
+  }
 
   setSync('loading', 'aggiornamento...');
   console.log('[YGO] syncDown start');
@@ -309,23 +318,37 @@ async function syncDown() {
 }
 
 /** Salva lo state corrente sul bin remoto. */
+/**
+ * Un solo salvataggio alla volta: due PUT partiti uno dopo l'altro possono arrivare
+ * al server in ordine inverso e far vincere lo stato più vecchio (partite perse).
+ * Se durante un salvataggio cambia qualcosa, appena finito se ne fa un altro con lo stato più recente.
+ */
+let syncInFlight = null, syncDirty = false;
+
 async function syncUp() {
   if (!cfg.apiKey || !cfg.binId) {
     console.log('[YGO] syncUp saltato: account non configurato');
     return;
   }
+  if (syncInFlight) { syncDirty = true; return syncInFlight; }
 
-  setSync('loading', 'salvataggio...');
-  console.log('[YGO] syncUp start — matches:', state.matches.length);
-
-  try {
-    await writeBin();
-    setSync('ok', 'salvato');
-    console.log('[YGO] syncUp completato');
-  } catch(e) {
-    console.error('[YGO] syncUp error:', e);
-    setSync('err', 'errore salvataggio');
-  }
+  syncInFlight = (async () => {
+    do {
+      syncDirty = false;
+      setSync('loading', 'salvataggio...');
+      console.log('[YGO] syncUp start — matches:', state.matches.length);
+      try {
+        await writeBin();
+        setSync('ok', 'salvato');
+        console.log('[YGO] syncUp completato');
+      } catch(e) {
+        console.error('[YGO] syncUp error:', e);
+        setSync('err', 'errore salvataggio');
+        break;
+      }
+    } while (syncDirty);
+  })();
+  try { await syncInFlight; } finally { syncInFlight = null; }
 }
 
 async function manualRefresh() {
@@ -419,6 +442,7 @@ function removeDeck(pi, di) {
     if (m.p2i === pi && m.d2i > di) m.d2i--;
   });
   state.players[pi].decks.splice(di, 1);
+  onDeckRenamed(pi, name, null);
   delete state.deckLists[deckKey(pi, name)];
   console.log(`[YGO] Mazzo rimosso dal giocatore ${pi}:`, name, `(${nMatches} partite rimosse)`);
   saveLocal(); renderPlayers(); updateSelects(); renderMatches(); renderTab(); syncUp();
@@ -1161,8 +1185,9 @@ function kbMinus() {
 /** Importo da applicare: il numero scritto, oppure la differenza |A − B|. */
 function getAmount() {
   const b = parseInt(duelState.buf) || 0;
+  const a = parseInt(duelState.minuend) || 0;
   if (duelState.minuend == null) return b;
-  return b ? Math.abs((parseInt(duelState.minuend) || 0) - b) : 0;
+  return b ? Math.abs(a - b) : a;          // "2500 −" senza secondo numero vale 2500
 }
 
 function refreshDisplay() {
@@ -1617,6 +1642,7 @@ function renameDeck() {
   const di = decks.indexOf(name);
   if (di < 0) return;
   decks[di] = v;   // le partite usano l'indice: restano collegate
+  onDeckRenamed(pi, name, v);
   const oldKey = deckKey(pi, name);
   if (state.deckLists[oldKey]) { state.deckLists[deckKey(pi, v)] = state.deckLists[oldKey]; delete state.deckLists[oldKey]; }
   dmCtx.name = v;
@@ -1680,7 +1706,11 @@ async function searchCardsApi(q, isCurrent = () => true) {
   let { en, it } = await searchBoth(q, 40);
 
   if (!en.length && !it.length) {
-    const tokens = [...new Set(words)].filter(w => w.length >= 3).sort((a, b) => b.length - a.length).slice(0, 2);
+    // Prima le coppie col trattino ("red eyes" → "red-eyes": nomi come Blue-Eyes, Red-Eyes), poche risposte;
+    // solo dopo la parola più lunga da sola, che può restituire migliaia di carte.
+    const pairs = words.slice(1).map((w, i) => `${words[i]}-${w}`).slice(0, 2);
+    const singles = [...new Set(words)].filter(w => w.length >= 3).sort((a, b) => b.length - a.length).slice(0, 2);
+    const tokens = [...pairs, ...singles];
     for (const t of tokens) {
       if (!isCurrent()) return [];
       const r = await searchBoth(t);
@@ -1851,3 +1881,17 @@ renderDuel();
 // Init stats tab with matchups visible
 currentTab = 'stats';
 console.log('[YGO] Tracker pronto');
+
+/**
+ * Mantiene coerenti i riferimenti per nome a un mazzo rinominato (newName) o eliminato (null):
+ * il mazzo scelto nel Laboratorio e i mazzi del duello in corso.
+ */
+function onDeckRenamed(pi, oldName, newName) {
+  if (typeof labSetup !== 'undefined' && labSetup.decks) {
+    labSetup.decks.forEach((ref, s) => {
+      if (ref && ref.pi === pi && ref.name === oldName) labSetup.decks[s] = newName ? { pi, name: newName } : null;
+    });
+    labSaveSetup();
+  }
+  if (duelState) duelState.players.forEach(p => { if (p.pi === pi && p.deck === oldName && newName) p.deck = newName; });
+}
