@@ -2,9 +2,12 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A1122">
 <title>Yu-Gi-Oh! Score Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500..800&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -28,7 +31,7 @@
     <div class="panel" id="duel-panel">
       <div class="panel-title">
         <span>Duello</span>
-        <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;font-size:11px;padding:4px 10px;margin-left:auto;letter-spacing:0;text-transform:none;font-family:Outfit,sans-serif">Abbandona</button>
+        <button class="btn-cfg-sec" onclick="resetDuel()" id="duel-reset-btn" style="display:none;margin-left:auto">Abbandona</button>
       </div>
       <div id="duel-content"></div>
     </div>
@@ -47,7 +50,7 @@
             <select id="p1sel" onchange="updateDeckSelects(1)"></select>
             <select id="d1sel" style="margin-top:6px"></select>
           </div>
-          <div class="vs-col">VS</div>
+          <div class="vs-col">vs</div>
           <div class="form-group">
             <span class="form-label">Giocatore 2</span>
             <select id="p2sel" onchange="updateDeckSelects(2)"></select>

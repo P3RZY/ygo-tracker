@@ -11,9 +11,13 @@
 // Tutto viene scaricato dai CDN quando serve: nulla di tutto ciò è copiato nel repository.
 // ─────────────────────────────────────────────
 const LAB_CORE_URL   = 'https://cdn.jsdelivr.net/npm/ocgcore-wasm@0.1.2/dist/index.js';
-const LAB_SCRIPT_CDN = ['https://cdn.jsdelivr.net/gh/ProjectIgnis/CardScripts@master/',
-                        'https://raw.githubusercontent.com/ProjectIgnis/CardScripts/master/'];
-const LAB_DIST_CDN   = 'https://cdn.jsdelivr.net/gh/ProjectIgnis/Distribution@master/config/';
+// Script e testi fissati a commit verificati: "master" evolve insieme all'ultima versione del motore
+// e prima o poi userebbe funzioni che ocgcore-wasm 0.1.2 non ha. Per aggiornare: cambiare gli SHA e riprovare il Lab.
+const LAB_SCRIPTS_SHA = '52503204818348e3ac6b3f2cd680ae4bd5bbcfa8';   // ProjectIgnis/CardScripts, 26/09/2026
+const LAB_DIST_SHA    = '54a6e2395c532648ff762540e9615319fac4f51b';   // ProjectIgnis/Distribution, 26/09/2026
+const LAB_SCRIPT_CDN = [`https://cdn.jsdelivr.net/gh/ProjectIgnis/CardScripts@${LAB_SCRIPTS_SHA}/`,
+                        `https://raw.githubusercontent.com/ProjectIgnis/CardScripts/${LAB_SCRIPTS_SHA}/`];
+const LAB_DIST_CDN   = `https://cdn.jsdelivr.net/gh/ProjectIgnis/Distribution@${LAB_DIST_SHA}/config/`;
 const LAB_SETUP_KEY  = 'ygo_lab_setup_v1';
 const LAB_LIB_SCRIPTS = ['constant.lua', 'card_counter_constants.lua', 'archetype_setcode_constants.lua', 'utility.lua',
   'debug_utility.lua', 'chain.lua', 'cards_specific_functions.lua', 'proc_fusion.lua', 'proc_fusion_spell.lua',
@@ -61,6 +65,7 @@ let labPickerCtx = null;       // { side, zone } oppure { announce: msg }
 let labPickerSeq = 0, labPickerTimer = null;
 let labBusy = '';              // messaggio di caricamento
 let labPromptMin = false;      // finestra delle scelte ridotta (per guardare il campo)
+let labStartWarnings = [];     // avvisi sulle carte (restano nel registro dopo Annulla / Ricomincia)
 
 // ── Setup (salvato sul dispositivo) ──────────────────────────────────────────
 function labEmptySide() { return { hand: [], mzone: [], szone: [], fzone: [], grave: [], removed: [], deck: [], extra: [] }; }
@@ -95,16 +100,19 @@ function labSyncGet(url) {
   } catch(e) { return null; }
 }
 
-function labScriptPath(name) { return /^c\d+\.lua$/.test(name) ? 'official/' + name : name; }
+/** Percorsi possibili: gli script delle carte appena uscite possono stare ancora in pre-release/. */
+function labScriptPaths(name) { return /^c\d+\.lua$/.test(name) ? ['official/' + name, 'pre-release/' + name] : [name]; }
 
 async function labFetchScript(name) {
   if (labScripts.has(name)) return;
-  for (const base of LAB_SCRIPT_CDN) {
-    try {
-      const r = await fetch(base + labScriptPath(name));
-      if (r.ok) { labScripts.set(name, await r.text()); return; }
-      if (r.status === 404) break;
-    } catch(e) { /* prova il CDN successivo */ }
+  for (const path of labScriptPaths(name)) {
+    for (const base of LAB_SCRIPT_CDN) {
+      try {
+        const r = await fetch(base + path);
+        if (r.ok) { labScripts.set(name, await r.text()); return; }
+        if (r.status === 404) break;          // non c'è in questa cartella: prova la successiva
+      } catch(e) { /* errore di rete: prova il CDN successivo */ }
+    }
   }
   labScripts.set(name, null);
 }
@@ -112,7 +120,10 @@ async function labFetchScript(name) {
 function labScriptReader(name) {
   if (!labScripts.has(name)) {
     let s = null;
-    for (const base of LAB_SCRIPT_CDN) { s = labSyncGet(base + labScriptPath(name)); if (s != null) break; }
+    for (const path of labScriptPaths(name)) {
+      for (const base of LAB_SCRIPT_CDN) { s = labSyncGet(base + path); if (s != null) break; }
+      if (s != null) break;
+    }
     labScripts.set(name, s);
   }
   return labScripts.get(name);
@@ -310,24 +321,44 @@ function labCreate(d) {
     team1: team(0 ^ d.first), team2: team(1 ^ d.first),
     cardReader: labCardData,
     scriptReader: labScriptReader,
-    errorHandler: (t, s) => { console.warn('[YGO] Motore:', s); labDuel?.log.push({ text: 'Motore: ' + s, cls: 'warn' }); }
+    errorHandler: (t, s) => {
+      console.warn('[YGO] Motore:', s);
+      // Script mancante: è già segnalato in chiaro all'avvio, il messaggio tecnico del motore non aggiunge nulla
+      const m = String(s).match(/c(\d+)\.initial_effect/);
+      if (m && !labScripts.get(`c${m[1]}.lua`)) return;
+      labDuel?.log.push({ text: 'Motore: ' + s, cls: 'warn' });
+    }
   });
   if (!h) throw new Error('Impossibile creare il duello');
   core.loadScript(h, 'constant.lua', labScriptReader('constant.lua'));
   core.loadScript(h, 'utility.lua', labScriptReader('utility.lua'));
+
+  // I mostri messi sul campo, e i mostri dell'Extra Deck o "Nomi" messi in Cimitero/Banditi, nella realtà
+  // ci sono arrivati dopo un'evocazione corretta: li aggiungo con Debug.AddCard(…, true), come fanno i
+  // puzzle di EDOPro, altrimenti il motore li considera "mai evocati" (es. Monster Reborn non li rianima).
+  const T = ocg.OcgType;
+  const needsProc = (k, code) => {
+    const type = labCardData(code)?.type || 0;
+    if (!(type & T.MONSTER)) return false;
+    if (k === 'mzone') return true;
+    return (k === 'grave' || k === 'removed') && !!(type & (T.FUSION | T.SYNCHRO | T.XYZ | T.LINK | T.SPSUMMON));
+  };
+  const lua = [];
 
   labSetup.sides.forEach((side, s) => {
     const t = s ^ d.first;
     LAB_SETUP_ZONES.forEach(({ k }) => {
       // Deck: ogni carta aggiunta va in cima, quindi le inserisco al contrario (la prima della lista resta in cima)
       const list = k === 'deck' ? [...side[k]].reverse() : side[k];
-      list.forEach((e, i) => core.duelNewCard(h, {
-        team: t, duelist: 0, code: Number(e.code), controller: t, location: LAB_LOC_CODE[k],
-        sequence: k === 'fzone' ? 5 : (k === 'mzone' || k === 'szone') ? i : 0,
-        position: labPos(k, e.pos)
-      }));
+      list.forEach((e, i) => {
+        const code = Number(e.code), location = LAB_LOC_CODE[k], position = labPos(k, e.pos);
+        const sequence = k === 'fzone' ? 5 : (k === 'mzone' || k === 'szone') ? i : 0;
+        if (needsProc(k, code)) lua.push(`Debug.AddCard(${code},${t},${t},${location},${sequence},${position},true)`);
+        else core.duelNewCard(h, { team: t, duelist: 0, code, controller: t, location, sequence, position });
+      });
     });
   });
+  if (lua.length && !core.loadScript(h, 'lab_setup.lua', lua.join('\n'))) throw new Error('Impossibile preparare il campo');
   core.startDuel(h);
   return h;
 }
@@ -342,6 +373,7 @@ function labStart(seed, replay = []) {
   };
   labDuel.lp[0 ^ labDuel.first] = labSetup.lp[0] || 8000;
   labDuel.lp[1 ^ labDuel.first] = labSetup.lp[1] || 8000;
+  labStartWarnings.forEach(w => labLog(w, 'warn'));
   labSel = [];
   labDuel.h = labCreate(labDuel);
   labProcess();
@@ -358,10 +390,13 @@ function labProcess() {
       if (LAB_SELECT_TYPES.has(m.type)) prompt = m;
       else labOnMessage(m);
     }
+    let askUser = false;
     if (d.retry) {                       // risposta rifiutata: si ripropone la stessa richiesta
       d.retry = false;
-      d.responses.pop();
+      const rejected = d.responses.pop();
       prompt = prompt || d.lastPrompt;
+      // Se era una risposta automatica non la si ripete all'infinito: si chiede all'utente
+      askUser = rejected && !rejected.manual;
       if (!d.queue.length) toast('Il motore ha rifiutato la scelta: riprova.');
     }
     if (st === RES.END) { d.pending = null; d.ended = true; break; }
@@ -370,7 +405,7 @@ function labProcess() {
     d.pending = prompt;
     const next = d.queue.length ? d.queue.shift() : null;
     if (next) { labSend(next.resp, next.manual); continue; }
-    const auto = labAutoResponse(prompt);
+    const auto = askUser ? null : labAutoResponse(prompt);
     if (auto) { labSend(auto, false); continue; }
     break;
   }
@@ -616,7 +651,8 @@ function labSetupHtml() {
         <option value=""${ref ? '' : ' selected'}>Nessun mazzo: carte scelte liberamente</option>
         ${deckOpts(s)}
       </select>
-      ${ref ? `<p class="lab-deck-note">Tutte le carte di «${escH(ref.name)}» partono da Deck ed Extra Deck: con <b>+ carta</b> puoi prenderle da lì e metterle in mano o sul campo.</p>` : ''}
+      ${ref && !labDeckListOf(s) ? `<p class="lab-deck-note warn">Il mazzo «${escH(ref.name)}» non esiste più nel tracker: scegline un altro o lascia le carte libere.</p>` : ''}
+      ${ref && labDeckListOf(s) ? `<p class="lab-deck-note">Tutte le carte di «${escH(ref.name)}» partono da Deck ed Extra Deck: con <b>+ carta</b> puoi prenderle da lì e metterle in mano o sul campo.</p>` : ''}
       ${LAB_SETUP_ZONES.map(z => {
         const list = labSetup.sides[s][z.k];
         const full = z.max && list.length >= z.max;
@@ -691,8 +727,10 @@ function labRemoveCard(s, k, i) {
     const code = Number(e.code);
     const wasOutside = labOutsideCards(s).length < outsideBefore.length;   // era una carta fuori mazzo: si elimina e basta
     if (!wasOutside) {
-      const toExtra = l.extra.some(c => labBaseId(c) === labBaseId(code));
-      (toExtra ? side.extra : side.deck).push({ code, name: e.name });
+      const base = labBaseId(code);
+      // torna da dove viene; le carte del Side Deck non stanno né nel Deck né nell'Extra: si tolgono e basta
+      if (l.extra.some(c => labBaseId(c) === base))     side.extra.push({ code, name: e.name });
+      else if (l.main.some(c => labBaseId(c) === base)) side.deck.push({ code, name: e.name });
     }
   }
   labSaveSetup(); labRender();
@@ -868,11 +906,24 @@ async function labStartFromSetup() {
     const ids = new Set(codes);
     codes.forEach(c => { const i = labInfo.get(c); if (i && i.id !== c) ids.add(i.id); });
     await Promise.all([...ids].map(c => labFetchScript(`c${c}.lua`)));
-    const unknown = codes.filter(c => !labInfo.has(c));
+
+    // Avvisi che restano nel registro anche dopo Annulla / Ricomincia
+    labStartWarnings = [];
+    const uniq = [...new Set(codes)];
+    const unknown = uniq.filter(c => !labInfo.has(c));
+    if (unknown.length) labStartWarnings.push(`Carte non trovate nel database: ${unknown.join(', ')}`);
+    // Una carta con effetti ma senza script si comporterebbe come se non avesse effetti: va detto
+    const noScript = uniq.filter(c => {
+      const info = labInfo.get(c);
+      if (!info) return false;
+      const plainNormal = /Normal/.test(info.type || '') && !/Pendulum/.test(info.type || '');
+      return !plainNormal && !labScripts.get(`c${c}.lua`) && !labScripts.get(`c${info.id}.lua`);
+    });
+    if (noScript.length) labStartWarnings.push(`Effetti non disponibili nel motore per: ${noScript.map(labName).join(', ')}. Queste carte si comporteranno come se non avessero effetti: il risultato su di loro non è affidabile.`);
+
     labBusy = '';
     const r = () => BigInt(Math.floor(Math.random() * 2 ** 32)) + 1n;
     labStart([r(), r(), r(), r()]);
-    if (unknown.length) labLog(`Carte non trovate nel database: ${[...new Set(unknown)].join(', ')}`, 'warn');
     labRender();
   } catch(e) { labFail(e); }
 }
@@ -1018,7 +1069,7 @@ function labPlayHtml() {
 
   const status = d.ended || d.winner != null
     ? `<div class="lab-status end">${d.winner != null && d.winner < 2 ? `Duello finito: vince ${labWho(d.winner)}` : 'Duello finito'}</div>`
-    : `<div class="lab-status">Turno ${d.turn} · ${LAB_PHASE[d.phase] || ''} · di turno: <b>${labWho(d.turnPlayer)}</b></div>`;
+    : `<div class="lab-status">Turno ${d.turn}, ${LAB_PHASE[d.phase] || ''}. Gioca <b>${labWho(d.turnPlayer)}</b></div>`;
 
   const log = d.log.map(e => `<div class="lab-log-line ${e.cls}">${escH(e.text)}</div>`).join('');
   const canUndo = d.responses.some(r => r.manual);
@@ -1069,7 +1120,7 @@ function labPromptHtml() {
   const { ocg } = labE, MT = ocg.OcgMessageType;
   const who = labWho(m.player);
   const hintTxt = d.hint && d.hint.player === m.player && d.hint.hint ? labDesc(d.hint.hint) : '';
-  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t)}</div>`;
+  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t.charAt(0).toUpperCase() + t.slice(1))}</div>`;
   const I = ocg.SelectIdleCMDAction, B = ocg.SelectBattleCMDAction;
 
   switch (m.type) {
@@ -1082,7 +1133,7 @@ function labPromptHtml() {
         ['Posiziona Magia/Trappola', m.spell_sets.map((c, i) => labBtn(labCardRef(c), `labIdle(${I.SELECT_SPELL_SET},${i})`))],
         ['Cambia posizione', m.pos_changes.map((c, i) => labBtn(labCardRef(c), `labIdle(${I.SELECT_POS_CHANGE},${i})`))],
       ];
-      return title(`— ${LAB_PHASE[d.phase] || 'Main Phase'}: cosa fai?`) +
+      return title(`${LAB_PHASE[d.phase] || 'Main Phase'}: cosa fai?`) +
         groups.filter(g => g[1].length).map(([h, b]) => `<div class="lab-group"><div class="lab-group-h">${h}</div>${b.join('')}</div>`).join('') +
         `<div class="lab-phase-row">
           ${m.to_bp ? labBtn('⚔ Battle Phase', `labIdle(${I.TO_BP},0)`, 'phase') : ''}
@@ -1099,18 +1150,18 @@ function labPromptHtml() {
         </div>`;
     case MT.SELECT_CHAIN: {
       const size = d.chain.length;
-      return title(size ? `— vuoi rispondere alla catena (anello ${size}: ${labName(d.chain[size - 1])})?` : '— vuoi attivare qualcosa ora?') +
+      return title(size ? `vuoi rispondere alla catena (anello ${size}: ${labName(d.chain[size - 1])})?` : 'vuoi attivare qualcosa ora?') +
         m.selects.map((c, i) => labBtn(`${labCardRef(c)}${escH(labEffectSuffix(c.description, c.code))}`, `labChain(${i})`, 'act')).join('') +
         (m.forced ? '' : labBtn('Non rispondere', 'labChain(null)', 'pass'));
     }
     case MT.SELECT_EFFECTYN:
-      return title(`— attivare l'effetto di ${labName(m.code)}${labEffectSuffix(m.description, m.code)}?`) +
+      return title(`attivare l'effetto di ${labName(m.code)}${labEffectSuffix(m.description, m.code)}?`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_YESNO:
-      return title(`— ${labDesc(m.description) || 'confermi?'}`) +
+      return title(`${labDesc(m.description) || 'confermi?'}`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_OPTION:
-      return title(hintTxt ? `— ${hintTxt}` : '— scegli un\'opzione') +
+      return title(hintTxt ? hintTxt : '— scegli un\'opzione') +
         m.options.map((o, i) => labBtn(escH(labDesc(o) || `Opzione ${i + 1}`), `labOption(${i})`)).join('');
     case MT.SELECT_CARD:
     case MT.SELECT_TRIBUTE:
@@ -1119,7 +1170,7 @@ function labPromptHtml() {
       const single = m.type !== MT.SELECT_SUM && m.min === 1 && m.max === 1;
       const must = m.type === MT.SELECT_SUM && m.selects_must.length ? `<div class="lab-group-h">Già incluse: ${m.selects_must.map(c => escH(labName(c.code))).join(', ')}</div>` : '';
       const range = m.type === MT.SELECT_SUM ? `valore ${m.select_max ? 'almeno' : 'esattamente'} ${m.amount}` : m.min === m.max ? `${m.min}` : `da ${m.min} a ${m.max}`;
-      return title(`— ${hintTxt || 'scegli le carte'} (${range})`) + must +
+      return title(`${hintTxt || 'scegli le carte'} (${range})`) + must +
         cards.map((c, i) => labBtn(`${labSel.includes(i) ? '☑ ' : single ? '' : '☐ '}${labCardRef(c)}${c.amount != null ? `<small> · valore ${c.amount & 0xffff}${c.amount >> 16 ? '/' + (c.amount >> 16) : ''}</small>` : ''}`,
           single ? `labSelectCards([${i}])` : `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">
@@ -1128,39 +1179,39 @@ function labPromptHtml() {
         </div>`;
     }
     case MT.SELECT_UNSELECT_CARD:
-      return title(`— ${hintTxt || 'scegli le carte'}${m.min === m.max ? ` (${m.min})` : ` (da ${m.min} a ${m.max})`}`) +
+      return title(`${hintTxt || 'scegli le carte'}${m.min === m.max ? ` (${m.min})` : ` (da ${m.min} a ${m.max})`}`) +
         m.select_cards.map((c, i) => labBtn('☐ ' + labCardRef(c), `labUnselect(${i})`)).join('') +
         m.unselect_cards.map((c, i) => labBtn('☑ ' + labCardRef(c), `labUnselect(${m.select_cards.length + i})`, 'on')).join('') +
         `<div class="lab-phase-row">${m.can_finish ? labBtn('Fine', 'labUnselect(null)', 'act') : m.can_cancel ? labBtn('Annulla', 'labUnselect(null)', 'pass') : ''}</div>`;
     case MT.SELECT_PLACE:
     case MT.SELECT_DISFIELD: {
       const zones = labFreeZones(m);
-      return title(`— ${hintTxt || 'scegli la zona'}${m.count > 1 ? ` (${labSel.length}/${m.count})` : ''}`) +
+      return title(`${hintTxt || 'scegli la zona'}${m.count > 1 ? ` (${labSel.length}/${m.count})` : ''}`) +
         zones.map((z, i) => labBtn(escH(z.label), `labPlace(${i})`, labSel.includes(i) ? 'on' : '')).join('');
     }
     case MT.SELECT_POSITION: {
       const P = ocg.OcgPosition;
       const opts = [[P.FACEUP_ATTACK, 'Attacco scoperto'], [P.FACEDOWN_ATTACK, 'Attacco coperto'], [P.FACEUP_DEFENSE, 'Difesa scoperta'], [P.FACEDOWN_DEFENSE, 'Difesa coperta']];
-      return title(`— posizione di ${labName(m.code)}`) + opts.filter(([p]) => m.positions & p).map(([p, l]) => labBtn(l, `labPosition(${p})`)).join('');
+      return title(`posizione di ${labName(m.code)}`) + opts.filter(([p]) => m.positions & p).map(([p, l]) => labBtn(l, `labPosition(${p})`)).join('');
     }
     case MT.ANNOUNCE_RACE: {
       const races = Object.entries(ocg.OcgRace).filter(([, v]) => BigInt(m.available) & v);
-      return title(`— dichiara ${m.count} Tipo/i`) +
+      return title(`dichiara ${m.count} Tipo/i`) +
         races.map(([k, v], i) => labBtn(escH(labSys(1020 + v.toString(2).length - 1) || k), `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">${labBtn('Conferma', 'labAnnounceRace()', 'act')}</div>`;
     }
     case MT.ANNOUNCE_ATTRIB: {
       const attrs = Object.entries(ocg.OcgAttribute).filter(([, v]) => m.available & v);
-      return title(`— dichiara ${m.count} Attributo/i`) +
+      return title(`dichiara ${m.count} Attributo/i`) +
         attrs.map(([k], i) => labBtn(escH(labSys(1010 + Math.log2(ocg.OcgAttribute[k])) || k), `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">${labBtn('Conferma', 'labAnnounceAttr()', 'act')}</div>`;
     }
     case MT.ANNOUNCE_NUMBER:
-      return title(`— ${hintTxt || 'dichiara un numero'}`) + m.options.map((o, i) => labBtn(String(o), `labNumber(${i})`)).join('');
+      return title(`${hintTxt || 'dichiara un numero'}`) + m.options.map((o, i) => labBtn(String(o), `labNumber(${i})`)).join('');
     case MT.ANNOUNCE_CARD:
-      return title(`— ${hintTxt || 'dichiara il nome di una carta'}`) + labBtn('🔍 Cerca la carta da dichiarare', 'labOpenAnnounce()', 'act');
+      return title(`${hintTxt || 'dichiara il nome di una carta'}`) + labBtn('🔍 Cerca la carta da dichiarare', 'labOpenAnnounce()', 'act');
   }
-  return title(`— richiesta non gestita (${ocg.ocgMessageTypeStrings.get(m.type) || m.type})`) +
+  return title(`richiesta non gestita (${ocg.ocgMessageTypeStrings.get(m.type) || m.type})`) +
     labBtn('Rispondi con la scelta predefinita', 'labDefault()', 'pass');
 }
 
@@ -1174,7 +1225,7 @@ function labFreeZones(m) {
     const location = j < 8 ? L.MZONE : L.SZONE, sequence = j % 8;
     const owner = labWho(player);
     const label = location === L.MZONE
-      ? (sequence >= 5 ? `Zona Mostri Extra ${sequence === 5 ? 'sinistra' : 'destra'}` : `Zona Mostri ${sequence + 1} di ${owner}`)
+      ? (sequence >= 5 ? `Zona Mostri Extra ${(player === (0 ^ labDuel.first) ? sequence === 5 : sequence === 6) ? 'a sinistra' : 'a destra'} (vista dal tuo lato)` : `Zona Mostri ${sequence + 1} di ${owner}`)
       : (sequence === 5 ? `Zona Terreno di ${owner}` : `Zona Magie/Trappole ${sequence + 1} di ${owner}`);
     out.push({ player, location, sequence, label });
   }
