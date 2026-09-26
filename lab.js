@@ -1018,7 +1018,7 @@ function labPlayHtml() {
 
   const status = d.ended || d.winner != null
     ? `<div class="lab-status end">${d.winner != null && d.winner < 2 ? `Duello finito: vince ${labWho(d.winner)}` : 'Duello finito'}</div>`
-    : `<div class="lab-status">Turno ${d.turn} · ${LAB_PHASE[d.phase] || ''} · di turno: <b>${labWho(d.turnPlayer)}</b></div>`;
+    : `<div class="lab-status">Turno ${d.turn}, ${LAB_PHASE[d.phase] || ''}. Gioca <b>${labWho(d.turnPlayer)}</b></div>`;
 
   const log = d.log.map(e => `<div class="lab-log-line ${e.cls}">${escH(e.text)}</div>`).join('');
   const canUndo = d.responses.some(r => r.manual);
@@ -1069,7 +1069,7 @@ function labPromptHtml() {
   const { ocg } = labE, MT = ocg.OcgMessageType;
   const who = labWho(m.player);
   const hintTxt = d.hint && d.hint.player === m.player && d.hint.hint ? labDesc(d.hint.hint) : '';
-  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t)}</div>`;
+  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t.charAt(0).toUpperCase() + t.slice(1))}</div>`;
   const I = ocg.SelectIdleCMDAction, B = ocg.SelectBattleCMDAction;
 
   switch (m.type) {
@@ -1082,7 +1082,7 @@ function labPromptHtml() {
         ['Posiziona Magia/Trappola', m.spell_sets.map((c, i) => labBtn(labCardRef(c), `labIdle(${I.SELECT_SPELL_SET},${i})`))],
         ['Cambia posizione', m.pos_changes.map((c, i) => labBtn(labCardRef(c), `labIdle(${I.SELECT_POS_CHANGE},${i})`))],
       ];
-      return title(`— ${LAB_PHASE[d.phase] || 'Main Phase'}: cosa fai?`) +
+      return title(`${LAB_PHASE[d.phase] || 'Main Phase'}: cosa fai?`) +
         groups.filter(g => g[1].length).map(([h, b]) => `<div class="lab-group"><div class="lab-group-h">${h}</div>${b.join('')}</div>`).join('') +
         `<div class="lab-phase-row">
           ${m.to_bp ? labBtn('⚔ Battle Phase', `labIdle(${I.TO_BP},0)`, 'phase') : ''}
@@ -1099,18 +1099,18 @@ function labPromptHtml() {
         </div>`;
     case MT.SELECT_CHAIN: {
       const size = d.chain.length;
-      return title(size ? `— vuoi rispondere alla catena (anello ${size}: ${labName(d.chain[size - 1])})?` : '— vuoi attivare qualcosa ora?') +
+      return title(size ? `vuoi rispondere alla catena (anello ${size}: ${labName(d.chain[size - 1])})?` : 'vuoi attivare qualcosa ora?') +
         m.selects.map((c, i) => labBtn(`${labCardRef(c)}${escH(labEffectSuffix(c.description, c.code))}`, `labChain(${i})`, 'act')).join('') +
         (m.forced ? '' : labBtn('Non rispondere', 'labChain(null)', 'pass'));
     }
     case MT.SELECT_EFFECTYN:
-      return title(`— attivare l'effetto di ${labName(m.code)}${labEffectSuffix(m.description, m.code)}?`) +
+      return title(`attivare l'effetto di ${labName(m.code)}${labEffectSuffix(m.description, m.code)}?`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_YESNO:
-      return title(`— ${labDesc(m.description) || 'confermi?'}`) +
+      return title(`${labDesc(m.description) || 'confermi?'}`) +
         `<div class="lab-phase-row">${labBtn('Sì', 'labYes(true)', 'act')}${labBtn('No', 'labYes(false)', 'pass')}</div>`;
     case MT.SELECT_OPTION:
-      return title(hintTxt ? `— ${hintTxt}` : '— scegli un\'opzione') +
+      return title(hintTxt ? hintTxt : '— scegli un\'opzione') +
         m.options.map((o, i) => labBtn(escH(labDesc(o) || `Opzione ${i + 1}`), `labOption(${i})`)).join('');
     case MT.SELECT_CARD:
     case MT.SELECT_TRIBUTE:
@@ -1119,7 +1119,7 @@ function labPromptHtml() {
       const single = m.type !== MT.SELECT_SUM && m.min === 1 && m.max === 1;
       const must = m.type === MT.SELECT_SUM && m.selects_must.length ? `<div class="lab-group-h">Già incluse: ${m.selects_must.map(c => escH(labName(c.code))).join(', ')}</div>` : '';
       const range = m.type === MT.SELECT_SUM ? `valore ${m.select_max ? 'almeno' : 'esattamente'} ${m.amount}` : m.min === m.max ? `${m.min}` : `da ${m.min} a ${m.max}`;
-      return title(`— ${hintTxt || 'scegli le carte'} (${range})`) + must +
+      return title(`${hintTxt || 'scegli le carte'} (${range})`) + must +
         cards.map((c, i) => labBtn(`${labSel.includes(i) ? '☑ ' : single ? '' : '☐ '}${labCardRef(c)}${c.amount != null ? `<small> · valore ${c.amount & 0xffff}${c.amount >> 16 ? '/' + (c.amount >> 16) : ''}</small>` : ''}`,
           single ? `labSelectCards([${i}])` : `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">
@@ -1128,39 +1128,39 @@ function labPromptHtml() {
         </div>`;
     }
     case MT.SELECT_UNSELECT_CARD:
-      return title(`— ${hintTxt || 'scegli le carte'}${m.min === m.max ? ` (${m.min})` : ` (da ${m.min} a ${m.max})`}`) +
+      return title(`${hintTxt || 'scegli le carte'}${m.min === m.max ? ` (${m.min})` : ` (da ${m.min} a ${m.max})`}`) +
         m.select_cards.map((c, i) => labBtn('☐ ' + labCardRef(c), `labUnselect(${i})`)).join('') +
         m.unselect_cards.map((c, i) => labBtn('☑ ' + labCardRef(c), `labUnselect(${m.select_cards.length + i})`, 'on')).join('') +
         `<div class="lab-phase-row">${m.can_finish ? labBtn('Fine', 'labUnselect(null)', 'act') : m.can_cancel ? labBtn('Annulla', 'labUnselect(null)', 'pass') : ''}</div>`;
     case MT.SELECT_PLACE:
     case MT.SELECT_DISFIELD: {
       const zones = labFreeZones(m);
-      return title(`— ${hintTxt || 'scegli la zona'}${m.count > 1 ? ` (${labSel.length}/${m.count})` : ''}`) +
+      return title(`${hintTxt || 'scegli la zona'}${m.count > 1 ? ` (${labSel.length}/${m.count})` : ''}`) +
         zones.map((z, i) => labBtn(escH(z.label), `labPlace(${i})`, labSel.includes(i) ? 'on' : '')).join('');
     }
     case MT.SELECT_POSITION: {
       const P = ocg.OcgPosition;
       const opts = [[P.FACEUP_ATTACK, 'Attacco scoperto'], [P.FACEDOWN_ATTACK, 'Attacco coperto'], [P.FACEUP_DEFENSE, 'Difesa scoperta'], [P.FACEDOWN_DEFENSE, 'Difesa coperta']];
-      return title(`— posizione di ${labName(m.code)}`) + opts.filter(([p]) => m.positions & p).map(([p, l]) => labBtn(l, `labPosition(${p})`)).join('');
+      return title(`posizione di ${labName(m.code)}`) + opts.filter(([p]) => m.positions & p).map(([p, l]) => labBtn(l, `labPosition(${p})`)).join('');
     }
     case MT.ANNOUNCE_RACE: {
       const races = Object.entries(ocg.OcgRace).filter(([, v]) => BigInt(m.available) & v);
-      return title(`— dichiara ${m.count} Tipo/i`) +
+      return title(`dichiara ${m.count} Tipo/i`) +
         races.map(([k, v], i) => labBtn(escH(labSys(1020 + v.toString(2).length - 1) || k), `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">${labBtn('Conferma', 'labAnnounceRace()', 'act')}</div>`;
     }
     case MT.ANNOUNCE_ATTRIB: {
       const attrs = Object.entries(ocg.OcgAttribute).filter(([, v]) => m.available & v);
-      return title(`— dichiara ${m.count} Attributo/i`) +
+      return title(`dichiara ${m.count} Attributo/i`) +
         attrs.map(([k], i) => labBtn(escH(labSys(1010 + Math.log2(ocg.OcgAttribute[k])) || k), `labToggle(${i})`, labSel.includes(i) ? 'on' : '')).join('') +
         `<div class="lab-phase-row">${labBtn('Conferma', 'labAnnounceAttr()', 'act')}</div>`;
     }
     case MT.ANNOUNCE_NUMBER:
-      return title(`— ${hintTxt || 'dichiara un numero'}`) + m.options.map((o, i) => labBtn(String(o), `labNumber(${i})`)).join('');
+      return title(`${hintTxt || 'dichiara un numero'}`) + m.options.map((o, i) => labBtn(String(o), `labNumber(${i})`)).join('');
     case MT.ANNOUNCE_CARD:
-      return title(`— ${hintTxt || 'dichiara il nome di una carta'}`) + labBtn('🔍 Cerca la carta da dichiarare', 'labOpenAnnounce()', 'act');
+      return title(`${hintTxt || 'dichiara il nome di una carta'}`) + labBtn('🔍 Cerca la carta da dichiarare', 'labOpenAnnounce()', 'act');
   }
-  return title(`— richiesta non gestita (${ocg.ocgMessageTypeStrings.get(m.type) || m.type})`) +
+  return title(`richiesta non gestita (${ocg.ocgMessageTypeStrings.get(m.type) || m.type})`) +
     labBtn('Rispondi con la scelta predefinita', 'labDefault()', 'pass');
 }
 

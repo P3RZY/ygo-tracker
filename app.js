@@ -600,17 +600,17 @@ function renderMatches() {
       <div class="match-card-side">
         <div class="match-card-player"><span class="badge ${pClass[m.p1i]}">${escH(p1?.name||'?')}</span></div>
         <div class="match-card-deck">${escH(d1)}</div>
-        <div class="match-card-result ${p1w?'win':'loss'}">${p1w?'VITTORIA':'SCONFITTA'}</div>
+        <div class="match-card-result ${p1w?'win':'loss'}">${p1w?'Vittoria':'Sconfitta'}</div>
       </div>
       <div class="match-card-center">
-        <div class="match-card-vs">VS</div>
+        <div class="match-card-vs">vs</div>
         <div class="match-card-date">${dt}</div>
         <button class="match-card-rm" onclick="removeMatch(${realIdx})">×</button>
       </div>
       <div class="match-card-side right">
         <div class="match-card-player"><span class="badge ${pClass[m.p2i]}">${escH(p2?.name||'?')}</span></div>
         <div class="match-card-deck">${escH(d2)}</div>
-        <div class="match-card-result ${p1w?'loss':'win'}">${p1w?'SCONFITTA':'VITTORIA'}</div>
+        <div class="match-card-result ${p1w?'loss':'win'}">${p1w?'Sconfitta':'Vittoria'}</div>
       </div>
     </div>`;
   }).join('');
@@ -962,12 +962,12 @@ function renderDuel() {
       <div class="duel-setup">
         <div class="duel-slots-row">
           ${slotSelect(0)}
-          <div class="duel-vs-sep">VS</div>
+          <div class="duel-vs-sep">vs</div>
           ${slotSelect(1)}
         </div>
         ${noDecks ? `<p class="hint" style="margin:0">Qualche giocatore non ha ancora mazzi: aggiungili in <a onclick="switchPage('settings')">Mazzi</a>.</p>` : ''}
         <div id="duel-setup-err" class="form-error"></div>
-        <button class="btn-start-duel" onclick="startDuel()">⚔ Inizia Duello · ${STARTING_LP.toLocaleString('it-IT')} LP</button>
+        <button class="btn-start-duel" onclick="startDuel()">Inizia il duello<small>${STARTING_LP.toLocaleString('it-IT')} LP a testa</small></button>
       </div>`;
 
     const p1sel = document.getElementById('duel-p1');
@@ -1015,7 +1015,7 @@ function renderDuel() {
       </div>
       <div class="duel-lp-display ${pClass[p.pi]}${danger ? ' danger' : ''}">${p.lp.toLocaleString('it-IT')}</div>
       <div class="duel-lp-bar-bg"><div class="duel-lp-bar" style="width:${pct}%;background:${barColor}"></div></div>
-      <div class="duel-target-tag">${sel ? '▲ bersaglio' : ''}</div>
+      <div class="duel-target-tag">${sel ? 'selezionato' : 'tocca per selezionare'}</div>
     </button>`;
   }).join('');
 
