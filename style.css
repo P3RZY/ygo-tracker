@@ -886,3 +886,5 @@ button { transition: transform 120ms var(--ease-out); }
 .viz-bar-name span { flex: 0 1 auto; }
 .viz-bar-name small { display: inline; flex: 0 0 auto; }
 .viz-bars-axis { margin: 6px 88px 0 0; }
+.viz-stat-value.name { font-size: 16px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.viz-stat-sub { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

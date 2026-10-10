@@ -107,10 +107,10 @@ function vizKpis(ms, prev) {
     delta = diff === 0 ? `come nei ${vizPeriod} giorni prima`
       : `${diff > 0 ? '+' : '−'}${vizNum.format(Math.abs(diff))} rispetto ai ${vizPeriod} giorni prima`;
   }
-  const tile = (label, value, sub) => `<div class="viz-stat"><div class="viz-stat-label">${label}</div><div class="viz-stat-value">${value}</div><div class="viz-stat-sub">${sub}</div></div>`;
+  const tile = (label, value, sub, isName = false) => `<div class="viz-stat"><div class="viz-stat-label">${label}</div><div class="viz-stat-value${isName ? ' name' : ''}"${isName ? ` title="${value}"` : ''}>${value}</div><div class="viz-stat-sub">${sub}</div></div>`;
   return `<div class="viz-stats">
     ${tile('Partite', vizNum.format(ms.length), delta || `dal ${vizDay.format(ms[0].ts)}`)}
-    ${tile('Mazzo più giocato', escH(most.name), `${owner(most)} · ${vizPlural(most.games, 'partita', 'partite')}`)}
+    ${tile('Mazzo più giocato', escH(most.name), `${owner(most)} · ${vizPlural(most.games, 'partita', 'partite')}`, true)}
     ${best ? tile('Miglior win rate', `${Math.round(best.wins / best.games * 100)}%`, `${escH(best.name)} di ${owner(best)} · ${best.wins} su ${best.games}`)
            : tile('Miglior win rate', '—', 'servono almeno 3 partite con lo stesso mazzo')}
   </div>`;
