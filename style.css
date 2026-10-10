@@ -802,3 +802,4 @@ button { transition: transform 120ms var(--ease-out); }
 @media (min-width: 560px) { .players-grid { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); } }
 .player-card { min-width: 0; }
 .deck-add-row input { min-width: 0; }
+.match-card-player { max-width: 100%; min-width: 0; }
