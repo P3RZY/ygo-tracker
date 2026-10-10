@@ -5,19 +5,26 @@
 //  - una sola scala per grafico, segni sottili, griglia e assi a filo e recessivi;
 //  - legenda per 2+ serie, etichette dirette solo dove servono, testo mai nel colore della serie;
 //  - etichetta al passaggio del dito/mouse e da tastiera, e una tabella con gli stessi dati;
-//  - il colore segue il giocatore, non la posizione in classifica.
+//  - si confrontano i MAZZI in PERCENTUALE: chi gioca di più non sembra "migliore" solo perché ha più partite;
+//  - il colore segue il mazzo, non la sua posizione: chi resta selezionato non cambia colore.
 // I colori sono nelle variabili --viz-* di style.css (validati con validate_palette.js).
 // ─────────────────────────────────────────────
 const VIZ_PERIODS = [{ days: 30, label: '30 giorni' }, { days: 90, label: '90 giorni' }, { days: 0, label: 'Tutto' }];
+const VIZ_MIN_GAMES = 3;        // sotto le 3 partite una percentuale non dice nulla (0% o 100% con 1 partita)
+const VIZ_MAX_DECKS = 4;        // linee confrontabili insieme: oltre, i colori non si distinguono più bene
 let vizPeriod = 0;
 let vizResizeTimer = null;
+let vizSel = null;              // chiavi dei mazzi nel grafico "Win rate nel tempo" (null = i più giocati)
+const vizSlots = {};            // chiave mazzo → colore (0-3), stabile finché il mazzo resta selezionato
+let vizShowFew = false;         // nelle barre, mostra anche i mazzi con meno di 3 partite
 
 const vizNum  = new Intl.NumberFormat('it-IT');
 const vizDay  = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' });
 const vizWhen = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const vizMon  = new Intl.DateTimeFormat('it-IT', { month: 'short', year: '2-digit' });
 const vizPlural = (n, one, many) => `${vizNum.format(n)} ${n === 1 ? one : many}`;
-const vizPlayerColor = pi => `var(--viz-p${pi % 3})`;
+const vizDeckColor = key => `var(--viz-d${vizSlots[key] ?? 0})`;
+const vizOwner = d => state.players[d.pi]?.name || '?';
 
 function setVizPeriod(days) {
   vizPeriod = days;
@@ -54,52 +61,60 @@ function renderCharts() {
   }
 
   c.innerHTML = filters + vizKpis(ms, prev) + `
+    <section class="viz-card" id="viz-decks" aria-labelledby="viz-decks-h">
+      <h3 id="viz-decks-h">Win rate dei mazzi</h3>
+      <p class="viz-sub">Percentuale di partite vinte da ogni mazzo; la linea indica il 50%</p>
+      <label class="viz-check"><input type="checkbox" ${vizShowFew ? 'checked' : ''} onchange="vizShowFew = this.checked; renderCharts()"/> Mostra anche i mazzi con meno di ${VIZ_MIN_GAMES} partite</label>
+      <div class="viz-plot"></div>
+      <details class="viz-table"><summary>Vedi i dati</summary><div class="viz-table-body"></div></details>
+    </section>
+    <section class="viz-card" id="viz-trend" aria-labelledby="viz-trend-h">
+      <h3 id="viz-trend-h">Win rate nel tempo</h3>
+      <p class="viz-sub">Percentuale di vittorie di ogni mazzo dopo ogni sua partita, a partire dalla ${VIZ_MIN_GAMES}ª</p>
+      <div class="viz-deck-picker" role="group" aria-label="Mazzi da confrontare (al massimo ${VIZ_MAX_DECKS})"></div>
+      <div class="viz-legend"></div>
+      <div class="viz-plot"></div>
+      <details class="viz-table"><summary>Vedi i dati</summary><div class="viz-table-body"></div></details>
+    </section>
     <section class="viz-card" id="viz-activity" aria-labelledby="viz-activity-h">
       <h3 id="viz-activity-h">Partite nel tempo</h3>
       <p class="viz-sub" id="viz-activity-sub"></p>
       <div class="viz-plot"></div>
       <details class="viz-table"><summary>Vedi i dati</summary><div class="viz-table-body"></div></details>
-    </section>
-    <section class="viz-card" id="viz-wins" aria-labelledby="viz-wins-h">
-      <h3 id="viz-wins-h">Vittorie accumulate</h3>
-      <p class="viz-sub">Quante partite ha vinto ogni giocatore, partita dopo partita</p>
-      <div class="viz-legend"></div>
-      <div class="viz-plot"></div>
-      <details class="viz-table"><summary>Vedi i dati</summary><div class="viz-table-body"></div></details>
-    </section>
-    <section class="viz-card" id="viz-decks" aria-labelledby="viz-decks-h">
-      <h3 id="viz-decks-h">Win rate dei mazzi</h3>
-      <p class="viz-sub">Percentuale di vittorie; la linea indica il 50%</p>
-      <div class="viz-legend"></div>
-      <div class="viz-plot"></div>
-      <details class="viz-table"><summary>Vedi i dati</summary><div class="viz-table-body"></div></details>
     </section>`;
 
+  const decks = vizDeckStats(ms);
+  vizDecks(document.getElementById('viz-decks'), decks);
+  vizTrend(document.getElementById('viz-trend'), decks);
   vizActivity(document.getElementById('viz-activity'), ms);
-  vizWins(document.getElementById('viz-wins'), ms);
-  vizDecks(document.getElementById('viz-decks'), ms);
 }
 
 // ── Numeri chiave ────────────────────────────────────────────────────────────
+/**
+ * Statistiche per mazzo nel periodo: partite, vittorie e la cronologia (per l'andamento).
+ * La chiave usa il nome (giocatore::mazzo) così la selezione resta valida anche se cambia l'ordine dei mazzi.
+ */
 function vizDeckStats(ms) {
   const map = new Map();
   ms.forEach(m => [[m.p1i, m.d1i], [m.p2i, m.d2i]].forEach(([pi, di]) => {
     const name = state.players[pi]?.decks[di];
     if (name == null) return;
-    const k = `${pi}::${di}`;
-    if (!map.has(k)) map.set(k, { pi, name, games: 0, wins: 0 });
-    const d = map.get(k);
+    const key = `${pi}::${name}`;
+    if (!map.has(key)) map.set(key, { key, pi, name, games: 0, wins: 0, history: [] });
+    const d = map.get(key);
     d.games++;
     if (m.winner === pi) d.wins++;
+    d.history.push({ ts: m.ts, win: m.winner === pi, pct: d.wins / d.games * 100, n: d.games });
   }));
   return [...map.values()];
 }
+const vizPct = d => Math.round(d.wins / d.games * 100);
 
 function vizKpis(ms, prev) {
   const decks = vizDeckStats(ms);
   const most = [...decks].sort((a, b) => b.games - a.games || b.wins - a.wins)[0];
-  const best = decks.filter(d => d.games >= 3).sort((a, b) => b.wins / b.games - a.wins / a.games || b.games - a.games)[0];
-  const owner = d => escH(state.players[d.pi]?.name || '?');
+  const best = decks.filter(d => d.games >= VIZ_MIN_GAMES).sort((a, b) => b.wins / b.games - a.wins / a.games || b.games - a.games)[0];
+  const owner = d => escH(vizOwner(d));
 
   let delta = '';
   if (prev) {
@@ -151,9 +166,9 @@ function vizTable(card, head, rows) {
     <tbody>${rows.map(r => `<tr>${r.map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
-function vizLegend(card, pis) {
-  card.querySelector('.viz-legend').innerHTML = pis.map(pi =>
-    `<span class="viz-legend-item"><span class="viz-legend-key" style="background:${vizPlayerColor(pi)}"></span>${escH(state.players[pi]?.name || '?')}</span>`).join('');
+function vizLegend(card, decks) {
+  card.querySelector('.viz-legend').innerHTML = decks.map(d =>
+    `<span class="viz-legend-item"><span class="viz-legend-key" style="background:${vizDeckColor(d.key)}"></span>${escH(d.name)}<small>${escH(vizOwner(d))}</small></span>`).join('');
 }
 
 /** Colonna con estremo dati arrotondato (4px) e base quadrata. */
@@ -225,61 +240,103 @@ function vizActivity(card, ms) {
   vizTable(card, [unit === 'mese' ? 'Mese' : 'Settimana dal', 'Partite'], buckets.map(b => [b.label, vizNum.format(b.n)]));
 }
 
-// ── Vittorie accumulate (linee, una per giocatore) ───────────────────────────
-function vizWins(card, ms) {
-  const pis = [...new Set(ms.flatMap(m => [m.p1i, m.p2i]))].sort((a, b) => a - b);
-  vizLegend(card, pis);
-  // Un punto per partita: vittorie di ognuno fino a quella partita compresa
-  const wins = Object.fromEntries(pis.map(pi => [pi, 0]));
-  const points = ms.map(m => { wins[m.winner] = (wins[m.winner] || 0) + 1; return { ts: m.ts, m, v: { ...wins } }; });
+// ── Win rate nel tempo (linee, una per mazzo scelto) ─────────────────────────
+/** Mazzi selezionati validi nel periodo; di base i più giocati con almeno 3 partite. Assegna colori stabili. */
+function vizSelected(decks) {
+  const eligible = decks.filter(d => d.games >= VIZ_MIN_GAMES);
+  let sel = (vizSel || []).filter(k => eligible.some(d => d.key === k));
+  if (!sel.length) sel = [...eligible].sort((a, b) => b.games - a.games).slice(0, VIZ_MAX_DECKS).map(d => d.key);
+  // Chi resta selezionato tiene il suo colore; i nuovi prendono il primo colore libero
+  Object.keys(vizSlots).forEach(k => { if (!sel.includes(k)) delete vizSlots[k]; });
+  sel.forEach(k => {
+    if (vizSlots[k] !== undefined) return;
+    const used = new Set(Object.values(vizSlots));
+    vizSlots[k] = [0, 1, 2, 3].find(s => !used.has(s));
+  });
+  return { eligible, sel };
+}
+
+function vizToggleDeck(key) {
+  const { decks } = vizToggleDeck;
+  const { sel } = vizSelected(decks);
+  if (sel.includes(key)) {
+    if (sel.length === 1) { toast('Lascia almeno un mazzo nel grafico'); return; }
+    vizSel = sel.filter(k => k !== key);
+  } else {
+    if (sel.length >= VIZ_MAX_DECKS) { toast(`Al massimo ${VIZ_MAX_DECKS} mazzi insieme: togline uno prima`); return; }
+    vizSel = [...sel, key];
+  }
+  renderCharts();
+}
+
+function vizTrend(card, decks) {
+  const { eligible, sel } = vizSelected(decks);
+  vizToggleDeck.decks = decks;
+  const picker = card.querySelector('.viz-deck-picker');
+  if (!eligible.length) {
+    picker.innerHTML = '';
+    card.querySelector('.viz-legend').innerHTML = '';
+    card.querySelector('.viz-plot').innerHTML = `<div class="dm-empty">Nessun mazzo ha ancora ${VIZ_MIN_GAMES} partite in questo periodo.</div>`;
+    card.querySelector('.viz-table').hidden = true;
+    return;
+  }
+  // I mazzi si scelgono con dei pulsanti: un chip per mazzo con almeno 3 partite
+  picker.innerHTML = [...eligible].sort((a, b) => b.games - a.games).map(d => {
+    const on = sel.includes(d.key);
+    return `<button class="viz-deck-chip${on ? ' on' : ''}" aria-pressed="${on}" data-key="${escH(d.key)}">
+      ${on ? `<span class="viz-legend-key" style="background:${vizDeckColor(d.key)}"></span>` : ''}${escH(d.name)}<small>${d.games}</small></button>`;
+  }).join('');
+  picker.querySelectorAll('.viz-deck-chip').forEach(b => b.addEventListener('click', () => vizToggleDeck(b.dataset.key)));
+
+  const shown = sel.map(k => decks.find(d => d.key === k));
+  vizLegend(card, shown);
+  // Punti di ogni mazzo dalla sua 3ª partita in poi
+  const series = shown.map(d => ({ d, pts: d.history.filter(h => h.n >= VIZ_MIN_GAMES) }));
+  const allTs = [...new Set(series.flatMap(s => s.pts.map(p => p.ts)))].sort((a, b) => a - b);
 
   const plot = card.querySelector('.viz-plot');
-  const W = Math.max(260, plot.clientWidth), H = 210, ml = 30, mr = 84, mt = 12, mb = 26;
+  const W = Math.max(260, plot.clientWidth), H = 220, ml = 36, mr = 92, mt = 12, mb = 26;
   const pw = W - ml - mr, ph = H - mt - mb;
-  const t0 = points[0].ts, t1 = points[points.length - 1].ts;
+  const t0 = allTs[0], t1 = allTs[allTs.length - 1];
   const x = ts => ml + (t1 === t0 ? pw : (ts - t0) / (t1 - t0) * pw);
-  const { max, step } = vizNiceScale(Math.max(1, ...pis.map(pi => wins[pi])));
-  const y = v => mt + ph - v / max * ph;
-  const ticks = []; for (let v = 0; v <= max; v += step) ticks.push(v);
+  const y = v => mt + ph - v / 100 * ph;
+  const valueAt = (s, ts) => { let v = null; for (const p of s.pts) { if (p.ts <= ts) v = p; else break; } return v; };
 
-  const line = pi => {
-    const pts = [[x(t0), y(0)], ...points.map(p => [x(p.ts), y(p.v[pi] || 0)])];
-    return `M${pts.map(p => p.map(n => n.toFixed(1)).join(',')).join('L')}`;
-  };
-  // Etichette finali: solo dove non si sovrappongono (altrimenti bastano legenda e tooltip)
-  const ends = pis.map(pi => ({ pi, yv: y(wins[pi]) })).sort((a, b) => a.yv - b.yv);
+  // Etichette finali: dove si sovrapporrebbero restano solo legenda e riepilogo (niente etichette impilate)
+  const ends = series.map(s => ({ s, last: s.pts[s.pts.length - 1] })).map(e => ({ ...e, yv: y(e.last.pct) })).sort((a, b) => a.yv - b.yv);
   let lastY = -Infinity;
   ends.forEach(e => { e.show = e.yv - lastY >= 14; if (e.show) lastY = e.yv; });
-  const short = s => s.length > 10 ? s.slice(0, 9) + '…' : s;
+  const short = s => s.length > 11 ? s.slice(0, 10) + '…' : s;
+  const path = s => s.pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.ts).toFixed(1)},${y(p.pct).toFixed(1)}`).join('');
 
-  plot.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vittorie accumulate per giocatore">
-    ${ticks.map(v => `<line class="viz-grid" x1="${ml}" x2="${ml + pw}" y1="${y(v)}" y2="${y(v)}"/><text class="viz-axis" x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">${vizNum.format(v)}</text>`).join('')}
-    <line class="viz-base" x1="${ml}" x2="${ml + pw}" y1="${y(0)}" y2="${y(0)}"/>
+  plot.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Win rate nel tempo dei mazzi scelti">
+    ${[0, 25, 50, 75, 100].map(v => `<line class="${v === 50 ? 'viz-base' : 'viz-grid'}" x1="${ml}" x2="${ml + pw}" y1="${y(v)}" y2="${y(v)}"/><text class="viz-axis" x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`).join('')}
     <text class="viz-axis" x="${ml}" y="${H - 8}">${vizDay.format(t0)}</text>
-    <text class="viz-axis" x="${ml + pw}" y="${H - 8}" text-anchor="end">${vizDay.format(t1)}</text>
-    ${pis.map(pi => `<path class="viz-line" style="stroke:${vizPlayerColor(pi)}" d="${line(pi)}"/>`).join('')}
-    ${pis.map(pi => `<circle class="viz-dot" style="fill:${vizPlayerColor(pi)}" cx="${x(t1)}" cy="${y(wins[pi])}" r="4"/>`).join('')}
-    ${ends.filter(e => e.show).map(e => `<text class="viz-end" x="${x(t1) + 9}" y="${e.yv + 4}">${escH(short(state.players[e.pi]?.name || '?'))} <tspan class="viz-end-v">${wins[e.pi]}</tspan></text>`).join('')}
+    ${t1 !== t0 ? `<text class="viz-axis" x="${ml + pw}" y="${H - 8}" text-anchor="end">${vizDay.format(t1)}</text>` : ''}
+    ${series.map(s => `<path class="viz-line" style="stroke:${vizDeckColor(s.d.key)}" d="${path(s)}"/>`).join('')}
+    ${series.map(s => s.pts.length === 1 ? `<circle class="viz-dot" style="fill:${vizDeckColor(s.d.key)}" cx="${x(s.pts[0].ts)}" cy="${y(s.pts[0].pct)}" r="4"/>` : '').join('')}
+    ${ends.map(e => `<circle class="viz-dot" style="fill:${vizDeckColor(e.s.d.key)}" cx="${x(e.last.ts)}" cy="${e.yv}" r="4"/>`).join('')}
+    ${ends.filter(e => e.show).map(e => `<text class="viz-end" x="${x(e.last.ts) + 9}" y="${e.yv + 4}">${escH(short(e.s.d.name))} <tspan class="viz-end-v">${Math.round(e.last.pct)}%</tspan></text>`).join('')}
     <line class="viz-cross" x1="0" x2="0" y1="${mt}" y2="${y(0)}" visibility="hidden"/>
-    <rect class="viz-hit viz-overlay" x="${ml}" y="${mt}" width="${pw}" height="${ph}" tabindex="0" aria-label="Scorri le partite con le frecce sinistra e destra"/>
+    <rect class="viz-hit viz-overlay" x="${ml}" y="${mt}" width="${pw}" height="${ph}" tabindex="0" aria-label="Scorri le date con le frecce sinistra e destra"/>
   </svg>`;
 
-  // Mirino: segue il dito/mouse e si aggancia alla partita più vicina; da tastiera con le frecce
+  // Mirino: si aggancia alla data più vicina e mostra il win rate di ogni mazzo in quel momento
   const svg = plot.querySelector('svg'), cross = svg.querySelector('.viz-cross'), overlay = svg.querySelector('.viz-overlay');
-  let idx = points.length - 1;
+  let idx = allTs.length - 1;
   const showAt = i => {
-    idx = Math.max(0, Math.min(points.length - 1, i));
-    const p = points[idx], px = x(p.ts);
+    idx = Math.max(0, Math.min(allTs.length - 1, i));
+    const ts = allTs[idx], px = x(ts);
     cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
-    const w = state.players[p.m.winner]?.name || '?';
-    const tipX = px > ml + pw / 2 ? px - 90 : px + 90;   // di lato al mirino, non sopra
-    vizTip(card, plot.offsetLeft + tipX, plot.offsetTop + mt, `dopo la partita del ${vizWhen.format(p.ts)} (vince ${w})`,
-      [...pis].sort((a, b) => (p.v[b] || 0) - (p.v[a] || 0)).map(pi => ({ color: vizPlayerColor(pi), value: String(p.v[pi] || 0), label: state.players[pi]?.name || '?' })), 'below');
+    const rows = series.map(s => ({ s, v: valueAt(s, ts) })).filter(r => r.v).sort((a, b) => b.v.pct - a.v.pct)
+      .map(r => ({ color: vizDeckColor(r.s.d.key), value: `${Math.round(r.v.pct)}%`, label: `${r.s.d.name} · ${vizPlural(r.v.n, 'partita', 'partite')}` }));
+    const tipX = px > ml + pw / 2 ? px - 100 : px + 100;
+    vizTip(card, plot.offsetLeft + tipX, plot.offsetTop + mt, `al ${vizWhen.format(ts)}`, rows, 'below');
   };
   const nearest = clientX => {
     const r = svg.getBoundingClientRect(), px = clientX - r.left;
     let best = 0, bd = Infinity;
-    points.forEach((p, i) => { const d = Math.abs(x(p.ts) - px); if (d < bd) { bd = d; best = i; } });
+    allTs.forEach((ts, i) => { const dd = Math.abs(x(ts) - px); if (dd < bd) { bd = dd; best = i; } });
     return best;
   };
   const hide = () => { cross.setAttribute('visibility', 'hidden'); vizTipHide(card); };
@@ -289,46 +346,54 @@ function vizWins(card, ms) {
   overlay.addEventListener('focus', () => showAt(idx));
   overlay.addEventListener('blur', hide);
   overlay.addEventListener('keydown', e => {
-    const k = { ArrowLeft: idx - 1, ArrowRight: idx + 1, Home: 0, End: points.length - 1 }[e.key];
+    const k = { ArrowLeft: idx - 1, ArrowRight: idx + 1, Home: 0, End: allTs.length - 1 }[e.key];
     if (k === undefined) return;
     e.preventDefault(); showAt(k);
   });
 
-  vizTable(card, ['Partita', 'Vince', ...pis.map(pi => escH(state.players[pi]?.name || '?'))],
-    [...points].reverse().map(p => [vizWhen.format(p.ts), escH(state.players[p.m.winner]?.name || '?'), ...pis.map(pi => p.v[pi] || 0)]));
+  card.querySelector('.viz-table').hidden = false;
+  vizTable(card, ['Data', 'Mazzo', 'Esito', 'Win rate dopo la partita'],
+    series.flatMap(s => s.d.history.map(h => ({ s, h }))).sort((a, b) => b.h.ts - a.h.ts)
+      .map(({ s, h }) => [vizWhen.format(h.ts), escH(s.d.name), h.win ? 'Vittoria' : 'Sconfitta', `${Math.round(h.pct)}% (${h.n})`]));
 }
 
-// ── Win rate dei mazzi (barre orizzontali, colore = proprietario) ────────────
-function vizDecks(card, ms) {
-  const decks = vizDeckStats(ms).sort((a, b) => b.wins / b.games - a.wins / a.games || b.games - a.games);
-  vizLegend(card, [...new Set(decks.map(d => d.pi))].sort((a, b) => a - b));
-  const shown = decks.slice(0, 10);
-  const pct = d => Math.round(d.wins / d.games * 100);
-
+// ── Win rate dei mazzi (barre orizzontali, una serie: il colore non distingue i giocatori) ─
+function vizDecks(card, decks) {
+  const sorted = [...decks].sort((a, b) => b.wins / b.games - a.wins / a.games || b.games - a.games);
+  const few = sorted.filter(d => d.games < VIZ_MIN_GAMES).length;
+  const list = vizShowFew ? sorted : sorted.filter(d => d.games >= VIZ_MIN_GAMES);
+  const shown = list.slice(0, 12);
   const plot = card.querySelector('.viz-plot');
-  plot.innerHTML = `<div class="viz-bars">${shown.map((d, i) => `
-    <div class="viz-bar-row" tabindex="0" data-i="${i}" aria-label="${escH(d.name)} di ${escH(state.players[d.pi]?.name || '?')}: ${pct(d)}% di vittorie, ${d.wins} su ${d.games}">
-      <div class="viz-bar-name"><span title="${escH(d.name)}">${escH(d.name)}</span><small>${escH(state.players[d.pi]?.name || '?')}</small></div>
-      <div class="viz-bar-track">
-        <div class="viz-bar-ref" aria-hidden="true"></div>
-        <div class="viz-bar" style="width:${Math.max(pct(d), 1)}%;background:${vizPlayerColor(d.pi)}"></div>
-        <span class="viz-bar-value" style="left:${Math.max(pct(d), 1)}%">${pct(d)}%<small> · ${d.games}${d.games < 3 ? ' (pochi dati)' : ''}</small></span>
-      </div>
-    </div>`).join('')}</div>
-    <div class="viz-bars-axis" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div>
-    ${decks.length > shown.length ? `<p class="viz-more">e altri ${decks.length - shown.length} mazzi nella tabella</p>` : ''}`;
+  card.querySelector('.viz-check').hidden = !few;
 
-  plot.querySelectorAll('.viz-bar-row').forEach(row => {
-    const show = () => {
-      const d = shown[+row.dataset.i], r = row.querySelector('.viz-bar').getBoundingClientRect(), cr = card.getBoundingClientRect();
-      vizTip(card, r.right - cr.left, r.top - cr.top, `${d.name} · ${state.players[d.pi]?.name || '?'}`,
-        [{ color: vizPlayerColor(d.pi), value: `${pct(d)}%`, label: `vittorie (${d.wins} su ${d.games})` }]);
-    };
-    const hide = () => vizTipHide(card);
-    row.addEventListener('pointerenter', show); row.addEventListener('focus', show);
-    row.addEventListener('pointerleave', hide); row.addEventListener('blur', hide);
-  });
+  if (!shown.length) {
+    plot.innerHTML = `<div class="dm-empty">Nessun mazzo ha ancora ${VIZ_MIN_GAMES} partite in questo periodo${few ? ': attiva l\'opzione qui sopra per vedere gli altri' : ''}.</div>`;
+  } else {
+    plot.innerHTML = `<div class="viz-bars">${shown.map((d, i) => `
+      <div class="viz-bar-row${d.games < VIZ_MIN_GAMES ? ' few' : ''}" tabindex="0" data-i="${i}" aria-label="${escH(d.name)} di ${escH(vizOwner(d))}: ${vizPct(d)}% di vittorie, ${d.wins} su ${d.games}">
+        <div class="viz-bar-name"><span title="${escH(d.name)}">${escH(d.name)}</span><small>${escH(vizOwner(d))}</small></div>
+        <div class="viz-bar-track">
+          <div class="viz-bar-ref" aria-hidden="true"></div>
+          <div class="viz-bar" style="width:${Math.max(vizPct(d), 1)}%"></div>
+          <span class="viz-bar-value" style="left:${Math.max(vizPct(d), 1)}%">${vizPct(d)}%<small> · ${vizPlural(d.games, 'partita', 'partite')}${d.games < VIZ_MIN_GAMES ? ', pochi dati' : ''}</small></span>
+        </div>
+      </div>`).join('')}</div>
+      <div class="viz-bars-axis" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div>
+      ${list.length > shown.length ? `<p class="viz-more">e altri ${list.length - shown.length} mazzi nella tabella</p>` : ''}
+      ${!vizShowFew && few ? `<p class="viz-more">${vizPlural(few, 'mazzo nascosto', 'mazzi nascosti')} perché con meno di ${VIZ_MIN_GAMES} partite</p>` : ''}`;
+
+    plot.querySelectorAll('.viz-bar-row').forEach(row => {
+      const show = () => {
+        const d = shown[+row.dataset.i], r = row.querySelector('.viz-bar').getBoundingClientRect(), cr = card.getBoundingClientRect();
+        vizTip(card, r.right - cr.left, r.top - cr.top, `${d.name} · ${vizOwner(d)}`,
+          [{ value: `${vizPct(d)}%`, label: `vittorie (${d.wins} su ${d.games})` }]);
+      };
+      const hide = () => vizTipHide(card);
+      row.addEventListener('pointerenter', show); row.addEventListener('focus', show);
+      row.addEventListener('pointerleave', hide); row.addEventListener('blur', hide);
+    });
+  }
 
   vizTable(card, ['Mazzo', 'Giocatore', 'Vittorie', 'Partite', 'Win rate'],
-    decks.map(d => [escH(d.name), escH(state.players[d.pi]?.name || '?'), d.wins, d.games, pct(d) + '%']));
+    sorted.map(d => [escH(d.name), escH(vizOwner(d)), d.wins, d.games, vizPct(d) + '%']));
 }
