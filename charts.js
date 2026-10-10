@@ -126,7 +126,7 @@ function vizNiceScale(max, maxTicks = 4) {
 }
 
 /** Tooltip della scheda: costruito con textContent (i nomi sono dati dell'utente). */
-function vizTip(card, x, y, title, rows) {
+function vizTip(card, x, y, title, rows, place = 'above') {
   let tip = card.querySelector('.viz-tip');
   if (!tip) { tip = document.createElement('div'); tip.className = 'viz-tip'; tip.setAttribute('role', 'status'); card.appendChild(tip); }
   tip.replaceChildren();
@@ -141,7 +141,8 @@ function vizTip(card, x, y, title, rows) {
   tip.hidden = false;
   const cw = card.clientWidth, tw = tip.offsetWidth;
   tip.style.left = Math.max(8, Math.min(cw - tw - 8, x - tw / 2)) + 'px';
-  tip.style.top = Math.max(4, y - tip.offsetHeight - 10) + 'px';
+  // "above": sopra il punto indicato; "below": dentro l'area del grafico, sotto il bordo superiore (non copre titolo e legenda)
+  tip.style.top = (place === 'below' ? y : Math.max(4, y - tip.offsetHeight - 10)) + 'px';
 }
 function vizTipHide(card) { const t = card.querySelector('.viz-tip'); if (t) t.hidden = true; }
 
@@ -271,8 +272,9 @@ function vizWins(card, ms) {
     const p = points[idx], px = x(p.ts);
     cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
     const w = state.players[p.m.winner]?.name || '?';
-    vizTip(card, plot.offsetLeft + px, plot.offsetTop + mt + 8, `dopo la partita del ${vizWhen.format(p.ts)} (vince ${w})`,
-      [...pis].sort((a, b) => (p.v[b] || 0) - (p.v[a] || 0)).map(pi => ({ color: vizPlayerColor(pi), value: String(p.v[pi] || 0), label: state.players[pi]?.name || '?' })));
+    const tipX = px > ml + pw / 2 ? px - 90 : px + 90;   // di lato al mirino, non sopra
+    vizTip(card, plot.offsetLeft + tipX, plot.offsetTop + mt, `dopo la partita del ${vizWhen.format(p.ts)} (vince ${w})`,
+      [...pis].sort((a, b) => (p.v[b] || 0) - (p.v[a] || 0)).map(pi => ({ color: vizPlayerColor(pi), value: String(p.v[pi] || 0), label: state.players[pi]?.name || '?' })), 'below');
   };
   const nearest = clientX => {
     const r = svg.getBoundingClientRect(), px = clientX - r.left;

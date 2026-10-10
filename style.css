@@ -880,3 +880,9 @@ button { transition: transform 120ms var(--ease-out); }
 .viz-table th, .viz-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .viz-table th { color: var(--text3); font-weight: 500; position: sticky; top: 0; background: var(--bg2); }
 .viz-table td { color: var(--text); font-variant-numeric: tabular-nums; }
+/* Barre dei mazzi: nome sopra e barra a tutta larghezza, così su telefono la lunghezza resta leggibile */
+.viz-bar-row { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 2px 0; }
+.viz-bar-name { display: flex; align-items: baseline; gap: 6px; }
+.viz-bar-name span { flex: 0 1 auto; }
+.viz-bar-name small { display: inline; flex: 0 0 auto; }
+.viz-bars-axis { margin: 6px 88px 0 0; }
