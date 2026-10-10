@@ -12,6 +12,7 @@
   --p2: #d1a761; --p2l: #edc989;
   --f-ui: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --f-display: var(--f-ui);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);   /* ease-out deciso: risposta immediata */
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow-x: hidden; }
@@ -33,7 +34,7 @@ header .subtitle { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.01
 #sync-label { display: none; }
 @media (min-width: 480px) { #sync-label { display: inline; } }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-.btn-refresh { background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); font-size: 15px; padding: 3px 8px; cursor: pointer; transition: all 0.15s; line-height: 1; }
+.btn-refresh { background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); font-size: 15px; padding: 3px 8px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); line-height: 1; }
 @media (hover: hover) and (pointer: fine) { .btn-refresh:hover { border-color: var(--gold); color: var(--gold); } }
 .btn-refresh.spinning { animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -92,7 +93,7 @@ header .subtitle { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.01
 .deck-add-row input { flex: 1; background: var(--bg2); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: var(--f-ui); font-size: 13px; padding: 7px 10px; outline: none; }
 .deck-add-row input:focus { border-color: var(--gold); }
 .deck-add-row input::placeholder { color: var(--text3); }
-.btn-icon { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.15s; }
+.btn-icon { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 15px; font-weight: 600; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { .btn-icon:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); } }
 .decks-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .deck-tag { font-size: 12px; padding: 4px 9px 4px 11px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
@@ -111,13 +112,13 @@ select { background: var(--bg3); border: 1px solid var(--border2); border-radius
 select:focus { border-color: var(--gold); }
 .winner-row { display: flex; gap: 6px; align-items: stretch; }
 .winner-select { flex: 0 0 90px; }
-.btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: var(--f-ui); font-size: 14px; font-weight: 700; padding: 10px 18px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex: 1; }
+.btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: var(--f-ui); font-size: 14px; font-weight: 700; padding: 10px 18px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); white-space: nowrap; flex: 1; }
 @media (hover: hover) and (pointer: fine) { .btn-add:hover { background: var(--gold2); } }
 .form-error { font-size: 12px; color: var(--red); margin-top: 6px; }
 
 /* ── TABS (stats page) ── */
 .tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
-.tab { font-family: var(--f-ui); font-size: 11px; letter-spacing: 0.01em; padding: 10px 14px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; flex: 1; text-align: center; }
+.tab { font-family: var(--f-ui); font-size: 11px; letter-spacing: 0.01em; padding: 10px 14px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); flex: 1; text-align: center; }
 @media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); } }
 
 /* ── HISTORY — card layout su mobile ── */
@@ -239,7 +240,7 @@ select:focus { border-color: var(--gold); }
 @media (hover: hover) and (pointer: fine) { .btn-start-duel:hover { opacity: 0.88; } }
 
 .duel-arena { display: flex; flex-direction: column; gap: 10px; }
-.duel-player-card { border-radius: 14px; padding: 16px; position: relative; overflow: hidden; transition: all 0.3s; }
+.duel-player-card { border-radius: 14px; padding: 16px; position: relative; overflow: hidden; transition: background-color 200ms ease, border-color 200ms ease, opacity 200ms ease; }
 .duel-player-card.p0 { background: linear-gradient(135deg, rgba(123,94,167,0.18), rgba(123,94,167,0.06)); border: 1px solid rgba(123,94,167,0.35); }
 .duel-player-card.p1 { background: linear-gradient(135deg, rgba(46,125,107,0.18), rgba(46,125,107,0.06)); border: 1px solid rgba(46,125,107,0.35); }
 .duel-player-card.p2 { background: linear-gradient(135deg, rgba(193,122,46,0.18), rgba(193,122,46,0.06)); border: 1px solid rgba(193,122,46,0.35); }
@@ -272,17 +273,17 @@ select:focus { border-color: var(--gold); }
 .duel-display-num.empty { color: var(--text3); font-size: 1rem; font-weight: 400; font-family: var(--f-ui); }
 
 .duel-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; padding: clamp(10px,4vw,16px) 6px; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
+.duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; padding: clamp(10px,4vw,16px) 6px; cursor: pointer; text-align: center; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); user-select: none; -webkit-tap-highlight-color: transparent; }
 @media (hover: hover) and (pointer: fine) { .duel-key:hover { background: var(--border2); } }
 .duel-key:active { transform: scale(0.93); background: rgba(201,168,76,0.1); border-color: var(--gold); }
 .duel-key.op { color: var(--gold2); background: rgba(212,175,55,0.07); font-family: var(--f-ui); font-size: 1.25rem; }
 .duel-key.tall { grid-row: span 2; }
 
 .duel-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.duel-btn-dmg { background: rgba(193,74,74,0.15); border: 1px solid rgba(193,74,74,0.4); color: #e07070; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
+.duel-btn-dmg { background: rgba(193,74,74,0.15); border: 1px solid rgba(193,74,74,0.4); color: #e07070; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); text-align: center; }
 @media (hover: hover) and (pointer: fine) { .duel-btn-dmg:hover { background: rgba(193,74,74,0.28); } }
 .duel-btn-dmg:active { transform: scale(0.96); }
-.duel-btn-heal { background: rgba(58,158,110,0.15); border: 1px solid rgba(58,158,110,0.4); color: #6ecfa8; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
+.duel-btn-heal { background: rgba(58,158,110,0.15); border: 1px solid rgba(58,158,110,0.4); color: #6ecfa8; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); text-align: center; }
 @media (hover: hover) and (pointer: fine) { .duel-btn-heal:hover { background: rgba(58,158,110,0.28); } }
 .duel-btn-heal:active { transform: scale(0.96); }
 
@@ -290,7 +291,7 @@ select:focus { border-color: var(--gold); }
 .tools-panel { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .dice-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .dice-label-title { font-family: var(--f-ui); font-size: 10px; letter-spacing: 0.01em; color: var(--gold); }
-.dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: var(--f-display); font-size: 1.3rem; font-weight: 700; width: 56px; height: 56px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: var(--f-display); font-size: 1.3rem; font-weight: 700; width: 56px; height: 56px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 @media (hover: hover) and (pointer: fine) { .dice-btn:hover { border-color: var(--gold); color: var(--gold2); background: rgba(201,168,76,0.08); } }
 .dice-btn:active { transform: scale(0.88); }
 .dice-result-wrap { text-align: center; }
@@ -301,13 +302,13 @@ select:focus { border-color: var(--gold); }
 
 .coin-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .coin-label-title { font-family: var(--f-ui); font-size: 10px; letter-spacing: 0.01em; color: var(--gold); }
-.coin-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 50%; width: 56px; height: 56px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; transition: all 0.15s; }
+.coin-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 50%; width: 56px; height: 56px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { .coin-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); } }
 .coin-btn:active { transform: scale(0.88); }
 .coin-result-wrap { text-align: center; }
 .coin-result { font-family: var(--f-display); font-size: 1rem; font-weight: 700; color: var(--gold2); min-height: 1.4rem; display: block; }
 .coin-result.flip { animation: coin-flip 0.35s ease-out; }
-@keyframes coin-flip { 0%{transform:scaleY(0);opacity:0.3} 50%{transform:scaleY(1.2)} 100%{transform:scaleY(1);opacity:1} }
+@keyframes coin-flip { 0%{transform:scaleY(0.2);opacity:0.3} 50%{transform:scaleY(1.2)} 100%{transform:scaleY(1);opacity:1} }
 .coin-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
 .duel-log { margin-top: 10px; max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
@@ -375,7 +376,7 @@ select:focus { border-color: var(--gold); }
 .card-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-type { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-qty { font-family: var(--f-ui); font-weight: 700; color: var(--gold2); min-width: 20px; text-align: center; }
-.card-btn { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all 0.15s; }
+.card-btn { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { .card-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); } }
 .dm-msg { font-size: 12px; min-height: 1.2em; color: var(--text2); margin-bottom: 6px; }
 .dm-msg.err { color: var(--red); } .dm-msg.ok { color: var(--green); }
@@ -396,7 +397,7 @@ select:focus { border-color: var(--gold); }
 
 /* ── WINNER BUTTONS (match form) ── */
 .winner-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.btn-win { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; font-family: var(--f-ui); font-size: 14px; font-weight: 600; padding: 12px 8px; cursor: pointer; transition: all 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-win { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; font-family: var(--f-ui); font-size: 14px; font-weight: 600; padding: 12px 8px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (hover: hover) and (pointer: fine) { .btn-win:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2); } }
 .btn-win:active { transform: scale(0.97); }
 
@@ -764,4 +765,19 @@ button:not(:disabled):active, .card-row[onclick]:active, .lab-zone.has:active { 
 header {
   padding-top: env(safe-area-inset-top, 0px);
   height: calc(var(--header-h, 64px) + env(safe-area-inset-top, 0px));   /* stessa altezza di prima + lo spazio della tacca */
+}
+
+/* ════════════════════════════════════════════
+   RIFINITURE (emil-design-eng)
+   ════════════════════════════════════════════ */
+/* Pressione: la scala torna indietro in fretta, con una curva decisa */
+button { transition: transform 120ms var(--ease-out); }
+
+/* Popup (mazzo, scelta carta, dettaglio carta): compaiono con una breve dissolvenza
+   invece che di scatto. Azione occasionale: 200–240ms, ease-out, centrati (sono modali). */
+.dm-overlay.open { transition: opacity 200ms ease-out; }
+.dm-overlay.open .dm-box { transition: transform 240ms var(--ease-out), opacity 200ms ease-out; }
+@starting-style {
+  .dm-overlay.open { opacity: 0; }
+  .dm-overlay.open .dm-box { opacity: 0; transform: translateY(12px) scale(0.98); }
 }
