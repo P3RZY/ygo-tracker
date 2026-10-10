@@ -382,11 +382,11 @@ function renderPlayers() {
     const div = document.createElement('div');
     div.className = `player-card ${pClass[i]}`;
     div.innerHTML = `
-      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore" autocapitalize="words" enterkeyhint="done"
+      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore" maxlength="40" autocapitalize="words" enterkeyhint="done"
         oninput="state.players[${i}].name = this.value; saveLocal(); updateSelects(); renderTab();"
         onblur="syncUp()"/>
       <div class="deck-add-row">
-        <input type="text" placeholder="Aggiungi mazzo..." autocapitalize="words" enterkeyhint="done" id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
+        <input type="text" placeholder="Aggiungi mazzo..." maxlength="40" autocapitalize="words" enterkeyhint="done" id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
         <button class="btn-icon" onclick="addDeck(${i})">+</button>
       </div>
       <div class="decks-tags" id="dt${i}"></div>`;
@@ -397,11 +397,11 @@ function renderPlayers() {
     p.decks.forEach((dk, j) => {
       const t = document.createElement('button');
       t.className = `deck-tag ${pClass[i]}`;
-      t.title = 'Apri lista carte';
+      t.title = `${dk} — apri la lista carte`;
       t.onclick = () => openDeckEditor(i, j);
       const dl = state.deckLists[deckKey(i, dk)];
       const n  = dl ? dl.main.length + dl.extra.length : 0;
-      t.innerHTML = `${escH(dk)}<span class="deck-count">${n ? n + ' carte' : '+ lista'}</span>`;
+      t.innerHTML = `<span class="deck-tag-name">${escH(dk)}</span><span class="deck-count">${n ? n + (n === 1 ? ' carta' : ' carte') : '+ lista'}</span>`;
       dt.appendChild(t);
     });
   });
@@ -625,7 +625,7 @@ function renderMatches() {
 
     return `<div class="match-card">
       <div class="match-card-side">
-        <div class="match-card-player"><span class="badge ${pClass[m.p1i]}">${escH(p1?.name||'?')}</span></div>
+        <div class="match-card-player"><span class="badge ${pClass[m.p1i]}" title="${escH(p1?.name||'')}">${escH(p1?.name||'?')}</span></div>
         <div class="match-card-deck">${escH(d1)}</div>
         <div class="match-card-result ${p1w?'win':'loss'}">${p1w?'Vittoria':'Sconfitta'}</div>
       </div>
@@ -635,7 +635,7 @@ function renderMatches() {
         <button class="match-card-rm" onclick="removeMatch(${realIdx})">×</button>
       </div>
       <div class="match-card-side right">
-        <div class="match-card-player"><span class="badge ${pClass[m.p2i]}">${escH(p2?.name||'?')}</span></div>
+        <div class="match-card-player"><span class="badge ${pClass[m.p2i]}" title="${escH(p2?.name||'')}">${escH(p2?.name||'?')}</span></div>
         <div class="match-card-deck">${escH(d2)}</div>
         <div class="match-card-result ${p1w?'loss':'win'}">${p1w?'Sconfitta':'Vittoria'}</div>
       </div>
@@ -690,7 +690,7 @@ function renderMatchups() {
     return `<div class="matchup-row">
       <div>
         <div class="matchup-deck">${escH(mu.d1)}</div>
-        <div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}">${escH(p1?.name || '?')}</span></div>
+        <div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}" title="${escH(p1?.name || '')}">${escH(p1?.name || '?')}</span></div>
       </div>
       <div>
         <div class="matchup-score">${mu.w1} – ${mu.w2}</div>
@@ -699,7 +699,7 @@ function renderMatchups() {
       <div style="text-align:right">
         <div class="matchup-deck">${escH(mu.d2)}</div>
         <div style="margin-top:4px;display:flex;justify-content:flex-end">
-          <span class="badge ${pClass[mu.p2i]}">${escH(p2?.name || '?')}</span>
+          <span class="badge ${pClass[mu.p2i]}" title="${escH(p2?.name || '')}">${escH(p2?.name || '?')}</span>
         </div>
       </div>
     </div>`;
@@ -828,7 +828,7 @@ function renderStats() {
           <span class="win">${d.wins}V</span>
           <span style="color:var(--text3)"> / </span>
           <span class="loss">${d.losses}S</span>
-          <span style="color:var(--text3);font-size:11px;margin-left:6px">${total} partite</span>
+          <span style="color:var(--text3);font-size:11px;margin-left:6px">${total} ${total === 1 ? 'partita' : 'partite'}</span>
         </div>
         <div class="stat-deck-detail">
           <div class="detail-section-title">✓ Vittorie contro</div>
@@ -1044,7 +1044,7 @@ function renderDuel() {
         <div class="duel-player-name ${pClass[p.pi]}">${escH(p.name)}</div>
         <div class="duel-deck-badge">${escH(p.deck)}</div>
       </div>
-      <div class="duel-lp-display ${pClass[p.pi]}${danger ? ' danger' : ''}">${p.lp.toLocaleString('it-IT')}</div>
+      <div class="duel-lp-display ${pClass[p.pi]}${danger ? ' danger' : ''}${p.lp >= 100000 ? ' long' : ''}">${p.lp.toLocaleString('it-IT')}</div>
       <div class="duel-lp-bar-bg"><div class="duel-lp-bar" style="width:${pct}%;background:${barColor}"></div></div>
       <div class="duel-target-tag">${sel ? 'selezionato' : 'tocca per selezionare'}</div>
     </button>`;
@@ -1642,7 +1642,7 @@ function clearDeckList() {
 function renameDeck() {
   if (!dmCtx) return;
   const { pi, name } = dmCtx;
-  const v = (prompt('Nuovo nome del mazzo:', name) || '').trim();
+  const v = (prompt('Nuovo nome del mazzo (max 40 caratteri):', name) || '').trim().slice(0, 40);
   if (!v || v === name) return;
   const decks = state.players[pi].decks;
   if (decks.includes(v)) { dmMsg('Esiste già un mazzo con questo nome.', 'err'); return; }

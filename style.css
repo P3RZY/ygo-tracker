@@ -781,3 +781,19 @@ button { transition: transform 120ms var(--ease-out); }
   .dm-overlay.open { opacity: 0; }
   .dm-overlay.open .dm-box { opacity: 0; transform: translateY(12px) scale(0.98); }
 }
+
+/* ════════════════════════════════════════════
+   DATI ESTREMI (break-ui): nomi lunghi, mazzi senza spazi, LP a 6 cifre
+   ════════════════════════════════════════════ */
+/* Storico e scontri diretti: le colonne possono restringersi sotto la larghezza del testo più lungo */
+.match-card, .matchup-row { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.match-card-side, .matchup-row > div { min-width: 0; }
+/* Il mazzo distingue le partite: va a capo (anche se non ha spazi). Il nome del giocatore si accorcia con "…" */
+.match-card-deck, .matchup-deck { overflow-wrap: anywhere; word-break: normal; }
+.badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+/* Pagina Mazzi: un mazzo dal nome lungo non allarga la scheda del giocatore */
+.deck-tag { max-width: 100%; min-width: 0; }
+.deck-tag-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-tag .deck-count { flex-shrink: 0; }
+/* LP da 6 cifre (100.000+): carattere più piccolo, così il numero resta nel riquadro accanto a "LP" */
+.duel-lp-display.long { font-size: clamp(22px, 6.2vw, 38px); letter-spacing: -0.5px; }
