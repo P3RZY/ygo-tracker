@@ -80,9 +80,11 @@
     <div class="panel">
       <div class="tabs">
         <div class="tab active" data-tab="stats" onclick="switchTab('stats')">Classifica</div>
+        <div class="tab" data-tab="charts" onclick="switchTab('charts')">Grafici</div>
         <div class="tab" data-tab="matchups" onclick="switchTab('matchups')">Scontri diretti</div>
       </div>
       <div id="tab-stats"></div>
+      <div id="tab-charts" style="display:none"></div>
       <div id="tab-matchups" style="display:none"></div>
     </div>
   </div>
@@ -243,5 +245,6 @@
 
 <script src="app.js"></script>
 <script src="lab.js"></script>
+<script src="charts.js"></script>
 </body>
 </html>

@@ -591,7 +591,7 @@ function switchTab(t) {
   document.querySelectorAll('.tab').forEach(el =>
     el.classList.toggle('active', el.dataset.tab === t)
   );
-  ['matchups', 'stats'].forEach(id => {
+  ['matchups', 'stats', 'charts'].forEach(id => {
     const el = document.getElementById(`tab-${id}`);
     if (el) el.style.display = id === t ? '' : 'none';
   });
@@ -599,8 +599,9 @@ function switchTab(t) {
 }
 
 function renderTab() {
-  if (currentTab === 'matchups') renderMatchups();
-  else                           renderStats();
+  if (currentTab === 'matchups')    renderMatchups();
+  else if (currentTab === 'charts') renderCharts();
+  else                              renderStats();
 }
 
 // ─────────────────────────────────────────────
