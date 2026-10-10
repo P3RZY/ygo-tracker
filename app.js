@@ -382,11 +382,11 @@ function renderPlayers() {
     const div = document.createElement('div');
     div.className = `player-card ${pClass[i]}`;
     div.innerHTML = `
-      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore"
+      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore" autocapitalize="words" enterkeyhint="done"
         oninput="state.players[${i}].name = this.value; saveLocal(); updateSelects(); renderTab();"
         onblur="syncUp()"/>
       <div class="deck-add-row">
-        <input type="text" placeholder="Aggiungi mazzo..." id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
+        <input type="text" placeholder="Aggiungi mazzo..." autocapitalize="words" enterkeyhint="done" id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
         <button class="btn-icon" onclick="addDeck(${i})">+</button>
       </div>
       <div class="decks-tags" id="dt${i}"></div>`;
@@ -1849,7 +1849,7 @@ function exportYdkFile() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  dmMsg('File .ydk scaricato — in Dueling Nexus: Deck Editor → Import.', 'ok');
+  dmMsg('File .ydk scaricato: si importa in EDOPro e negli altri simulatori.', 'ok');
 }
 
 async function copyText(text, okMsg) {

@@ -34,7 +34,7 @@ header .subtitle { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.01
 @media (min-width: 480px) { #sync-label { display: inline; } }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 .btn-refresh { background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); font-size: 15px; padding: 3px 8px; cursor: pointer; transition: all 0.15s; line-height: 1; }
-.btn-refresh:hover { border-color: var(--gold); color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .btn-refresh:hover { border-color: var(--gold); color: var(--gold); } }
 .btn-refresh.spinning { animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -56,9 +56,9 @@ header .subtitle { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.01
 .config-row input::placeholder { color: var(--text3); }
 .btn-cfg { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: var(--f-ui); font-weight: 600; font-size: 13px; padding: 9px 16px; cursor: pointer; white-space: nowrap; width: 100%; }
 @media (min-width: 480px) { .btn-cfg { width: auto; } }
-.btn-cfg:hover { background: var(--gold2); }
+@media (hover: hover) and (pointer: fine) { .btn-cfg:hover { background: var(--gold2); } }
 .btn-cfg-sec { background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: 8px; font-family: var(--f-ui); font-size: 12px; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
-.btn-cfg-sec:hover { border-color: var(--gold); color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .btn-cfg-sec:hover { border-color: var(--gold); color: var(--gold); } }
 .cfg-error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
 
 /* ── LAYOUT ── */
@@ -93,13 +93,12 @@ header .subtitle { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.01
 .deck-add-row input:focus { border-color: var(--gold); }
 .deck-add-row input::placeholder { color: var(--text3); }
 .btn-icon { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.15s; }
-.btn-icon:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .btn-icon:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); } }
 .decks-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .deck-tag { font-size: 12px; padding: 4px 9px 4px 11px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
 .deck-tag.p0 { background: rgba(123,94,167,0.15); color: var(--p0l); border: 1px solid rgba(123,94,167,0.3); }
 .deck-tag.p1 { background: rgba(46,125,107,0.15); color: var(--p1l); border: 1px solid rgba(46,125,107,0.3); }
 .deck-tag.p2 { background: rgba(193,122,46,0.15); color: var(--p2l); border: 1px solid rgba(193,122,46,0.3); }
-.deck-rm { cursor: pointer; opacity: 0.5; font-size: 14px; } .deck-rm:hover { opacity: 1; color: var(--red); }
 
 /* ── MATCH FORM ── */
 .match-form { display: flex; flex-direction: column; gap: 10px; }
@@ -113,13 +112,13 @@ select:focus { border-color: var(--gold); }
 .winner-row { display: flex; gap: 6px; align-items: stretch; }
 .winner-select { flex: 0 0 90px; }
 .btn-add { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: var(--f-ui); font-size: 14px; font-weight: 700; padding: 10px 18px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex: 1; }
-.btn-add:hover { background: var(--gold2); }
+@media (hover: hover) and (pointer: fine) { .btn-add:hover { background: var(--gold2); } }
 .form-error { font-size: 12px; color: var(--red); margin-top: 6px; }
 
 /* ── TABS (stats page) ── */
 .tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
 .tab { font-family: var(--f-ui); font-size: 11px; letter-spacing: 0.01em; padding: 10px 14px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; flex: 1; text-align: center; }
-.tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--text2); } .tab.active { color: var(--gold2); border-bottom-color: var(--gold); } }
 
 /* ── HISTORY — card layout su mobile ── */
 .match-list { display: flex; flex-direction: column; gap: 6px; }
@@ -134,7 +133,7 @@ select:focus { border-color: var(--gold); }
 .match-card-vs { font-family: var(--f-ui); font-size: 10px; color: var(--text3); letter-spacing: 0.01em; }
 .match-card-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
 .match-card-rm { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 4px; display: block; margin: 4px auto 0; }
-.match-card-rm:hover { color: var(--red); }
+@media (hover: hover) and (pointer: fine) { .match-card-rm:hover { color: var(--red); } }
 .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; display: inline-block; font-weight: 500; white-space: nowrap; }
 .badge.p0 { background: rgba(123,94,167,0.15); color: var(--p0l); }
 .badge.p1 { background: rgba(46,125,107,0.15); color: var(--p1l); }
@@ -155,7 +154,7 @@ select:focus { border-color: var(--gold); }
 
 .stat-decks-list { display: flex; flex-direction: column; gap: 8px; }
 .stat-deck-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
-.stat-deck-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+@media (hover: hover) and (pointer: fine) { .stat-deck-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); } }
 .stat-deck-row:active { background: rgba(255,255,255,0.05); }
 .stat-deck-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
 .stat-deck-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -215,7 +214,7 @@ select:focus { border-color: var(--gold); }
 .ranking-list { display: flex; flex-direction: column; gap: 6px; }
 
 .rank-row { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
-.rank-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+@media (hover: hover) and (pointer: fine) { .rank-row:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); } }
 .rank-row-header { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; }
 .rank-pos { font-size: 1.2rem; text-align: center; flex-shrink: 0; }
 .rank-info { min-width: 0; }
@@ -237,7 +236,7 @@ select:focus { border-color: var(--gold); }
 .duel-slot select { width: 100%; }
 .duel-vs-sep { font-family: var(--f-display); font-size: 13px; color: var(--text3); letter-spacing: 0.01em; display: flex; align-items: center; padding-top: 22px; }
 .btn-start-duel { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--bg); border: none; border-radius: 10px; font-family: var(--f-display); font-size: 1rem; font-weight: 700; padding: 14px; cursor: pointer; width: 100%; letter-spacing: 0.01em; transition: opacity 0.15s; }
-.btn-start-duel:hover { opacity: 0.88; }
+@media (hover: hover) and (pointer: fine) { .btn-start-duel:hover { opacity: 0.88; } }
 
 .duel-arena { display: flex; flex-direction: column; gap: 10px; }
 .duel-player-card { border-radius: 14px; padding: 16px; position: relative; overflow: hidden; transition: all 0.3s; }
@@ -274,17 +273,17 @@ select:focus { border-color: var(--gold); }
 
 .duel-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .duel-key { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; padding: clamp(10px,4vw,16px) 6px; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
-.duel-key:hover { background: var(--border2); }
+@media (hover: hover) and (pointer: fine) { .duel-key:hover { background: var(--border2); } }
 .duel-key:active { transform: scale(0.93); background: rgba(201,168,76,0.1); border-color: var(--gold); }
 .duel-key.op { color: var(--gold2); background: rgba(212,175,55,0.07); font-family: var(--f-ui); font-size: 1.25rem; }
 .duel-key.tall { grid-row: span 2; }
 
 .duel-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .duel-btn-dmg { background: rgba(193,74,74,0.15); border: 1px solid rgba(193,74,74,0.4); color: #e07070; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
-.duel-btn-dmg:hover { background: rgba(193,74,74,0.28); }
+@media (hover: hover) and (pointer: fine) { .duel-btn-dmg:hover { background: rgba(193,74,74,0.28); } }
 .duel-btn-dmg:active { transform: scale(0.96); }
 .duel-btn-heal { background: rgba(58,158,110,0.15); border: 1px solid rgba(58,158,110,0.4); color: #6ecfa8; border-radius: 10px; font-family: var(--f-ui); font-size: 15px; font-weight: 700; padding: 14px 8px; cursor: pointer; transition: all 0.12s; text-align: center; }
-.duel-btn-heal:hover { background: rgba(58,158,110,0.28); }
+@media (hover: hover) and (pointer: fine) { .duel-btn-heal:hover { background: rgba(58,158,110,0.28); } }
 .duel-btn-heal:active { transform: scale(0.96); }
 
 /* ── Dice + Coin ── */
@@ -292,7 +291,7 @@ select:focus { border-color: var(--gold); }
 .dice-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .dice-label-title { font-family: var(--f-ui); font-size: 10px; letter-spacing: 0.01em; color: var(--gold); }
 .dice-btn { background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 50%; font-family: var(--f-display); font-size: 1.3rem; font-weight: 700; width: 56px; height: 56px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.dice-btn:hover { border-color: var(--gold); color: var(--gold2); background: rgba(201,168,76,0.08); }
+@media (hover: hover) and (pointer: fine) { .dice-btn:hover { border-color: var(--gold); color: var(--gold2); background: rgba(201,168,76,0.08); } }
 .dice-btn:active { transform: scale(0.88); }
 .dice-result-wrap { text-align: center; }
 .dice-result { font-family: var(--f-display); font-size: 2rem; font-weight: 700; color: var(--gold2); line-height: 1; min-height: 2rem; display: block; }
@@ -303,7 +302,7 @@ select:focus { border-color: var(--gold); }
 .coin-panel { flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .coin-label-title { font-family: var(--f-ui); font-size: 10px; letter-spacing: 0.01em; color: var(--gold); }
 .coin-btn { background: var(--bg2); border: 1px solid var(--border2); border-radius: 50%; width: 56px; height: 56px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; transition: all 0.15s; }
-.coin-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+@media (hover: hover) and (pointer: fine) { .coin-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); } }
 .coin-btn:active { transform: scale(0.88); }
 .coin-result-wrap { text-align: center; }
 .coin-result { font-family: var(--f-display); font-size: 1rem; font-weight: 700; color: var(--gold2); min-height: 1.4rem; display: block; }
@@ -321,9 +320,9 @@ select:focus { border-color: var(--gold); }
 .duel-over-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
 .duel-over-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .btn-save-result { background: var(--gold); color: var(--bg); border: none; border-radius: 8px; font-family: var(--f-ui); font-weight: 600; font-size: 14px; padding: 10px 22px; cursor: pointer; }
-.btn-save-result:hover { background: var(--gold2); }
+@media (hover: hover) and (pointer: fine) { .btn-save-result:hover { background: var(--gold2); } }
 .btn-new-duel { background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: 8px; font-family: var(--f-ui); font-size: 14px; padding: 10px 22px; cursor: pointer; }
-.btn-new-duel:hover { border-color: var(--gold); color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .btn-new-duel:hover { border-color: var(--gold); color: var(--gold); } }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -331,7 +330,7 @@ select:focus { border-color: var(--gold); }
 
 /* ── DECK LIST EDITOR ── */
 .deck-open { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.deck-open:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) { .deck-open:hover { text-decoration: underline; } }
 .deck-count { font-size: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 0 6px; line-height: 1.6; }
 .dm-overlay { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,0.75); display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 1rem 0.5rem 2rem; }
 .dm-overlay.open { display: flex; }
@@ -357,12 +356,12 @@ select:focus { border-color: var(--gold); }
 .seg button.on { background: var(--gold); color: var(--bg); }
 .dm-results { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
 .dm-results .card-row { cursor: pointer; transition: border-color 0.15s; }
-.dm-results .card-row:hover { border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .dm-results .card-row:hover { border-color: var(--gold); } }
 .dm-results .card-row.maxed { opacity: 0.45; }
 .card-have { font-size: 11px; color: var(--gold); white-space: nowrap; }
 .dm-footer { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(193,74,74,0.4); border-radius: 8px; font-family: var(--f-ui); font-size: 12px; padding: 5px 12px; cursor: pointer; }
-.btn-danger:hover { background: rgba(193,74,74,0.15); }
+@media (hover: hover) and (pointer: fine) { .btn-danger:hover { background: rgba(193,74,74,0.15); } }
 .dm-export-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .dm-results:not(:empty) { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .dm-section { margin-top: 14px; }
@@ -377,7 +376,7 @@ select:focus { border-color: var(--gold); }
 .card-type { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-qty { font-family: var(--f-ui); font-weight: 700; color: var(--gold2); min-width: 20px; text-align: center; }
 .card-btn { background: var(--border2); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all 0.15s; }
-.card-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .card-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); } }
 .dm-msg { font-size: 12px; min-height: 1.2em; color: var(--text2); margin-bottom: 6px; }
 .dm-msg.err { color: var(--red); } .dm-msg.ok { color: var(--green); }
 .dm-credit { font-size: 10px; color: var(--text3); margin-top: 14px; text-align: right; }
@@ -398,12 +397,12 @@ select:focus { border-color: var(--gold); }
 /* ── WINNER BUTTONS (match form) ── */
 .winner-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btn-win { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; font-family: var(--f-ui); font-size: 14px; font-weight: 600; padding: 12px 8px; cursor: pointer; transition: all 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btn-win:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2); }
+@media (hover: hover) and (pointer: fine) { .btn-win:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2); } }
 .btn-win:active { transform: scale(0.97); }
 
 /* ── DECK TAGS as buttons ── */
 button.deck-tag { font-family: var(--f-ui); cursor: pointer; padding: 5px 10px 5px 12px; transition: filter 0.15s; }
-button.deck-tag:hover { filter: brightness(1.3); }
+@media (hover: hover) and (pointer: fine) { button.deck-tag:hover { filter: brightness(1.3); } }
 .deck-count { opacity: 0.8; }
 
 /* ── DUEL (shared keypad) ── */
@@ -426,7 +425,7 @@ button.duel-player-card { text-align: left; font-family: var(--f-ui); color: var
 body { background: var(--bg); -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; }
 button { touch-action: manipulation; }
-header { height: 76px; padding: 0 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
+header { --header-h: 76px; height: var(--header-h); padding: 0 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
 header h1 { color: var(--text); font-size: 17px; font-weight: 650; letter-spacing: -0.5px; }
 header .subtitle { color: var(--text3); font-size: 11px; letter-spacing: 0; display: block; margin-top: 1px; }
 .logo-eye { width: 36px; height: 36px; padding: 8px; background: var(--gold); border-radius: 11px; box-shadow: none; color: #151515; }
@@ -446,7 +445,7 @@ select, .config-row input, .deck-add-row input, .dm-search input, .dm-import tex
 select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .hint { color: var(--text2); font-size: 13px; line-height: 1.65; }
 .btn-cfg, .btn-add, .btn-save-result, .btn-start-duel, .seg button.on { background: var(--gold); color: #17140d; box-shadow: none; border: 0; font-weight: 650; }
-.btn-cfg:hover, .btn-add:hover, .btn-save-result:hover, .btn-start-duel:hover { background: var(--gold2); opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .btn-cfg:hover, .btn-add:hover, .btn-save-result:hover, .btn-start-duel:hover { background: var(--gold2); opacity: 1; } }
 .btn-start-duel { font-family: var(--f-ui); font-size: 15px; padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 14px; letter-spacing: 0; }
 .btn-start-duel small { font-size: 12px; font-weight: 500; opacity: 0.8; }
 .btn-cfg-sec, .btn-new-duel { min-height: 36px; border-color: var(--border2); border-radius: 9px; font-size: 12px; color: var(--text2); }
@@ -476,7 +475,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .duel-display-expr { color: var(--text2); font-size: 12px; }
 .duel-keypad { gap: 7px; }
 .duel-key { background: var(--bg3); border: 1px solid transparent; border-radius: 11px; padding: 13px 6px; font-family: var(--f-ui); font-size: 22px; font-weight: 500; }
-.duel-key:hover { background: #33353c; }
+@media (hover: hover) and (pointer: fine) { .duel-key:hover { background: #33353c; } }
 .duel-key.op { background: var(--bg2); color: var(--text2); }
 .duel-key:active { background: #3b3628; border-color: var(--gold); transform: scale(.97); }
 .duel-btn-dmg { background: #342125; border-color: transparent; color: #ff9ca4; }
@@ -492,7 +491,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .nav-btn { min-height: 54px; color: var(--text3); padding: 8px 4px; gap: 5px; border-radius: 10px; }
 .nav-btn::after { display: none; }
 .nav-btn.active { color: var(--gold2); background: #2a261c; }
-.nav-btn:hover { color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .nav-btn:hover { color: var(--text); } }
 .nav-icon { width: 20px; height: 20px; display: block; }
 .nav-icon svg { width: 100%; height: 100%; display: block; }
 .nav-label { font-size: 11px; font-weight: 550; letter-spacing: 0; }
@@ -512,7 +511,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .card-row { background: var(--bg2); border-color: var(--border); border-radius: 10px; padding: 8px; }
 .card-name { font-size: 13px; }
 .btn-icon, .card-btn { background: var(--bg3); border-color: var(--border); color: var(--text); }
-.btn-icon:hover, .card-btn:hover { background: var(--gold); color: #17140d; }
+@media (hover: hover) and (pointer: fine) { .btn-icon:hover, .card-btn:hover { background: var(--gold); color: #17140d; } }
 :focus-visible { outline: 2px solid var(--gold2); outline-offset: 3px; }
 .duel-player-card:focus-visible { outline: 2px solid var(--gold2) !important; outline-offset: 3px; }
 ::-webkit-scrollbar-thumb { background: #44464e; border-radius: 8px; }
@@ -528,7 +527,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
   .toast { left: calc(50% + 104px); }
 }
 @media (max-width: 600px) {
-  header { height: 66px; padding: 0 16px; }
+  header { --header-h: 66px; height: var(--header-h); padding: 0 16px; }
   header h1 { font-size: 15px; }
   .container { padding: 22px 14px calc(100px + env(safe-area-inset-bottom, 0px)); }
   .page-heading { margin-bottom: 20px; }
@@ -582,9 +581,9 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .lab-chip-name { font-size: 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .lab-pos { background: rgba(212,175,55,0.12); border: 1px solid var(--border2); color: var(--gold2); border-radius: 5px; font-size: 10px; font-weight: 600; padding: 2px 6px; cursor: pointer; font-family: var(--f-ui); }
 .lab-x { background: none; border: none; color: var(--text3); font-size: 16px; cursor: pointer; padding: 0 3px; line-height: 1; }
-.lab-x:hover { color: var(--red); }
+@media (hover: hover) and (pointer: fine) { .lab-x:hover { color: var(--red); } }
 .lab-add { background: none; border: 1px dashed var(--border2); color: var(--text2); border-radius: 8px; font-family: var(--f-ui); font-size: 12px; padding: 6px 10px; cursor: pointer; }
-.lab-add:hover { border-color: var(--gold); color: var(--gold2); }
+@media (hover: hover) and (pointer: fine) { .lab-add:hover { border-color: var(--gold); color: var(--gold2); } }
 .lab-setup-opts { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 13px; color: var(--text2); }
 .lab-setup-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .btn-start-duel:disabled { opacity: 0.4; cursor: default; }
@@ -631,7 +630,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .lab-group-h { font-size: 10px; letter-spacing: 0.01em; color: var(--text3); margin-top: 4px; }
 .lab-opt { text-align: left; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; font-family: var(--f-ui); font-size: 13px; padding: 8px 10px; cursor: pointer; }
 .lab-opt small { color: var(--text3); font-size: 11px; }
-.lab-opt:hover { border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .lab-opt:hover { border-color: var(--gold); } }
 .lab-opt.act { border-color: rgba(212,175,55,0.45); }
 .lab-opt.on { background: rgba(212,175,55,0.15); border-color: var(--gold); }
 .lab-opt.pass { color: var(--text2); }
@@ -700,7 +699,7 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
 .lab-picker-h { font-size: 10px; letter-spacing: 0.01em; color: var(--gold); margin: 4px 0 6px; }
 .lab-picker-decklist { max-height: 260px; overflow-y: auto; margin-bottom: 10px; }
 .lab-picker-decklist .card-row { cursor: pointer; }
-.lab-picker-decklist .card-row:hover { border-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) { .lab-picker-decklist .card-row:hover { border-color: var(--gold); } }
 #lab-picker-results .card-row { cursor: pointer; }
 .dm-msg.warn { color: var(--gold2); }
 .lab-deck-note.warn { color: var(--gold2); }
@@ -728,4 +727,41 @@ select { padding: 12px 34px 12px 12px; font-size: 14px; }
   .duel-key { padding: 8px 4px; }
   .duel-player-card .duel-player-header { margin-bottom: 8px; }
   .duel-display { min-height: 54px; }
+}
+
+/* ════════════════════════════════════════════
+   MOBILE: comportamento da app installata
+   ════════════════════════════════════════════ */
+html {
+  -webkit-tap-highlight-color: transparent;   /* niente riquadro grigio/blu al tocco: il feedback lo dà :active */
+  -webkit-text-size-adjust: 100%;             /* niente testo ingrandito in orizzontale */
+  overscroll-behavior: none;                  /* niente "trascina per ricaricare" che interrompe un duello */
+}
+body { min-height: 100vh; min-height: 100dvh; } /* dvh segue la barra del browser che compare e scompare */
+
+/* Le liste che scorrono dentro la pagina non trascinano la pagina quando arrivano in fondo */
+.dm-overlay, .dm-results, .dm-list, .lab-log, .lab-prompt, .lab-hand, .duel-log, .lab-picker-decklist { overscroll-behavior: contain; }
+
+/* iOS ingrandisce la pagina se un campo ha testo sotto i 16px (e non torna indietro) */
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
+/* Tocco immediato (niente attesa del doppio tocco) e niente selezione del testo dei comandi con la pressione lunga */
+button, a, select, [onclick], .tab, .lab-zone {
+  touch-action: manipulation;
+}
+button, [onclick], .tab, .nav-btn, .lab-zone, .lab-chip, .deck-tag {
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Il feedback arriva quando il dito tocca, non quando si alza */
+button:not(:disabled):active, .card-row[onclick]:active, .lab-zone.has:active { transform: scale(0.97); }
+.duel-key:not(:disabled):active { transform: scale(0.94); }
+
+/* Header fisso: sotto la tacca / Dynamic Island c'è lo sfondo, non i contenuti */
+header {
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(var(--header-h, 64px) + env(safe-area-inset-top, 0px));   /* stessa altezza di prima + lo spazio della tacca */
 }

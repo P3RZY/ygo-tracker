@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#101114">
 <title>Yu-Gi-Oh! Score Tracker</title>
 <link rel="stylesheet" href="style.css">
@@ -126,8 +126,8 @@
         <li data-n="4"><strong>Altri dispositivi:</strong> incolla chiave + Bin ID (sul primo dispositivo lo trovi qui, dopo la connessione)</li>
       </ol>
       <div class="config-row">
-        <input type="password" id="apikey-input" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
-        <input type="text" id="binid-input" placeholder="Bin ID (solo dal 2° dispositivo in poi)" style="flex:1;min-width:140px"/>
+        <input type="password" id="apikey-input" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="X-Master-Key ($2a$10$...)" style="flex:2;min-width:180px"/>
+        <input type="text" id="binid-input" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="Bin ID (solo dal 2° dispositivo in poi)" style="flex:1;min-width:140px"/>
         <button class="btn-cfg" onclick="connect()">Connetti</button>
       </div>
       <p class="cfg-error" id="cfg-error"></p>
@@ -159,8 +159,8 @@
       </div>
     </div>
     <div class="dm-import" id="dm-import">
-      <div class="dm-hint">Incolla il contenuto di un file .ydk (Dueling Nexus → Export) oppure un link ydke://</div>
-      <textarea id="dm-import-text" placeholder="#main&#10;14558127&#10;...&#10;#extra&#10;...&#10;!side&#10;..."></textarea>
+      <div class="dm-hint">Incolla un link ydke:// oppure il testo di un file .ydk. Da Dueling Nexus si esporta con l'estensione per browser «Dueling Nexus Deck Exporter».</div>
+      <textarea id="dm-import-text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="#main&#10;14558127&#10;...&#10;#extra&#10;...&#10;!side&#10;..."></textarea>
       <div class="dm-import-row">
         <button class="btn-cfg" onclick="importDeckFromText(document.getElementById('dm-import-text').value)">Importa testo</button>
         <button class="btn-cfg-sec" onclick="document.getElementById('dm-file').click()">Scegli file .ydk</button>

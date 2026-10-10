@@ -645,7 +645,7 @@ function labSetupHtml() {
     <div class="lab-setup-side ${s ? 'opp' : 'me'}">
       <div class="lab-setup-head">
         <span class="lab-side-name">${LAB_SIDES[s]}</span>
-        <label class="lab-lp-input">LP <input type="number" min="1" step="100" value="${labSetup.lp[s]}" onchange="labSetLp(${s}, this.value)"/></label>
+        <label class="lab-lp-input">LP <input type="number" inputmode="numeric" min="1" step="100" value="${labSetup.lp[s]}" onchange="labSetLp(${s}, this.value)"/></label>
       </div>
       <select class="lab-deck-sel" onchange="labSelectDeck(${s}, this.value)">
         <option value=""${ref ? '' : ' selected'}>Nessun mazzo: carte scelte liberamente</option>
