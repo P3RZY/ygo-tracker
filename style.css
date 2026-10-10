@@ -797,3 +797,8 @@ button { transition: transform 120ms var(--ease-out); }
 .deck-tag .deck-count { flex-shrink: 0; }
 /* LP da 6 cifre (100.000+): carattere più piccolo, così il numero resta nel riquadro accanto a "LP" */
 .duel-lp-display.long { font-size: clamp(22px, 6.2vw, 38px); letter-spacing: -0.5px; }
+.duel-lp-display.long::after { margin-left: 3px; }
+.players-grid { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .players-grid { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); } }
+.player-card { min-width: 0; }
+.deck-add-row input { min-width: 0; }
