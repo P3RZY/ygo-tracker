@@ -1,8 +1,9 @@
 // ─────────────────────────────────────────────
 // STATISTICHE — Panoramica (mazzo da battere, podio, chi batte chi) e Mazzi (schede per giocatore)
 //
-// Tutto in percentuale e per mazzo. Un mazzo entra in classifica da VIZ_MIN_GAMES partite,
-// e uno scontro diretto mostra la percentuale solo da VIZ_MIN_GAMES partite tra quei due mazzi.
+// La classifica va a PUNTEGGIO (0-100), come nella prima versione del tracker: parte dal win rate
+// e lo abbassa quando le partite sono poche, così 1 vittoria su 1 non batte 30 su 44.
+// Uno scontro diretto mostra la percentuale solo da VIZ_MIN_GAMES partite tra quei due mazzi.
 // Riusa vizDeckStats / vizPct / vizOwner di charts.js.
 // Le animazioni partono solo quando si apre la pagina o si cambia scheda (statsAnimate),
 // non a ogni aggiornamento dei dati; con "riduci animazioni" attivo non partono.
@@ -23,9 +24,20 @@ function statsData() {
     add(a, b, m.winner === m.p1i);
     add(b, a, m.winner === m.p2i);
   });
-  const byRate = (x, y) => y.wins / y.games - x.wins / x.games || y.games - x.games;
-  const ranked = decks.filter(d => d.games >= VIZ_MIN_GAMES).sort(byRate);
-  return { ms, decks, h2h, ranked, byRate };
+  decks.forEach(d => { d.score = statsScore(d.wins, d.games); });
+  const byScore = (x, y) => y.score - x.score || y.games - x.games;
+  const ranked = [...decks].sort(byScore);
+  return { ms, decks, h2h, ranked, byScore };
+}
+
+/**
+ * Punteggio del mazzo, da 0 a 100: limite inferiore di Wilson (confidenza 95%) sul win rate.
+ * Con poche partite resta basso anche col 100% di vittorie; con molte si avvicina al win rate reale.
+ */
+function statsScore(wins, total) {
+  if (!total) return 0;
+  const z = 1.96, z2 = z * z, p = wins / total;
+  return Math.round((p + z2 / (2 * total) - z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total)) / (1 + z2 / total) * 100);
 }
 
 /** Avvia le animazioni d'ingresso su un contenitore appena disegnato (una volta sola). */
@@ -99,17 +111,17 @@ function renderOverview() {
     <section class="st-hero" aria-label="Mazzo da battere">
       <div class="st-hero-tag">Mazzo da battere</div>
       <div class="st-hero-id"><div class="st-hero-name">${escH(champ.name)}</div><small>${escH(vizOwner(champ))}</small></div>
-      <div class="st-hero-big"><span data-count="${vizPct(champ)}">${vizPct(champ)}</span><span class="u">%</span></div>
-      <div class="st-hero-meta"><span>${vizPlural(champ.wins, 'vittoria', 'vittorie')} su ${champ.games} partite</span><span class="st-hero-spark">${statsSpark(champ.history, 'var(--gold)')}</span></div>
+      <div class="st-hero-big"><span data-count="${champ.score}">${champ.score}</span><span class="u">punti</span></div>
+      <div class="st-hero-meta"><span>${vizPct(champ)}% di vittorie, ${champ.wins} su ${champ.games}</span><span class="st-hero-spark">${statsSpark(champ.history, 'var(--gold)')}</span></div>
       ${statsMatchups(champ, data)}
-    </section>` : `<div class="empty">Nessun mazzo ha ancora ${VIZ_MIN_GAMES} partite.<br><small>La classifica parte dalla ${VIZ_MIN_GAMES}ª partita di un mazzo.</small></div>`;
+    </section>` : '';
 
   const podium = rest.length ? `<div class="st-podium">${rest.slice(0, 2).map((d, i) => `
     <div class="st-step" style="--d:${120 + i * 90}ms">
       <div class="st-step-pos">${i + 2}º posto</div>
       <div class="st-step-name" title="${escH(d.name)}">${escH(d.name)}</div>
-      <div class="st-step-pct"><span data-count="${vizPct(d)}">${vizPct(d)}</span>%</div>
-      <small>${escH(vizOwner(d))}, ${vizPlural(d.games, 'partita', 'partite')}</small>
+      <div class="st-step-pct"><span data-count="${d.score}">${d.score}</span><span class="u">punti</span></div>
+      <small>${escH(vizOwner(d))} · ${vizPct(d)}% su ${vizPlural(d.games, 'partita', 'partite')}</small>
     </div>`).join('')}</div>` : '';
 
   c.innerHTML = hero + podium + statsGridHtml(data);
@@ -119,8 +131,8 @@ function renderOverview() {
 
 /** Griglia mazzo contro mazzo: percentuale di vittorie del mazzo di riga contro quello di colonna. */
 function statsGridHtml(data) {
-  // Prima i mazzi in classifica (per win rate), poi gli altri; se sono troppi, i più giocati
-  let list = [...data.ranked, ...data.decks.filter(d => d.games < VIZ_MIN_GAMES).sort((a, b) => b.games - a.games)];
+  // In ordine di classifica (punteggio); se sono troppi, i più giocati
+  let list = [...data.ranked];
   const hidden = Math.max(0, list.length - STATS_GRID_MAX);
   if (hidden) { const keep = new Set([...list].sort((a, b) => b.games - a.games).slice(0, STATS_GRID_MAX)); list = list.filter(d => keep.has(d)); }
   if (list.length < 2) return '';
@@ -163,7 +175,7 @@ function renderDeckCards() {
   const html = state.players.map((p, pi) => {
     if (!p.decks.length) return '';
     const cards = p.decks.map(name => byKey.get(`${pi}::${name}`) || { key: `${pi}::${name}`, pi, name, games: 0, wins: 0, history: [] })
-      .sort((a, b) => (b.games >= VIZ_MIN_GAMES) - (a.games >= VIZ_MIN_GAMES) || (a.games && b.games ? data.byRate(a, b) : b.games - a.games))
+      .sort((a, b) => a.games && b.games ? data.byScore(a, b) : b.games - a.games)
       .map(d => {
         const delay = `--d:${n++ * 60}ms`;
         if (!d.games) return `<article class="st-deck empty-deck" style="${delay}"><div class="st-deck-name">${escH(d.name)}</div><small>Nessuna partita registrata</small></article>`;
@@ -172,7 +184,7 @@ function renderDeckCards() {
           <div class="st-deck-head">${statsRing(vizPct(d), top ? 'var(--gold)' : 'var(--viz-s1)')}
             <div class="st-deck-id">${top ? '<div class="st-deck-tag">Mazzo da battere</div>' : ''}
               <div class="st-deck-name">${escH(d.name)}</div>
-              <small>${vizPlural(d.wins, 'vittoria', 'vittorie')}, ${vizPlural(d.games - d.wins, 'sconfitta', 'sconfitte')}${few ? ' · pochi dati' : ''}</small></div></div>
+              <small><b class="st-score">${d.score} punti</b> · ${d.wins} V, ${d.games - d.wins} S${few ? ' · pochi dati' : ''}</small></div></div>
           ${statsSpark(d.history, top ? 'var(--gold)' : 'var(--viz-s1)')}
           ${statsMatchups(d, data)}
         </article>`;

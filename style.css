@@ -1042,3 +1042,7 @@ button { transition: transform 120ms var(--ease-out); }
 /* Laboratorio: righe nuove del registro in sequenza, richiesta che compare */
 .lab-log-line.new { animation: row-new 360ms var(--ease-out) var(--d, 0ms) backwards; }
 .lab-prompt.prompt-in { animation: in-rise 220ms var(--ease-out) backwards; }
+/* Classifica a punteggio */
+.st-hero-big .u { font-size: 15px; font-weight: 600; margin-left: 4px; }
+.st-step-pct .u { font-size: 12px; font-weight: 500; color: var(--text3); margin-left: 4px; }
+.st-score { color: var(--text); font-weight: 600; }
