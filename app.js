@@ -535,6 +535,7 @@ async function addMatch(ws) {
   });
 
   saveLocal(); renderMatches(); renderTab();
+  replayAnim(document.querySelector('#tab-matches .match-card'), 'match-new');
   toast(`Vittoria di ${state.players[match.winner].name} registrata`, 'Annulla', () => {
     const idx = state.matches.indexOf(match);
     if (idx >= 0) { state.matches.splice(idx, 1); saveLocal(); renderMatches(); renderTab(); syncUp(); }
@@ -571,6 +572,7 @@ function switchPage(p) {
   if (p === 'settings') { renderPlayers(); }
   if (p === 'lab')      { labOnShow(); }
   window.scrollTo(0, 0);
+  replayAnim(document.querySelector(`#page-${p} .container`), 'page-enter');
 }
 
 // ─────────────────────────────────────────────
@@ -826,6 +828,7 @@ function startDuel() {
   duelState = { players, log: [], history: [], over: false, winner: null, buf: '', sel: 0 };
   console.log('[YGO] Duello iniziato:', players.map(p => `${p.name} (${p.deck})`));
   renderDuel();
+  replayAnim(document.getElementById('duel-content'), 'duel-enter');
 }
 
 function resetDuel() {
@@ -917,7 +920,10 @@ function changeLp(delta, label) {
   duelState.buf = '';
   duelState.minuend = null;
   checkDuelOver();
+  const slot = duelState.sel, over = duelState.over;
   renderDuel();
+  if (over) replayAnim(document.querySelector('.duel-over-banner'), 'over-enter');
+  else animateLp(slot, prev, p.lp);
 }
 
 function applyDmg() { const a = getAmount(); if (a) changeLp(-a); }
@@ -1588,4 +1594,45 @@ function onDeckRenamed(pi, oldName, newName) {
     labSaveSetup();
   }
   if (duelState) duelState.players.forEach(p => { if (p.pi === pi && p.deck === oldName && newName) p.deck = newName; });
+}
+
+// ─────────────────────────────────────────────
+// ANIMAZIONI
+// Partono solo in risposta a un'azione (cambio pagina, inizio duello, danno, partita registrata),
+// mai sui tasti del tastierino, e non partono con "riduci animazioni" attivo.
+// ─────────────────────────────────────────────
+function motionOK() { return !matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+/** Fa ripartire un'animazione CSS legata a una classe (la toglie alla fine). */
+function replayAnim(el, cls) {
+  if (!el || !motionOK()) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  clearTimeout(el._animTimer);
+  el._animTimer = setTimeout(() => el.classList.remove(cls), 1600);
+}
+
+/** LP del giocatore nello slot: conteggio dal vecchio al nuovo valore, scossa o impulso, variazione che sale. */
+function animateLp(slot, from, to) {
+  const card = document.querySelectorAll('#duel-content .duel-player-card')[slot];
+  const el = card?.querySelector('.duel-lp-display');
+  if (!el || from === to || !motionOK()) return;
+  const fmt = n => Math.round(n).toLocaleString('it-IT');
+  replayAnim(card, to < from ? 'lp-hit' : 'lp-heal');
+
+  const delta = document.createElement('span');
+  delta.className = 'lp-delta ' + (to < from ? 'dmg' : 'heal');
+  delta.textContent = (to < from ? '−' : '+') + fmt(Math.abs(to - from));
+  card.appendChild(delta);
+  delta.addEventListener('animationend', () => delta.remove());
+
+  const t0 = performance.now(), dur = 450;
+  const step = now => {
+    if (!el.isConnected) return;                       // la scheda è stata ridisegnata: mostra già il valore finale
+    const t = Math.min(1, (now - t0) / dur);
+    el.textContent = fmt(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }

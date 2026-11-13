@@ -424,11 +424,16 @@ function labSend(resp, manual) {
 /** Risposta dell'utente a una richiesta del motore. */
 function labRespond(resp) {
   labPromptMin = false;
+  const before = labDuel.log.length;
   labSend(resp, true);
   try { labProcess(); } catch(e) { labFail(e); return; }
   labRender();
   const log = document.getElementById('lab-log');
-  if (log) log.scrollTop = log.scrollHeight;
+  if (log) {
+    log.scrollTop = log.scrollHeight;
+    if (motionOK()) [...log.children].slice(before).forEach((line, i) => { line.classList.add('new'); line.style.setProperty('--d', `${Math.min(i, 10) * 70}ms`); });
+  }
+  replayAnim(document.getElementById('lab-prompt'), 'prompt-in');
 }
 
 /** Richieste che non richiedono una vera scelta: risposte automatiche. */
