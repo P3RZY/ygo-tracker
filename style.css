@@ -932,7 +932,7 @@ button { transition: transform 120ms var(--ease-out); }
 .st-block h3 { font-size: 15px; font-weight: 600; }
 .st-sub { font-size: 12px; color: var(--text3); margin: 2px 0 10px; }
 .st-grid-scroll { overflow-x: auto; overscroll-behavior: contain; }
-.st-grid { display: grid; grid-template-columns: minmax(84px, 1.6fr) repeat(var(--n), minmax(30px, 1fr)); gap: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.st-grid { display: grid; grid-template-columns: minmax(64px, 1.4fr) repeat(var(--n), minmax(26px, 1fr)); gap: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .st-col { color: var(--text3); font-size: 11px; text-align: center; padding-bottom: 3px; }
 .st-row-name { align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 4px; }
 .st-row-name b { display: inline-block; width: 16px; color: var(--text3); font-weight: 500; font-size: 11px; }

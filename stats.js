@@ -79,9 +79,10 @@ function statsMatchups(d, data) {
     if (!hi || p > hi.p) hi = { e, p };
     if (!lo || p < lo.p) lo = { e, p };
   });
-  if (!hi) return '';
-  return `<div class="st-vs">Meglio contro <i>${escH(hi.e.name)}</i> <i class="w">${hi.p}%</i>${lo.e !== hi.e
-    ? `<br>Soffre contro <i>${escH(lo.e.name)}</i> <i class="l">${lo.p}%</i>` : ''}</div>`;
+  // "Meglio" solo se sopra il 50%, "soffre" solo se sotto: un 50% non è né l'uno né l'altro
+  const good = hi && hi.p > 50 ? `Meglio contro <i>${escH(hi.e.name)}</i> <i class="w">${hi.p}%</i>` : '';
+  const bad  = lo && lo.p < 50 ? `Soffre contro <i>${escH(lo.e.name)}</i> <i class="l">${lo.p}%</i>` : '';
+  return good || bad ? `<div class="st-vs">${[good, bad].filter(Boolean).join('<br>')}</div>` : '';
 }
 
 // ── Panoramica ───────────────────────────────────────────────────────────────
