@@ -553,14 +553,6 @@ function removeMatch(i) {
 }
 
 // ─────────────────────────────────────────────
-// MATCHUP KEY
-// ─────────────────────────────────────────────
-function matchKey(p1, d1n, p2, d2n) {
-  const a = `${p1}::${d1n}`, b = `${p2}::${d2n}`;
-  return a < b ? `${a}|||${b}` : `${b}|||${a}`;
-}
-
-// ─────────────────────────────────────────────
 // PAGE NAVIGATION
 // ─────────────────────────────────────────────
 let currentPage = 'duel';
@@ -575,7 +567,7 @@ function switchPage(p) {
   });
   // Render the relevant content when switching
   if (p === 'matches')  { renderMatches(); }
-  if (p === 'stats')    { renderTab(); }
+  if (p === 'stats')    { statsAnimate = true; renderTab(); }
   if (p === 'settings') { renderPlayers(); }
   if (p === 'lab')      { labOnShow(); }
   window.scrollTo(0, 0);
@@ -588,10 +580,11 @@ let currentTab = 'stats';
 
 function switchTab(t) {
   currentTab = t;
+  statsAnimate = true;
   document.querySelectorAll('.tab').forEach(el =>
     el.classList.toggle('active', el.dataset.tab === t)
   );
-  ['matchups', 'stats', 'charts'].forEach(id => {
+  ['stats', 'decks', 'charts'].forEach(id => {
     const el = document.getElementById(`tab-${id}`);
     if (el) el.style.display = id === t ? '' : 'none';
   });
@@ -599,9 +592,11 @@ function switchTab(t) {
 }
 
 function renderTab() {
-  if (currentTab === 'matchups')    renderMatchups();
+  // Le statistiche si disegnano solo a pagina visibile (stats.js e charts.js si caricano dopo app.js)
+  if (currentPage !== 'stats') return;
+  if (currentTab === 'decks')       renderDeckCards();
   else if (currentTab === 'charts') renderCharts();
-  else                              renderStats();
+  else                              renderOverview();
 }
 
 // ─────────────────────────────────────────────
@@ -644,315 +639,6 @@ function renderMatches() {
   }).join('');
 
   c.innerHTML = `<div class="match-list">${cards}</div>`;
-}
-
-// ─────────────────────────────────────────────
-// RENDER: SCONTRI
-// ─────────────────────────────────────────────
-function renderMatchups() {
-  const c   = document.getElementById('tab-matchups');
-  const map = {};
-
-  state.matches.forEach(m => {
-    const p1 = state.players[m.p1i];
-    const p2 = state.players[m.p2i];
-    if (!p1 || !p2) return;
-
-    const d1n = p1.decks[m.d1i] || '?';
-    const d2n = p2.decks[m.d2i] || '?';
-    const key = matchKey(m.p1i, d1n, m.p2i, d2n);
-
-    if (!map[key]) {
-      const aFirst = `${m.p1i}::${d1n}` < `${m.p2i}::${d2n}`;
-      map[key] = {
-        p1i:   aFirst ? m.p1i : m.p2i,
-        d1:    aFirst ? d1n   : d2n,
-        p2i:   aFirst ? m.p2i : m.p1i,
-        d2:    aFirst ? d2n   : d1n,
-        w1:    0, w2: 0, total: 0
-      };
-    }
-
-    const mu = map[key];
-    mu.total++;
-    if (m.winner === mu.p1i) mu.w1++; else mu.w2++;
-  });
-
-  const keys = Object.keys(map);
-  if (!keys.length) {
-    c.innerHTML = '<div class="empty">Nessuna partita registrata.<br><small>Gioca un duello o registra un risultato da Partite.</small></div>';
-    return;
-  }
-
-  c.innerHTML = '<div>' + keys.map(k => {
-    const mu = map[k];
-    const p1 = state.players[mu.p1i];
-    const p2 = state.players[mu.p2i];
-    return `<div class="matchup-row">
-      <div>
-        <div class="matchup-deck">${escH(mu.d1)}</div>
-        <div style="margin-top:4px"><span class="badge ${pClass[mu.p1i]}" title="${escH(p1?.name || '')}">${escH(p1?.name || '?')}</span></div>
-      </div>
-      <div>
-        <div class="matchup-score">${mu.w1} – ${mu.w2}</div>
-        <div class="matchup-games">${mu.total} ${mu.total === 1 ? 'partita' : 'partite'}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="matchup-deck">${escH(mu.d2)}</div>
-        <div style="margin-top:4px;display:flex;justify-content:flex-end">
-          <span class="badge ${pClass[mu.p2i]}" title="${escH(p2?.name || '')}">${escH(p2?.name || '?')}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
-}
-
-// ─────────────────────────────────────────────
-// SCORING ENGINE
-// ─────────────────────────────────────────────
-
-/**
- * Wilson score lower bound (intervallo di confidenza 95%).
- * Penalizza i deck con poche partite: con n=1 il punteggio
- * è molto vicino allo 0, con n≥15 converge al win rate reale.
- * Restituisce un valore 0–1.
- */
-function wilsonScore(wins, total) {
-  if (total === 0) return 0;
-  const z  = 1.96; // 95% confidence
-  const p  = wins / total;
-  const z2 = z * z;
-  return (p + z2 / (2 * total) - z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total))
-       / (1 + z2 / total);
-}
-
-/**
- * Forza media degli avversari battuti.
- * Usa il wilson score degli avversari come peso: battere deck forti vale di più.
- * Restituisce 0–1 (0.5 se nessuna vittoria).
- */
-function opponentStrength(wonAgainst, deckStats) {
-  const entries = Object.entries(wonAgainst);
-  if (!entries.length) return 0.5;
-  let weightedSum = 0, totalCount = 0;
-  entries.forEach(([oppKey, { count }]) => {
-    const opp = deckStats[oppKey];
-    if (!opp) return;
-    const oppWilson = wilsonScore(opp.wins, opp.wins + opp.losses);
-    weightedSum += oppWilson * count;
-    totalCount  += count;
-  });
-  return totalCount ? weightedSum / totalCount : 0.5;
-}
-
-/**
- * Punteggio finale composito (0–100):
- *   70% Wilson score (win rate corretto per sample size)
- *   30% Forza avversari battuti
- *
- * Con poche partite il Wilson score è basso → il punteggio
- * resta modesto anche con 100% win rate su 1 partita.
- */
-function deckScore(ds, deckStats) {
-  const total   = ds.wins + ds.losses;
-  const wilson  = wilsonScore(ds.wins, total);
-  const oppStr  = opponentStrength(ds.wonAgainst, deckStats);
-  return Math.round((wilson * 0.70 + oppStr * 0.30) * 100);
-}
-
-// ─────────────────────────────────────────────
-// RENDER: STATISTICHE (per deck × giocatore)
-// ─────────────────────────────────────────────
-function renderStats() {
-  const c = document.getElementById('tab-stats');
-  if (!state.matches.length) {
-    c.innerHTML = '<div class="empty">Nessuna partita registrata.<br><small>Gioca un duello o registra un risultato da Partite.</small></div>';
-    return;
-  }
-
-  const deckStats = buildDeckStats();
-
-  // ── Ranking globale ───────────────────────────────────────────────────
-  let html = renderRanking(deckStats);
-
-  // ── Per giocatore ─────────────────────────────────────────────────────
-  html += '<div style="margin-top:1.5rem">';
-  state.players.forEach((p, i) => {
-    const decks = Object.values(deckStats)
-      .filter(d => d.pi === i)
-      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses));
-
-    if (!decks.length) return;
-
-    html += `<div class="stat-player">
-      <div class="stat-player-name ${pClass[i]}">${escH(p.name)}</div>
-      <div class="stat-decks-list">`;
-
-    decks.forEach((d, idx) => {
-      const total   = d.wins + d.losses;
-      const wr      = total ? Math.round(d.wins / total * 100) : 0;
-      const score   = Math.round(wilsonScore(d.wins, total) * 100);
-      const wrColor = wr >= 50 ? 'var(--green)' : 'var(--red)';
-      const uid     = `sd_${i}_${idx}`;
-      const lowData = total < 3;
-
-      const wonList  = Object.values(d.wonAgainst).sort((a, b) => b.count - a.count);
-      const lostList = Object.values(d.lostAgainst).sort((a, b) => b.count - a.count);
-
-      const renderOppRows = (list) => list.length
-        ? list.map(o => `
-            <div class="detail-opponent-row">
-              <div>
-                <div class="detail-opponent-deck">${escH(o.oppDeck)}</div>
-                <div class="detail-opponent-player">${escH(state.players[o.oppPi]?.name || '?')}</div>
-              </div>
-              <div class="detail-count">${o.count}×</div>
-            </div>`).join('')
-        : '<div class="detail-empty">—</div>';
-
-      html += `<div class="stat-deck-row" id="${uid}" onclick="toggleDeckDetail('${uid}')">
-        <div class="stat-deck-header">
-          <div class="stat-deck-left">
-            <span class="stat-deck-chevron">▶</span>
-            <span class="stat-deck-name ${pClass[i]}">${escH(d.deckName)}</span>
-            ${lowData ? '<span class="rank-lowdata">pochi dati</span>' : ''}
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div class="stat-deck-wr" style="color:${wrColor}">${wr}%</div>
-            <div style="font-size:10px;color:var(--text3)">score ${score}</div>
-          </div>
-        </div>
-        <div class="stat-deck-bar-bg">
-          <div class="stat-deck-bar" style="width:${wr}%;background:${wrColor}"></div>
-        </div>
-        <div class="stat-deck-nums">
-          <span class="win">${d.wins}V</span>
-          <span style="color:var(--text3)"> / </span>
-          <span class="loss">${d.losses}S</span>
-          <span style="color:var(--text3);font-size:11px;margin-left:6px">${total} ${total === 1 ? 'partita' : 'partite'}</span>
-        </div>
-        <div class="stat-deck-detail">
-          <div class="detail-section-title">✓ Vittorie contro</div>
-          <div class="detail-opponent-list">${renderOppRows(wonList)}</div>
-          <div class="detail-section-title" style="margin-top:10px">✗ Sconfitte contro</div>
-          <div class="detail-opponent-list">${renderOppRows(lostList)}</div>
-        </div>
-      </div>`;
-    });
-
-    html += '</div></div>';
-  });
-
-  html += '</div>';
-  c.innerHTML = html;
-}
-
-function toggleDeckDetail(uid) {
-  const el = document.getElementById(uid);
-  if (el) el.classList.toggle('open');
-}
-
-// ─────────────────────────────────────────────
-// RENDER: RANKING DECK
-// ─────────────────────────────────────────────
-function buildDeckStats() {
-  const deckStats = {};
-  state.matches.forEach(m => {
-    const sides = [
-      { myPi: m.p1i, myDi: m.d1i, oppPi: m.p2i, oppDi: m.d2i },
-      { myPi: m.p2i, myDi: m.d2i, oppPi: m.p1i, oppDi: m.d1i }
-    ];
-    sides.forEach(({ myPi, myDi, oppPi, oppDi }) => {
-      const myDeck  = state.players[myPi]?.decks[myDi]  || '?';
-      const oppDeck = state.players[oppPi]?.decks[oppDi] || '?';
-      const key     = `${myPi}::${myDeck}`;
-      const won     = m.winner === myPi;
-      const oppKey  = `${oppPi}::${oppDeck}`;
-      if (!deckStats[key]) {
-        deckStats[key] = { pi: myPi, deckName: myDeck, wins: 0, losses: 0, wonAgainst: {}, lostAgainst: {} };
-      }
-      const ds = deckStats[key];
-      if (won) {
-        ds.wins++;
-        if (!ds.wonAgainst[oppKey])  ds.wonAgainst[oppKey]  = { count: 0, oppPi, oppDeck };
-        ds.wonAgainst[oppKey].count++;
-      } else {
-        ds.losses++;
-        if (!ds.lostAgainst[oppKey]) ds.lostAgainst[oppKey] = { count: 0, oppPi, oppDeck };
-        ds.lostAgainst[oppKey].count++;
-      }
-    });
-  });
-  return deckStats;
-}
-
-function renderRanking(deckStats) {
-  const ranked = Object.values(deckStats)
-    .map(d => {
-      const total = d.wins + d.losses;
-      const wr    = total ? d.wins / total : 0;
-      const score = wilsonScore(d.wins, total);
-      return { ...d, total, wr, score };
-    })
-    .sort((a, b) => b.score - a.score);
-
-  if (!ranked.length) return '';
-
-  const medals = ['🥇', '🥈', '🥉'];
-
-  const renderOppRows = (list) => list.length
-    ? list.map(o => `
-        <div class="detail-opponent-row">
-          <div>
-            <div class="detail-opponent-deck">${escH(o.oppDeck)}</div>
-            <div class="detail-opponent-player">${escH(state.players[o.oppPi]?.name || '?')}</div>
-          </div>
-          <div class="detail-count">${o.count}×</div>
-        </div>`).join('')
-    : '<div class="detail-empty">—</div>';
-
-  const rows = ranked.map((d, idx) => {
-    const wr      = Math.round(d.wr * 100);
-    const score   = Math.round(d.score * 100);
-    const wrColor = wr >= 50 ? 'var(--green)' : 'var(--red)';
-    const medal   = medals[idx] || `#${idx + 1}`;
-    const lowData = d.total < 3;
-    const p       = state.players[d.pi];
-    const uid     = `rk_${d.pi}_${idx}`;
-
-    const wonList  = Object.values(d.wonAgainst).sort((a, b) => b.count - a.count);
-    const lostList = Object.values(d.lostAgainst).sort((a, b) => b.count - a.count);
-
-    return `<div class="rank-row" id="${uid}" onclick="toggleDeckDetail('${uid}')">
-      <div class="rank-row-header">
-        <div class="rank-pos">${medal}</div>
-        <div class="rank-info">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span class="stat-deck-chevron">▶</span>
-            <div class="rank-deck-name ${pClass[d.pi]}">${escH(d.deckName)}</div>
-          </div>
-          <div class="rank-player"><span class="badge ${pClass[d.pi]}">${escH(p?.name || '?')}</span>${lowData ? '<span class="rank-lowdata">pochi dati</span>' : ''}</div>
-        </div>
-        <div class="rank-right">
-          <div class="rank-wr" style="color:${wrColor}">${wr}%</div>
-          <div class="rank-score">score ${score}</div>
-          <div class="rank-games">${d.wins}V ${d.losses}S · ${d.total} pt</div>
-        </div>
-      </div>
-      <div class="stat-deck-detail">
-        <div class="detail-section-title">✓ Vittorie contro</div>
-        <div class="detail-opponent-list">${renderOppRows(wonList)}</div>
-        <div class="detail-section-title" style="margin-top:10px">✗ Sconfitte contro</div>
-        <div class="detail-opponent-list">${renderOppRows(lostList)}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  return `<div class="ranking-panel">
-    <div class="ranking-title">🏆 Classifica Mazzi</div>
-    <div class="ranking-subtitle">Ordinati per affidabilità: conta il win rate ma anche quante partite ha giocato · tocca un mazzo per i dettagli</div>
-    <div class="ranking-list">${rows}</div>
-  </div>`;
 }
 
 // ─────────────────────────────────────────────

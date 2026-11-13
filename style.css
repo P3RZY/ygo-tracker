@@ -901,3 +901,87 @@ button { transition: transform 120ms var(--ease-out); }
 .viz-deck-chip small { color: var(--text3); font-size: 11px; }
 .viz-deck-chip.on { border-color: var(--border2); background: var(--bg3); color: var(--text); }
 .viz-legend-item small { color: var(--text3); margin-left: 4px; }
+
+/* ════════════════════════════════════════════
+   STATISTICHE — Panoramica e schede dei mazzi
+   ════════════════════════════════════════════ */
+:root { --st-win: #3fae86; --st-lose: #e0685f; --st-even: #2c2e36; }   /* sopra / sotto il 50% */
+#tab-stats, #tab-decks { display: flex; flex-direction: column; gap: 12px; }
+#tab-stats[style*="none"], #tab-decks[style*="none"] { display: none; }
+
+/* Mazzo da battere */
+.st-hero { position: relative; overflow: hidden; background: linear-gradient(160deg, #2b2616 0%, var(--card) 60%); border: 1px solid var(--gold); border-radius: 18px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: end; }
+.st-hero-tag { grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: var(--gold); }
+.st-hero-id { min-width: 0; }
+.st-hero-name { font-size: 22px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.st-hero small, .st-step small, .st-deck small { color: var(--text3); font-size: 12px; }
+.st-hero-big { font-size: 60px; font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; color: var(--gold); }
+.st-hero-big .u { font-size: 26px; letter-spacing: 0; }
+.st-hero-meta { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--text2); font-size: 13px; margin-top: 6px; }
+.st-hero-spark { flex: 0 0 110px; }
+.st-hero .st-vs { grid-column: 1 / -1; margin-top: 4px; }
+
+.st-podium { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+.st-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; min-width: 0; }
+.st-step-pos { font-size: 12px; color: var(--text3); }
+.st-step-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-step-pct { font-size: 26px; font-weight: 700; line-height: 1.1; }
+
+/* Chi batte chi */
+.st-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; min-width: 0; }
+.st-block h3 { font-size: 15px; font-weight: 600; }
+.st-sub { font-size: 12px; color: var(--text3); margin: 2px 0 10px; }
+.st-grid-scroll { overflow-x: auto; overscroll-behavior: contain; }
+.st-grid { display: grid; grid-template-columns: minmax(84px, 1.6fr) repeat(var(--n), minmax(30px, 1fr)); gap: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.st-col { color: var(--text3); font-size: 11px; text-align: center; padding-bottom: 3px; }
+.st-row-name { align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 4px; }
+.st-row-name b { display: inline-block; width: 16px; color: var(--text3); font-weight: 500; font-size: 11px; }
+.st-cell { aspect-ratio: 1; border-radius: 6px; display: grid; place-items: center; font-weight: 700; color: #fff; }
+.st-cell[data-tip] { cursor: pointer; }
+.st-cell.self { color: var(--border2); }
+.st-cell.none { border: 1px dashed var(--border); color: var(--text3); font-weight: 400; }
+.st-cell.few { background: var(--st-even); color: var(--text3); font-weight: 400; font-size: 11px; }
+.st-scale { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text3); margin-top: 10px; }
+.st-scale i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--st-lose), var(--st-even) 50%, var(--st-win)); }
+.st-keys { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--text3); margin-top: 6px; }
+.st-keys span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.st-keys .kfew::before { background: var(--st-even); }
+.st-keys .knone::before { border: 1px dashed var(--border2); }
+
+/* Schede dei mazzi */
+.st-player .stat-player-name { margin-bottom: 8px; }
+.st-decks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); gap: 8px; }
+.st-deck { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.st-deck.top { border-color: var(--gold); background: linear-gradient(160deg, #2b2616 0%, var(--bg2) 65%); }
+.st-deck.few .st-ring, .st-deck.few .st-spark { opacity: 0.55; }
+.st-deck.empty-deck { border-style: dashed; }
+.st-deck-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.st-deck-id { min-width: 0; }
+.st-deck-tag { font-size: 11px; font-weight: 600; color: var(--gold); }
+.st-deck-name { font-weight: 700; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
+.st-ring { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.st-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.st-ring b { position: absolute; inset: 0; display: grid; place-items: center; grid-auto-flow: column; justify-content: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.st-deck.top .st-ring b { color: var(--gold); }
+.st-spark { width: 100%; height: 34px; display: block; }
+.st-vs { font-size: 12px; color: var(--text2); line-height: 1.45; }
+.st-vs i { font-style: normal; font-weight: 600; color: var(--text); }
+.st-vs i.w { color: var(--st-win); } .st-vs i.l { color: var(--st-lose); }
+
+/* ── Animazioni d'ingresso: solo all'apertura della pagina o al cambio scheda (.st-anim).
+   Ogni keyframe parte da uno stato nascosto e arriva allo stato normale: senza animazioni tutto è già visibile. */
+@keyframes st-rise  { from { opacity: 0; transform: translateY(14px); } }
+@keyframes st-pop   { from { opacity: 0; transform: scale(0.6); } }
+@keyframes st-ring  { from { stroke-dashoffset: var(--len); } }
+@keyframes st-wipe  { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes st-shine { from { transform: translateX(-120%) skewX(-20deg); } to { transform: translateX(320%) skewX(-20deg); } }
+@keyframes st-glow  { 0% { box-shadow: 0 0 0 0 rgba(237,197,106,0.45); } 100% { box-shadow: 0 0 0 16px rgba(237,197,106,0); } }
+.st-anim .st-hero { animation: st-rise 420ms var(--ease-out) backwards, st-glow 900ms ease-out 250ms; }
+.st-anim .st-hero::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 35%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(247,216,142,0.22), transparent); animation: st-shine 1100ms ease-out 300ms both; }
+.st-anim .st-step { animation: st-rise 420ms var(--ease-out) var(--d, 0ms) backwards; }
+.st-anim .st-block { animation: st-rise 420ms var(--ease-out) 260ms backwards; }
+.st-anim .st-cell { animation: st-pop 320ms var(--ease-out) calc(380ms + var(--d, 0ms)) backwards; }
+.st-anim .st-deck { animation: st-rise 420ms var(--ease-out) var(--d, 0ms) backwards; }
+.st-anim .st-ring-arc { animation: st-ring 900ms var(--ease-out) calc(150ms + var(--d, 0ms)) backwards; }
+.st-anim .st-spark { animation: st-wipe 800ms var(--ease-out) calc(250ms + var(--d, 0ms)) backwards; }

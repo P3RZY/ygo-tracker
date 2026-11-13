@@ -77,16 +77,16 @@
 
 <div class="page" id="page-stats" style="display:none">
   <div class="container">
-    <div class="page-heading"><h2>Ogni duello conta.</h2><p>Confronta giocatori, mazzi e scontri diretti.</p></div>
+    <div class="page-heading"><h2>Ogni duello conta.</h2><p>Il mazzo da battere, chi batte chi e il profilo di ogni mazzo.</p></div>
     <div class="panel">
       <div class="tabs">
-        <div class="tab active" data-tab="stats" onclick="switchTab('stats')">Classifica</div>
+        <div class="tab active" data-tab="stats" onclick="switchTab('stats')">Panoramica</div>
+        <div class="tab" data-tab="decks" onclick="switchTab('decks')">Mazzi</div>
         <div class="tab" data-tab="charts" onclick="switchTab('charts')">Grafici</div>
-        <div class="tab" data-tab="matchups" onclick="switchTab('matchups')">Scontri diretti</div>
       </div>
       <div id="tab-stats"></div>
       <div id="tab-charts" style="display:none"></div>
-      <div id="tab-matchups" style="display:none"></div>
+      <div id="tab-decks" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -247,5 +247,6 @@
 <script src="app.js"></script>
 <script src="lab.js"></script>
 <script src="charts.js"></script>
+<script src="stats.js"></script>
 </body>
 </html>
