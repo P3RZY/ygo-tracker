@@ -100,7 +100,7 @@ function renderOverview() {
       <div class="st-hero-tag">Mazzo da battere</div>
       <div class="st-hero-id"><div class="st-hero-name">${escH(champ.name)}</div><small>${escH(vizOwner(champ))}</small></div>
       <div class="st-hero-big"><span data-count="${vizPct(champ)}">${vizPct(champ)}</span><span class="u">%</span></div>
-      <div class="st-hero-meta"><span>${champ.wins} vittorie su ${champ.games} partite</span><span class="st-hero-spark">${statsSpark(champ.history, 'var(--gold)')}</span></div>
+      <div class="st-hero-meta"><span>${vizPlural(champ.wins, 'vittoria', 'vittorie')} su ${champ.games} partite</span><span class="st-hero-spark">${statsSpark(champ.history, 'var(--gold)')}</span></div>
       ${statsMatchups(champ, data)}
     </section>` : `<div class="empty">Nessun mazzo ha ancora ${VIZ_MIN_GAMES} partite.<br><small>La classifica parte dalla ${VIZ_MIN_GAMES}ª partita di un mazzo.</small></div>`;
 
@@ -172,7 +172,7 @@ function renderDeckCards() {
           <div class="st-deck-head">${statsRing(vizPct(d), top ? 'var(--gold)' : 'var(--viz-s1)')}
             <div class="st-deck-id">${top ? '<div class="st-deck-tag">Mazzo da battere</div>' : ''}
               <div class="st-deck-name">${escH(d.name)}</div>
-              <small>${d.wins} vittorie, ${d.games - d.wins} sconfitte${few ? ' · pochi dati' : ''}</small></div></div>
+              <small>${vizPlural(d.wins, 'vittoria', 'vittorie')}, ${vizPlural(d.games - d.wins, 'sconfitta', 'sconfitte')}${few ? ' · pochi dati' : ''}</small></div></div>
           ${statsSpark(d.history, top ? 'var(--gold)' : 'var(--viz-s1)')}
           ${statsMatchups(d, data)}
         </article>`;
