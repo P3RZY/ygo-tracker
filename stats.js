@@ -228,7 +228,8 @@ function homeSuggestions(data) {
     const close = 1 - Math.abs(homeLevel(a) - homeLevel(b));        // 1 = stesso livello
     const fresh = 1 / (1 + r[1]);                                    // meno si sono affrontati, più conta
     const young = 1 / Math.sqrt(1 + Math.min(a.games, b.games) / 4); // i mazzi con pochi dati imparano di più
-    out.push({ a, b, h2h: r, score: close ** 3 * (0.35 + 0.65 * fresh) * (0.6 + 0.4 * young) });
+    const known = a.games && b.games ? 1 : 0.55;                     // un mazzo mai usato può essere solo in archivio: lo propone, ma meno spesso
+    out.push({ a, b, h2h: r, score: close ** 3 * (0.35 + 0.65 * fresh) * (0.6 + 0.4 * young) * known });
   }
   return out.sort((x, y) => y.score - x.score).slice(0, 8);
 }
