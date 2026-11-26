@@ -1110,19 +1110,19 @@ body { background: radial-gradient(900px 420px at 50% -160px, rgba(49,65,93,0.38
 #home-extra[hidden] { display: none; }
 #home-extra { margin-bottom: 0.9rem; }
 .home-podium { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.home-rank { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 10px 8px 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.home-rank { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 8px 10px 8px 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); position: relative; overflow: hidden; }
 .home-rank.r1 { background: linear-gradient(100deg, rgba(237,197,106,0.14), rgba(237,197,106,0.02) 80%), var(--card); border-color: rgba(237,197,106,0.5); }
 .home-rank.r2 { border-color: rgba(163,188,232,0.32); }
 .home-rank.r3 { border-color: rgba(211,150,98,0.4); }
 .home-rank.r1::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 40%; background: linear-gradient(90deg, transparent, rgba(247,216,142,0.18), transparent); transform: translateX(-120%) skewX(-20deg); pointer-events: none; }
-.home-pyr { position: relative; width: 26px; height: 22px; flex-shrink: 0; display: grid; place-items: center; }
+.home-pyr { position: relative; width: 22px; height: 19px; flex-shrink: 0; display: grid; place-items: center; }
 .home-pyr svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke-width: 1.5; stroke-linejoin: round; }
-.home-pyr b { position: relative; top: 3px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.home-pyr b { position: relative; top: 3px; font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .r1 .home-pyr svg { fill: rgba(237,197,106,0.22); stroke: var(--gold); }      .r1 .home-pyr b { color: var(--gold2); }
 .r2 .home-pyr svg { fill: rgba(163,188,232,0.14); stroke: var(--lapis2); }    .r2 .home-pyr b { color: var(--lapis2); }
 .r3 .home-pyr svg { fill: rgba(211,150,98,0.18); stroke: var(--bronze); }     .r3 .home-pyr b { color: var(--bronze2); }
 .home-rank-id { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
-.home-rank-id b { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-rank-id b { font-size: 13px; font-weight: 650; line-height: 1.2; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }   /* due righe: in tre colonne su telefono un nome su una riga si tronca subito */
 .home-rank-id small { font-size: 11px; color: var(--text3); white-space: nowrap; }
 .home-rank-id small i { font-style: normal; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
 .r1 .home-rank-id small i { color: var(--gold2); }
