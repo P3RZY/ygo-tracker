@@ -571,6 +571,7 @@ function switchPage(p) {
   if (p === 'stats')    { statsAnimate = true; renderTab(); }
   if (p === 'settings') { renderPlayers(); }
   if (p === 'lab')      { labOnShow(); }
+  if (p === "duel")     { replayAnim(document.getElementById("home-extra"), "home-anim"); }
   window.scrollTo(0, 0);
   replayAnim(document.querySelector(`#page-${p} .container`), 'page-enter');
 }
@@ -597,6 +598,7 @@ function switchTab(t) {
 }
 
 function renderTab() {
+  if (typeof renderHome === "function") renderHome();   // top 3 e duello consigliato nella schermata Duello (stats.js)
   // Le statistiche si disegnano solo a pagina visibile (stats.js e charts.js si caricano dopo app.js)
   if (currentPage !== 'stats') return;
   if (currentTab === 'decks')       renderDeckCards();
@@ -659,6 +661,7 @@ const MAX_LP        = 999999;
 let duelState = null;
 
 function renderDuel() {
+  if (typeof renderHome === "function") renderHome();
   const heading = document.getElementById('duel-heading');
   if (heading) heading.hidden = !!duelState;
   const title = document.querySelector('#duel-panel > .panel-title > span');
