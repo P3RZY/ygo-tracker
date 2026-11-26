@@ -1068,3 +1068,18 @@ button.tab { min-height: 36px; }
 /* Focus visibile anche sugli elementi con role="button" e sulle celle della griglia */
 [role="button"]:focus-visible, .st-cell:focus-visible, .card-row:focus-visible { outline: 2px solid var(--gold2); outline-offset: 2px; }
 .lab-zone[role="button"]:focus-visible { outline-offset: 1px; }
+
+/* ════════════════════════════════════════════
+   RIFINITURE (make-interfaces-feel-better)
+   ════════════════════════════════════════════ */
+/* Titoli bilanciati, niente parola sola sull'ultima riga nei testi brevi */
+h1, h2, h3, .panel-title, .dm-title, .duel-over-title, .ranking-title, .lab-prompt-title { text-wrap: balance; }
+.hint, .page-heading p, .viz-sub, .dm-hint, .lab-card-text, .lab-card-note, .lab-deck-note, .empty, .lab-help li { text-wrap: pretty; }
+
+/* Immagini delle carte: filo neutro all'interno, così i bordi delle carte scure non si perdono sul fondo */
+.card-row img, .lab-zone img, .lab-chip img, .lab-card-img, .lab-hand img { outline: 1px solid rgba(255,255,255,0.1); outline-offset: -1px; }
+
+/* Area di tocco più grande dell'icona (aspetto invariato): la × allarga la zona sensibile verso lo spazio libero */
+.match-card-rm, .lab-x { position: relative; }
+.match-card-rm::after { content: ""; position: absolute; inset: -8px; }
+.lab-x::after { content: ""; position: absolute; inset: -8px -8px -8px 0; }   /* non verso sinistra: lì c'è un altro pulsante */
