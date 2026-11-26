@@ -678,14 +678,15 @@ function renderDuel() {
       return `
         <div class="duel-slot">
           <div class="form-label" style="margin-bottom:6px">Giocatore ${slot + 1}</div>
-          <select id="duel-p${slot}" aria-label="Giocatore ${slot + 1}" onchange="onDuelPlayerChange(${slot})">${playerOpts}</select>
-          <select id="duel-d${slot}" aria-label="Mazzo del giocatore ${slot + 1}" style="margin-top:6px"></select>
+          <select id="duel-p${slot}" aria-label="Giocatore ${slot + 1}" onchange="onDuelPlayerChange(${slot}); homeManualPick()">${playerOpts}</select>
+          <select id="duel-d${slot}" aria-label="Mazzo del giocatore ${slot + 1}" onchange="homeManualPick()" style="margin-top:6px"></select>
         </div>`;
     };
     const noDecks = state.players.some(p => !p.decks.length);
 
     c.innerHTML = `
       <div class="duel-setup">
+        <div class="duel-suggest" id="duel-suggest" hidden></div>
         <div class="duel-slots-row">
           ${slotSelect(0)}
           <div class="duel-vs-sep">vs</div>
@@ -700,6 +701,7 @@ function renderDuel() {
     if (p1sel && state.players.length > 1) p1sel.value = '1';
     onDuelPlayerChange(0);
     onDuelPlayerChange(1);
+    if (typeof homeApplySuggest === "function") { homeManual = false; homeApplySuggest(); }   // propone subito il duello consigliato (stats.js)
     return;
   }
 
@@ -713,7 +715,8 @@ function renderDuel() {
     c.innerHTML = `
       <div class="duel-over-banner">
         ${winner ? `
-          <div class="duel-over-title">🏆 ${escH(winner.name)} vince!</div>
+          <svg class="over-ankh" viewBox="0 0 24 34" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="8.5" rx="5.2" ry="6.8"/><path d="M12 15.5V32M3.5 18.5h17"/></svg>
+          <div class="duel-over-title">${escH(winner.name)} vince!</div>
           <div class="duel-over-sub">${escH(winner.deck)} batte ${escH(loser.name)} (${escH(loser.deck)})</div>`
         : `
           <div class="duel-over-title">Pareggio</div>

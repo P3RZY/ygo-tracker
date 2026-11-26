@@ -204,10 +204,12 @@ function renderDeckCards() {
   statsEnter(c);
 }
 
-// ── Schermata Duello: i 3 mazzi più forti e il duello da giocare ─────────────
+// ── Schermata Duello: podio compatto in alto e duello consigliato già impostato ──
 // Il duello consigliato mette di fronte due mazzi di giocatori diversi con livello simile
 // e pochi scontri diretti: è la partita il cui risultato dice di più alle statistiche.
+// Compila da solo la scelta di giocatori e mazzi, finché l'utente non sceglie a mano.
 let homeSuggestIdx = 0;
+let homeManual = false;          // true dopo una scelta a mano: la proposta non sovrascrive più i menu
 const HOME_EYE = '<svg class="home-eye" viewBox="0 0 32 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5c6-2.6 17-2.8 24-.6"/><path d="M3 10c6-6.5 18-6.5 26 0-8 5.8-20 5.8-26 0z"/><circle cx="16" cy="10" r="2.8" fill="currentColor"/><path d="M15 15v5.5"/><path d="M19.5 14.6c1.6 3.6 6 5.2 8.5 2.4"/></svg>';
 
 /** Livello stimato di un mazzo (0–1): win rate "prudente", un mazzo mai giocato parte dal 50%. */
@@ -234,85 +236,81 @@ function homeSuggestions(data) {
   return out.sort((x, y) => y.score - x.score).slice(0, 8);
 }
 
+/** Perché proprio questa partita, in breve (una riga sotto il titolo). */
 function homeReasons(s) {
   const { a, b, h2h } = s, why = [];
   if (a.games && b.games) {
     const pa = vizPct(a), pb = vizPct(b);
-    why.push(Math.abs(pa - pb) <= 8 ? `Livello simile: ${pa}% e ${pb}% di vittorie` : `${pa}% contro ${pb}% di vittorie`);
-  } else {
-    why.push(a.games || b.games ? `${escH((a.games ? b : a).name)} non ha ancora partite: è il momento di provarlo` : 'Due mazzi tutti da scoprire');
-  }
-  if (!h2h[1]) why.push('Non si sono mai affrontati');
-  else if (h2h[1] < VIZ_MIN_GAMES) why.push(`${vizPlural(h2h[1], 'scontro', 'scontri')} finora: ${VIZ_MIN_GAMES - h2h[1] === 1 ? 'ne manca 1' : `ne mancano ${VIZ_MIN_GAMES - h2h[1]}`} per la percentuale in Chi batte chi`);
-  else why.push(`Tra loro ${h2h[0]}–${h2h[1] - h2h[0]}: un'altra partita conferma o ribalta il dato`);
-  return why;
+    why.push(Math.abs(pa - pb) <= 8 ? `livello simile (${pa}% e ${pb}%)` : `${pa}% contro ${pb}% di vittorie`);
+  } else why.push(a.games || b.games ? `${escH((a.games ? b : a).name)} è ancora da provare` : 'due mazzi da scoprire');
+  if (!h2h[1]) why.push('mai affrontati');
+  else if (h2h[1] < VIZ_MIN_GAMES) why.push(`${vizPlural(h2h[1], 'scontro', 'scontri')} su ${VIZ_MIN_GAMES} per la percentuale`);
+  else why.push(`tra loro ${h2h[0]}–${h2h[1] - h2h[0]}`);
+  const t = why.join(' · ');
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-function homeFace(d, side) {
-  const p = state.players[d.pi];
-  return `<div class="home-face ${pClass[d.pi]} ${side}">
-    <small class="home-face-owner">${escH(p?.name || '?')}</small>
-    <b class="home-face-name">${escH(d.name)}</b>
-    <span class="home-face-stat">${d.games ? `${vizPct(d)}% · ${vizPlural(d.games, 'partita', 'partite')}` : 'nessuna partita'}</span>
-  </div>`;
+function homeCurrent() {
+  const sug = homeSuggestions(statsData());
+  return sug.length ? sug[homeSuggestIdx % sug.length] : null;
 }
+const homeIdx = d => state.players[d.pi].decks.indexOf(d.name);
+function homeSelected() {
+  const v = id => document.getElementById(id)?.value;
+  return [[v('duel-p0'), v('duel-d0')], [v('duel-p1'), v('duel-d1')]].map(x => x.join(':')).sort().join('|');
+}
+const homeKeyOf = s => [`${s.a.pi}:${homeIdx(s.a)}`, `${s.b.pi}:${homeIdx(s.b)}`].sort().join('|');
 
+/** Podio compatto: tre piramidi affiancate (oro, lapislazzuli, bronzo); si tocca per la classifica. */
 function renderHome() {
   const c = document.getElementById('home-extra');
   if (!c) return;
   if (duelState) { c.hidden = true; return; }      // durante il duello conta solo il tastierino
-  c.hidden = false;
-  const data = statsData();
+  const top = statsData().ranked.filter(d => d.games).slice(0, 3);
+  c.hidden = !top.length;
+  c.innerHTML = top.length ? `<button class="home-podium" onclick="switchPage('stats')" aria-label="I mazzi più forti: ${top.map((d, i) => `${i + 1}º ${escH(d.name)}, ${d.score} punti`).join('; ')}. Apri la classifica">
+    ${top.map((d, i) => `<span class="home-rank r${i + 1}" style="--d:${60 + i * 70}ms">
+      <span class="home-pyr" aria-hidden="true"><svg viewBox="0 0 28 24"><path d="M14 2 26.5 22h-25z"/></svg><b>${i + 1}</b></span>
+      <span class="home-rank-id"><b>${escH(d.name)}</b><small><i>${d.score}</i> punti</small></span>
+    </span>`).join('')}
+  </button>` : '';
+  // Proposta nel pannello Nuovo duello: si riallinea ai dati nuovi solo se l'utente non ha già scelto a mano
+  if (!homeManual) homeApplySuggest(); else homeRenderSuggest();
+}
 
-  const top = data.ranked.filter(d => d.games).slice(0, 3);
-  const topHtml = top.length ? `<section class="panel home-top" aria-labelledby="home-top-title">
-    <div class="panel-title"><span id="home-top-title">I mazzi più forti</span><button class="home-more" onclick="switchPage('stats')">Classifica <span aria-hidden="true">→</span></button></div>
-    <ol class="home-ranks">${top.map((d, i) => `
-      <li class="home-rank r${i + 1}" style="--d:${80 + i * 70}ms">
-        <span class="home-pyr" aria-label="${i + 1}º posto"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M14 2 26.5 22h-25z"/></svg><b>${i + 1}</b></span>
-        <span class="home-rank-id"><b>${escH(d.name)}</b><small>${escH(vizOwner(d))} · ${d.wins} V, ${d.games - d.wins} S</small></span>
-        <span class="home-rank-score"><b>${d.score}</b><small>punti</small></span>
-      </li>`).join('')}</ol>
-  </section>` : '';
+/** Scrive la riga della proposta in cima al pannello Nuovo duello. */
+function homeRenderSuggest(s = homeCurrent()) {
+  const box = document.getElementById('duel-suggest');
+  if (!box) return;
+  if (!s) { box.hidden = true; box.innerHTML = ''; return; }
+  const using = homeSelected() === homeKeyOf(s);
+  box.hidden = false;
+  box.innerHTML = `${HOME_EYE}
+    <div class="duel-suggest-txt"><b>${using ? 'Duello consigliato' : `Consigliato: ${escH(s.a.name)} vs ${escH(s.b.name)}`}</b><small>${homeReasons(s)}</small></div>
+    ${using ? `<button class="duel-suggest-btn" onclick="homeNext()">Un'altra</button>`
+            : `<button class="duel-suggest-btn on" onclick="homeUse()">Usa</button>`}`;
+}
 
-  const sug = homeSuggestions(data);
-  let sugHtml = '';
-  if (sug.length) {
-    const s = sug[homeSuggestIdx % sug.length];
-    const ia = state.players[s.a.pi].decks.indexOf(s.a.name), ib = state.players[s.b.pi].decks.indexOf(s.b.name);
-    sugHtml = `<section class="panel home-sug" aria-labelledby="home-sug-title">
-      <div class="panel-title">${HOME_EYE}<span id="home-sug-title">Il duello da giocare</span></div>
-      <div class="home-vs">${homeFace(s.a, 'l')}<span class="home-vs-gem" aria-hidden="true"><i>VS</i></span>${homeFace(s.b, 'r')}</div>
-      <ul class="home-why">${homeReasons(s).map(w => `<li>${w}</li>`).join('')}</ul>
-      <div class="home-sug-btns">
-        <button class="btn-cfg" onclick="homePlan(${s.a.pi},${ia},${s.b.pi},${ib})">Prepara questo duello</button>
-        ${sug.length > 1 ? `<button class="btn-cfg-sec" onclick="homeNext()">Un'altra proposta</button>` : ''}
-      </div>
-    </section>`;
+/** Imposta giocatori e mazzi della proposta nei menu del nuovo duello. */
+function homeApplySuggest() {
+  const s = homeCurrent();
+  if (s && document.getElementById('duel-p0')) {
+    [s.a, s.b].forEach((d, slot) => {
+      document.getElementById(`duel-p${slot}`).value = String(d.pi);
+      onDuelPlayerChange(slot);
+      document.getElementById(`duel-d${slot}`).value = String(homeIdx(d));
+    });
   }
-  c.innerHTML = topHtml + sugHtml;
+  homeRenderSuggest(s);
 }
 
-function homeNext() {
-  homeSuggestIdx++;
-  renderHome();
-  replayAnim(document.querySelector('#home-extra .home-sug'), 'home-swap');
-}
-
-/** Compila la scelta giocatori e mazzi del nuovo duello con la proposta. */
-function homePlan(pa, da, pb, db) {
-  if (duelState) return;
-  [[pa, da], [pb, db]].forEach(([pi, di], slot) => {
-    const ps = document.getElementById(`duel-p${slot}`);
-    if (!ps) return;
-    ps.value = String(pi);
-    onDuelPlayerChange(slot);
-    document.getElementById(`duel-d${slot}`).value = String(di);
-  });
-  const panel = document.getElementById('duel-panel');
-  panel.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  replayAnim(panel, 'home-filled');
-  announce(`Duello pronto: ${state.players[pa].decks[da]} contro ${state.players[pb].decks[db]}. Tocca Inizia il duello.`);
+function homeManualPick() { homeManual = true; homeRenderSuggest(); }
+function homeUse() { homeManual = false; homeApplySuggest(); homeFlash(); }
+function homeNext() { homeSuggestIdx++; homeManual = false; homeApplySuggest(); homeFlash(); }
+function homeFlash() {
+  replayAnim(document.querySelector('.duel-slots-row'), 'home-filled');
+  const s = homeCurrent();
+  if (s) announce(`Duello impostato: ${s.a.name} contro ${s.b.name}`);
 }
 
 renderHome();
