@@ -652,7 +652,7 @@ function labSetupHtml() {
         <span class="lab-side-name">${LAB_SIDES[s]}</span>
         <label class="lab-lp-input">LP <input type="number" inputmode="numeric" min="1" step="100" value="${labSetup.lp[s]}" onchange="labSetLp(${s}, this.value)"/></label>
       </div>
-      <select class="lab-deck-sel" onchange="labSelectDeck(${s}, this.value)">
+      <select class="lab-deck-sel" aria-label="Mazzo di ${LAB_SIDES[s]}" onchange="labSelectDeck(${s}, this.value)">
         <option value=""${ref ? '' : ' selected'}>Nessun mazzo: carte scelte liberamente</option>
         ${deckOpts(s)}
       </select>
@@ -667,9 +667,9 @@ function labSetupHtml() {
             ${list.map((e, i) => `
               <span class="lab-chip">
                 <img src="${labCardImg(e.code)}" alt="" loading="lazy" onclick="labShowCard(${e.code})"/>
-                <span class="lab-chip-name" onclick="labShowCard(${e.code})">${escH(e.name || labName(e.code))}</span>
-                ${LAB_POS_CYCLE[z.k] ? `<button class="lab-pos" onclick="labCyclePos(${s},'${z.k}',${i})" title="Cambia posizione">${LAB_POS_LABEL[e.pos || LAB_POS_CYCLE[z.k][0]]}</button>` : ''}
-                <button class="lab-x" onclick="labRemoveCard(${s},'${z.k}',${i})" title="${ref && z.k !== 'deck' && z.k !== 'extra' ? 'Rimetti nel mazzo' : 'Togli'}">×</button>
+                <button type="button" class="lab-chip-name" onclick="labShowCard(${e.code})" title="Leggi la carta">${escH(e.name || labName(e.code))}</button>
+                ${LAB_POS_CYCLE[z.k] ? `<button class="lab-pos" onclick="labCyclePos(${s},'${z.k}',${i})" title="Cambia posizione" aria-label="Posizione: ${LAB_POS_LABEL[e.pos || LAB_POS_CYCLE[z.k][0]]}. Tocca per cambiarla">${LAB_POS_LABEL[e.pos || LAB_POS_CYCLE[z.k][0]]}</button>` : ''}
+                <button class="lab-x" onclick="labRemoveCard(${s},'${z.k}',${i})" title="${ref && z.k !== 'deck' && z.k !== 'extra' ? 'Rimetti nel mazzo' : 'Togli'}" aria-label="${ref && z.k !== 'deck' && z.k !== 'extra' ? 'Rimetti nel mazzo' : 'Togli'} ${escH(e.name || labName(e.code))}"><span aria-hidden="true">×</span></button>
               </span>`).join('')}
             ${full ? '' : `<button class="lab-add" onclick="labOpenPicker(${s},'${z.k}')">+ carta</button>`}
             ${z.k === 'deck' && list.length > 1 ? `<button class="lab-add" onclick="labShuffleDeck(${s})" title="Mescola il Deck">🔀 Mescola</button>` : ''}
@@ -795,6 +795,7 @@ function labShowPicker(title) {
   document.getElementById('lab-picker-msg').textContent = '';
   document.getElementById('lab-picker-input').placeholder = '🔍 Cerca carta (italiano o inglese)';
   document.getElementById('lab-picker').classList.add('open');
+  modalOpened(document.getElementById('lab-picker'), document.getElementById('lab-picker-input'));
   document.body.style.overflow = 'hidden';
   if (matchMedia('(hover: hover) and (pointer: fine)').matches && !labDeckRef(labPickerCtx?.side)) document.getElementById('lab-picker-input').focus();
 }
@@ -848,6 +849,7 @@ function labPickFromDeck(code, src) {
 function labClosePicker() {
   labPickerCtx = null;
   document.getElementById('lab-picker').classList.remove('open');
+  modalClosed(document.getElementById('lab-picker'));
   document.body.style.overflow = '';
   labRender();
 }
@@ -1013,7 +1015,7 @@ function labTile(card, extraCls = '', loc = null) {
   const mats = card.overlayCards?.length ? `<span class="lab-mats">${card.overlayCards.length}</span>` : '';
   const can = loc && labActionsFor(loc.controller, loc.location, loc.sequence).length;
   const tap = loc ? `labTapCard(${card.code},${loc.controller},${loc.location},${loc.sequence})` : `labShowCard(${card.code})`;
-  return `<div class="lab-zone ${extraCls} has${down ? ' down' : ''}${def ? ' def' : ''}${can ? ' can' : ''}" onclick="${tap}" title="${escH(labName(card.code))}">
+  return `<div class="lab-zone ${extraCls} has${down ? ' down' : ''}${def ? ' def' : ''}${can ? ' can' : ''}" onclick="${tap}" title="${escH(labName(card.code))}" role="button" tabindex="0" aria-label="${escH(labName(card.code))}${down ? ", coperta" : ""}${def && !inHand ? ", in difesa" : ""}${can ? ", utilizzabile ora" : ""}">
     <img src="${labCardImg(card.code)}" alt="" loading="lazy"/>
     ${down ? '<span class="lab-badge">coperta</span>' : def && isMon ? '<span class="lab-badge">DIF</span>' : ''}
     ${isMon && !down ? `<span class="lab-stat">${card.attack}/${type & T.LINK ? "L" : card.defense}</span>` : ''}${mats}
@@ -1125,7 +1127,7 @@ function labPromptHtml() {
   const { ocg } = labE, MT = ocg.OcgMessageType;
   const who = labWho(m.player);
   const hintTxt = d.hint && d.hint.player === m.player && d.hint.hint ? labDesc(d.hint.hint) : '';
-  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t.charAt(0).toUpperCase() + t.slice(1))}</div>`;
+  const title = t => `<div class="lab-prompt-title" onclick="labTogglePrompt()" title="Riduci / espandi" role="button" tabindex="0" aria-expanded="${!labPromptMin}"><span class="lab-prompt-who ${m.player === (0 ^ d.first) ? 'me' : 'opp'}">${who}</span> ${escH(t.charAt(0).toUpperCase() + t.slice(1))}</div>`;
   const I = ocg.SelectIdleCMDAction, B = ocg.SelectBattleCMDAction;
 
   switch (m.type) {
@@ -1317,6 +1319,7 @@ function labDefault() {
 async function labShowCard(code, actionsHtml = '') {
   const box = document.getElementById('lab-card-body');
   document.getElementById('lab-card').classList.add('open');
+  modalOpened(document.getElementById('lab-card'));
   document.body.style.overflow = 'hidden';
   const render = () => {
     const c = labInfo.get(code);
@@ -1350,11 +1353,13 @@ function labShowPile(p, k) {
       labActionsFor(p, loc, seq).length ? '<span class="card-have">usabile ora</span>' : '',
       `onclick="labTapCard(${c.code},${p},${loc},${seq})"`, labActionsFor(p, loc, seq).length ? 'can' : '')).join('') || '<div class="dm-empty">Vuoto</div>'}</div>`;
   document.getElementById('lab-card').classList.add('open');
+  modalOpened(document.getElementById('lab-card'));
   document.body.style.overflow = 'hidden';
 }
 
 function labCloseCard() {
   document.getElementById('lab-card').classList.remove('open');
+  modalClosed(document.getElementById('lab-card'));
   if (!document.querySelector('.dm-overlay.open')) document.body.style.overflow = '';
 }
 
@@ -1367,6 +1372,7 @@ document.addEventListener('keydown', e => {
 function labTogglePrompt() {
   labPromptMin = !labPromptMin;
   document.getElementById('lab-prompt')?.classList.toggle('min', labPromptMin);
+  document.querySelector('#lab-prompt .lab-prompt-title')?.setAttribute('aria-expanded', String(!labPromptMin));
 }
 
 function labToggleAskPhases() {

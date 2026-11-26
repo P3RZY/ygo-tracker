@@ -382,12 +382,12 @@ function renderPlayers() {
     const div = document.createElement('div');
     div.className = `player-card ${pClass[i]}`;
     div.innerHTML = `
-      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore" maxlength="40" autocapitalize="words" enterkeyhint="done"
+      <input class="player-name-input ${pClass[i]}" value="${escH(p.name)}" placeholder="Nome giocatore" aria-label="Nome del giocatore ${i + 1}" maxlength="40" autocapitalize="words" enterkeyhint="done"
         oninput="state.players[${i}].name = this.value; saveLocal(); updateSelects(); renderTab();"
         onblur="syncUp()"/>
       <div class="deck-add-row">
-        <input type="text" placeholder="Aggiungi mazzo..." maxlength="40" autocapitalize="words" enterkeyhint="done" id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
-        <button class="btn-icon" onclick="addDeck(${i})">+</button>
+        <input type="text" placeholder="Aggiungi mazzo..." aria-label="Nome del nuovo mazzo di ${escH(p.name)}" maxlength="40" autocapitalize="words" enterkeyhint="done" id="ni${i}" onkeydown="if(event.key==='Enter') addDeck(${i})"/>
+        <button class="btn-icon" onclick="addDeck(${i})" aria-label="Aggiungi mazzo"><span aria-hidden="true">+</span></button>
       </div>
       <div class="decks-tags" id="dt${i}"></div>`;
     c.appendChild(div);
@@ -583,9 +583,12 @@ let currentTab = 'stats';
 function switchTab(t) {
   currentTab = t;
   statsAnimate = true;
-  document.querySelectorAll('.tab').forEach(el =>
-    el.classList.toggle('active', el.dataset.tab === t)
-  );
+  document.querySelectorAll('.tab').forEach(el => {
+    const on = el.dataset.tab === t;
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-selected', on);
+    el.tabIndex = on ? 0 : -1;          // nel gruppo di schede si entra con Tab sulla scheda attiva, poi frecce
+  });
   ['stats', 'decks', 'charts'].forEach(id => {
     const el = document.getElementById(`tab-${id}`);
     if (el) el.style.display = id === t ? '' : 'none';
@@ -630,7 +633,7 @@ function renderMatches() {
       <div class="match-card-center">
         <div class="match-card-vs">vs</div>
         <div class="match-card-date">${dt}</div>
-        <button class="match-card-rm" onclick="removeMatch(${realIdx})">×</button>
+        <button class="match-card-rm" onclick="removeMatch(${realIdx})" aria-label="Elimina questa partita"><span aria-hidden="true">×</span></button>
       </div>
       <div class="match-card-side right">
         <div class="match-card-player"><span class="badge ${pClass[m.p2i]}" title="${escH(p2?.name||'')}">${escH(p2?.name||'?')}</span></div>
@@ -672,8 +675,8 @@ function renderDuel() {
       return `
         <div class="duel-slot">
           <div class="form-label" style="margin-bottom:6px">Giocatore ${slot + 1}</div>
-          <select id="duel-p${slot}" onchange="onDuelPlayerChange(${slot})">${playerOpts}</select>
-          <select id="duel-d${slot}" style="margin-top:6px"></select>
+          <select id="duel-p${slot}" aria-label="Giocatore ${slot + 1}" onchange="onDuelPlayerChange(${slot})">${playerOpts}</select>
+          <select id="duel-d${slot}" aria-label="Mazzo del giocatore ${slot + 1}" style="margin-top:6px"></select>
         </div>`;
     };
     const noDecks = state.players.some(p => !p.decks.length);
@@ -924,6 +927,8 @@ function changeLp(delta, label) {
   renderDuel();
   if (over) replayAnim(document.querySelector('.duel-over-banner'), 'over-enter');
   else animateLp(slot, prev, p.lp);
+  // Chi usa un lettore di schermo sente il nuovo valore (l'animazione dei numeri non viene letta)
+  announce(over ? `${p.name} a ${fmt(p.lp)} LP. Duello finito.` : `${p.name}: ${fmt(p.lp)} LP`);
 }
 
 function applyDmg() { const a = getAmount(); if (a) changeLp(-a); }
@@ -1189,6 +1194,7 @@ async function openDeckEditor(pi, di) {
   setDeckTarget('auto');
   dmMsg('');
   document.getElementById('deck-modal').classList.add('open');
+  modalOpened(document.getElementById('deck-modal'));
   document.body.style.overflow = 'hidden';
   renderDeckEditor();
   // Focus automatico solo con mouse: su telefono aprirebbe la tastiera sopra la lista
@@ -1207,6 +1213,7 @@ async function openDeckEditor(pi, di) {
 function closeDeckEditor() {
   dmCtx = null;
   document.getElementById('deck-modal').classList.remove('open');
+  modalClosed(document.getElementById('deck-modal'));
   document.body.style.overflow = '';
   if (dmSyncTimer) { clearTimeout(dmSyncTimer); dmSyncTimer = null; syncUp(); }
 }
@@ -1225,7 +1232,9 @@ function typeOrder(c) {
 }
 
 function cardRowHtml(id, name, type, controls, rowAttrs = '', extraCls = '') {
-  return `<div class="card-row ${extraCls}" ${rowAttrs}>
+  // Una riga cliccabile si usa anche da tastiera e il lettore di schermo la legge come pulsante
+  const act = /onclick=/.test(rowAttrs) ? ` role="button" tabindex="0" aria-label="${escH(name)}"` : '';
+  return `<div class="card-row ${extraCls}" ${rowAttrs}${act}>
     <img src="${CARD_IMG(id)}" loading="lazy" alt="" onerror="this.style.visibility='hidden'"/>
     <div class="card-info">
       <div class="card-name">${escH(name)}</div>
@@ -1263,10 +1272,10 @@ function renderDeckEditor() {
     rows.forEach(([id, n]) => {
       const c = cardCache[id];
       const controls = `
-        <button class="card-btn" title="${sec === 'side' ? 'Sposta nel Main/Extra' : 'Sposta nel Side'}" onclick="moveCard('${sec}','${id}')">⇄</button>
-        <button class="card-btn" onclick="changeCard('${sec}','${id}',-1)">−</button>
+        <button class="card-btn" title="${sec === 'side' ? 'Sposta nel Main/Extra' : 'Sposta nel Side'}" onclick="moveCard('${sec}','${id}')" aria-label="${sec === 'side' ? 'Sposta nel Main/Extra' : 'Sposta nel Side'}"><span aria-hidden="true">⇄</span></button>
+        <button class="card-btn" onclick="changeCard('${sec}','${id}',-1)" aria-label="Togli una copia di ${escH(c ? c.n : id)}"><span aria-hidden="true">−</span></button>
         <span class="card-qty">${n}</span>
-        <button class="card-btn" onclick="changeCard('${sec}','${id}',1)">+</button>`;
+        <button class="card-btn" onclick="changeCard('${sec}','${id}',1)" aria-label="Aggiungi una copia di ${escH(c ? c.n : id)}"><span aria-hidden="true">+</span></button>`;
       html += cardRowHtml(id, c ? c.n : `#${id}`, c ? c.t : 'caricamento...', controls);
     });
     html += `</div></div>`;
@@ -1636,3 +1645,59 @@ function animateLp(slot, from, to) {
   };
   requestAnimationFrame(step);
 }
+
+// ─────────────────────────────────────────────
+// ACCESSIBILITÀ (WCAG 2.2)
+// ─────────────────────────────────────────────
+/** Legge un messaggio con il lettore di schermo senza spostare il focus. */
+function announce(msg) {
+  const el = document.getElementById('sr-live');
+  if (!el) return;
+  el.textContent = '';
+  setTimeout(() => { el.textContent = msg; }, 30);   // svuoto e riscrivo: così lo stesso testo viene riletto
+}
+
+// Elementi con role="button" che non sono <button>: Invio e Spazio li attivano come un pulsante vero
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (!(t instanceof Element) || t.tagName === 'BUTTON' || t.getAttribute('role') !== 'button') return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t.click(); }
+});
+
+// Popup: il focus entra nel popup, Tab resta al suo interno, alla chiusura torna dove si trovava prima
+const modalReturn = new Map();
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function modalOpened(overlay, focusEl) {
+  if (!modalReturn.has(overlay)) modalReturn.set(overlay, document.activeElement);
+  const target = focusEl || overlay.querySelector('.dm-box ' + FOCUSABLE);
+  setTimeout(() => target?.focus({ preventScroll: true }), 0);
+}
+function modalClosed(overlay) {
+  const back = modalReturn.get(overlay);
+  modalReturn.delete(overlay);
+  if (back && document.contains(back)) back.focus({ preventScroll: true });
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const overlay = [...document.querySelectorAll('.dm-overlay.open')].pop();
+  if (!overlay) return;
+  const items = [...overlay.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null || el === document.activeElement);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (!overlay.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+// Schede di Statistiche: frecce sinistra/destra, Home e Fine (schema WAI-ARIA "tabs")
+document.addEventListener('keydown', e => {
+  const tab = e.target instanceof Element && e.target.closest('[role="tab"]');
+  if (!tab) return;
+  const tabs = [...tab.parentElement.querySelectorAll('[role="tab"]')];
+  const i = tabs.indexOf(tab);
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  const t = tabs[(next + tabs.length) % tabs.length];
+  t.focus(); t.click();
+});

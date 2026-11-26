@@ -125,7 +125,11 @@ function renderOverview() {
     </div>`).join('')}</div>` : '';
 
   c.innerHTML = hero + podium + statsGridHtml(data);
-  c.querySelectorAll('.st-cell[data-tip]').forEach(el => el.addEventListener('click', () => toast(el.dataset.tip)));
+  // Celle della griglia: si toccano per leggere il dettaglio; da tastiera con Invio, e il lettore di schermo legge il dettaglio
+  c.querySelectorAll('.st-cell[data-tip]').forEach(el => {
+    el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', el.dataset.tip);
+    el.addEventListener('click', () => toast(el.dataset.tip));
+  });
   statsEnter(c);
 }
 
@@ -139,7 +143,11 @@ function statsGridHtml(data) {
 
   const mix = (a, b, t) => a.map((v, k) => Math.round(v + (b[k] - v) * t));
   const EVEN = [44, 46, 54], WIN = [63, 174, 134], LOSE = [224, 104, 95];
-  const fill = p => `rgb(${mix(EVEN, p >= 50 ? WIN : LOSE, 0.25 + 0.75 * Math.min(1, Math.abs(p - 50) / 40)).join(',')})`;
+  const fillRgb = p => mix(EVEN, p >= 50 ? WIN : LOSE, 0.25 + 0.75 * Math.min(1, Math.abs(p - 50) / 40));
+  const fill = p => `rgb(${fillRgb(p).join(',')})`;
+  // Testo bianco dove arriva a 4,5:1, altrimenti scuro: sulle celle più intense il bianco scendeva fino a 2,8:1
+  const lum = c => c.map(x => x / 255).map(x => x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4).reduce((s, v, k) => s + v * [0.2126, 0.7152, 0.0722][k], 0);
+  const ink = p => { const l = lum(fillRgb(p)); return 1.05 / (l + 0.05) >= (l + 0.05) / 0.05 ? '#fff' : '#000'; };   // il più leggibile dei due: col nero il caso peggiore resta sopra 4,5:1
 
   const head = `<span></span>${list.map((d, j) => `<span class="st-col" title="${escH(d.name)}">${j + 1}</span>`).join('')}`;
   const rows = list.map((d, i) => `<span class="st-row-name" title="${escH(d.name)} · ${escH(vizOwner(d))}"><b>${i + 1}</b>${escH(d.name)}</span>` + list.map((e, j) => {
@@ -150,7 +158,7 @@ function statsGridHtml(data) {
     if (!r) return `<span class="st-cell few" style="${delay}" data-tip="${escH(`${d.name} contro ${e.name}: nessuna partita`)}"></span>`;
     if (r[1] < VIZ_MIN_GAMES) return `<span class="st-cell few" style="${delay}" data-tip="${escH(`${d.name} contro ${e.name}: ${r[0]} su ${r[1]}, ancora poche partite`)}">${r[1]}p</span>`;
     const p = Math.round(r[0] / r[1] * 100);
-    return `<span class="st-cell" style="background:${fill(p)};${delay}" data-tip="${escH(`${d.name} contro ${e.name}: ${p}% (${r[0]} vittorie su ${r[1]})`)}">${p}</span>`;
+    return `<span class="st-cell" style="background:${fill(p)};color:${ink(p)};${delay}" data-tip="${escH(`${d.name} contro ${e.name}: ${p}% (${r[0]} vittorie su ${r[1]})`)}">${p}</span>`;
   }).join('')).join('');
 
   return `<section class="st-block">
