@@ -1083,3 +1083,4 @@ h1, h2, h3, .panel-title, .dm-title, .duel-over-title, .ranking-title, .lab-prom
 .match-card-rm, .lab-x { position: relative; }
 .match-card-rm::after { content: ""; position: absolute; inset: -8px; }
 .lab-x::after { content: ""; position: absolute; inset: -8px -8px -8px 0; }   /* non verso sinistra: lì c'è un altro pulsante */
+.st-step small { display: block; font-size: 12px; line-height: 1.4; margin-top: 2px; text-wrap: pretty; }   /* niente "partite" da sola con un grande stacco */
